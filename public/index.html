@@ -88,23 +88,7 @@ document.getElementById('deposit').addEventListener('change',()=>updateQuote(sel
 document.getElementById('quickIn').addEventListener('change',e=>{document.getElementById('checkin').value=e.target.value;checkAvailability()});
 document.getElementById('quickOut').addEventListener('change',e=>{document.getElementById('checkout').value=e.target.value;checkAvailability()});
 document.getElementById('quickGuests').addEventListener('change',e=>{document.getElementById('guests').value=e.target.value;checkAvailability()});
-// Rezerv olunmuş giriş tarixləri
-const blockedCheckInDates = new Set([
-  '2026-10-24'
-]);
-
-document.getElementById('checkin').addEventListener('change', function () {
-  if (blockedCheckInDates.has(this.value)) {
-    this.value = '';
-
-    document.getElementById('availabilityStatus').textContent =
-      'Bu tarix artıq rezerv olunub. Zəhmət olmasa başqa tarix seçin.';
-
-    document.getElementById('unit').innerHTML =
-      '<option value="">Əvvəl tarixləri yoxlayın</option>';
-
-    document.getElementById('unit').disabled = true;
-  }
+ 
 }); async function 
  createBooking(){
 
