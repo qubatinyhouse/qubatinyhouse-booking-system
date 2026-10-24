@@ -11,21 +11,37 @@ export const handler = async (event) => {
     if (!Number.isInteger(guests) || guests < 1 || guests > 10) return json(400, { error: 'Qonaq sayı 1–10 arasında olmalıdır.' });
     if (!['small', 'large', 'aframe'].includes(unitType)) return json(400, { error: 'Ev növü düzgün seçilməyib.' });
     const client = db();
-    const [unitsRes, bookingsRes] = await Promise.all([
-      client.from('units').select('id,name,unit_type,capacity,weekday_rate,weekend_rate,holiday_rate,breakfast_rate_per_person,is_demo_rate,active').eq('active', true).eq('unit_type', unitType).gte('capacity', guests).order('sort_order'),
-      client.from('reservations').select('unit_id,check_in,check_out,status,expires_at').lt('check_in', checkOut).gt('check_out', checkIn).in('status', ['pending_payment', 'confirmed'])
-    ]);
+    const [unitsRes, bookingsRes, blockedRes] = await Promise.all([
+  client.from('units').select('id,name,unit_type,capacity,weekday_rate,weekend_rate'),
+  client.from('reservations').select('unit_id,check_in,check_out,status,expires_at'),
+  client.from('blocked_dates').select('unit_id,check_in,check_out,active')
+]);
     if (unitsRes.error) throw unitsRes.error;
     if (bookingsRes.error) throw bookingsRes.error;
+    if (blockedRes.error) throw blockedRes.error;
     const now = Date.now();
     const conflicts = (bookingsRes.data || []).filter(b => b.status === 'confirmed' || (b.status === 'pending_payment' && Date.parse(b.expires_at) > now));
+    const blockedDates = (blockedRes.data || []).filter(
+  b => b.active === true
+);
     const units = await Promise.all((unitsRes.data || []).map(async unit => {
-      const busy = conflicts.some(b => b.unit_id === unit.id && b.check_in < checkOut && b.check_out > checkIn);
+      const busy =
+  conflicts.some(
+    b => b.unit_id === unit.id &&
+         b.check_in < checkOut &&
+         b.check_out > checkIn
+  ) ||
+  blockedDates.some(
+    b => b.unit_id === unit.id &&
+         b.check_in < checkOut &&
+         b.check_out > checkIn
+  );
+      if (busy) return null;
       let quote = null;
       try { quote = await quoteForUnit(client, unit, checkIn, checkOut, guests, breakfast === '1'); }
       catch (e) { return { id: unit.id, name: unit.name, unitType: unit.unit_type, capacity: unit.capacity, available: !busy, isDemoRate: unit.is_demo_rate, quote: null, pricingError: e.message }; }
       return { id: unit.id, name: unit.name, unitType: unit.unit_type, capacity: unit.capacity, available: !busy, isDemoRate: unit.is_demo_rate, quote };
-    }));
+    })).filter(Boolean);
     return json(200, { checkIn, checkOut, guestCount: guests, units });
   } catch (e) {
     console.error('availability error', e);
