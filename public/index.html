@@ -88,10 +88,10 @@ document.getElementById('deposit').addEventListener('change',()=>updateQuote(sel
 document.getElementById('quickIn').addEventListener('change',e=>{document.getElementById('checkin').value=e.target.value;checkAvailability()});
 document.getElementById('quickOut').addEventListener('change',e=>{document.getElementById('checkout').value=e.target.value;checkAvailability()});
 document.getElementById('quickGuests').addEventListener('change',e=>{document.getElementById('guests').value=e.target.value;checkAvailability()});
-}); async function 
- createBooking(){
+}); 
+ async function createBooking(){
 
-}); const name=document.getElementById('name').value.trim(),phone=document.getElementById('phone').value.trim(),checkIn=dt('checkin'),checkOut=dt('checkout'),unitId=document.getElementById('unit').value;
+ const name=document.getElementById('name').value.trim(),phone=document.getElementById('phone').value.trim(),checkIn=dt('checkin'),checkOut=dt('checkout'),unitId=document.getElementById('unit').value;
  if(!name||!phone||!checkIn||!checkOut||!unitId){alert('Ad, telefon, tarixlər və boş ev seçimi mütləqdir. Əvvəl “Boş tarixləri və evləri yoxla” düyməsini basın.');return}
  const button=document.getElementById('bookAndPay');button.disabled=true;button.textContent='Rezervasiya yoxlanılır…';
  try{
