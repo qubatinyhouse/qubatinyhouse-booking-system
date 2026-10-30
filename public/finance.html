@@ -94,7 +94,35 @@ Salam, administrator!
 <p>Aylıq mənfəət və zərər</p>
 <p class="muted">Bu modullar növbəti inteqrasiya mərhələsində aktivləşdiriləcək.</p>
 </div>
-</section>
+  <div class="card">
+  <h3>Yeni kommunal borc əlavə et</h3>
+
+  <label>Kommunal növü</label>
+  <select id="newUtilityType">
+    <option value="Qaz">Qaz</option>
+    <option value="Elektrik">Elektrik</option>
+    <option value="Su">Su</option>
+    <option value="İnternet">İnternet</option>
+  </select>
+
+  <label>Qurum / Təchizatçı</label>
+  <input id="newUtilityProvider" placeholder="Məsələn: Azəriqaz">
+
+  <label>Abonent kodu</label>
+  <input id="newUtilityAccount" placeholder="Abonent kodu">
+
+  <label>Borc məbləği (AZN)</label>
+  <input id="newUtilityAmount" type="number" min="0.01" step="0.01">
+
+  <label>Son ödəniş tarixi</label>
+  <input id="newUtilityDue" type="date">
+
+  <label>Qeyd</label>
+  <input id="newUtilityNotes" placeholder="Əlavə məlumat">
+
+  <button onclick="addUtility()">Borcu yadda saxla</button>
+  <p id="utilityMessage"></p>
+</div></section>
 </main>
 
 <script>
@@ -108,8 +136,53 @@ SUPABASE_ANON_KEY
 const money = n => Number(n || 0).toLocaleString(
 "az-AZ",{minimumFractionDigits:2,maximumFractionDigits:2}
 ) + " ₼";
+async function addUtility() {
+  const type = document.getElementById("newUtilityType").value;
+  const provider = document.getElementById("newUtilityProvider").value.trim();
+  const account = document.getElementById("newUtilityAccount").value.trim();
+  const amount = Number(document.getElementById("newUtilityAmount").value);
+  const due = document.getElementById("newUtilityDue").value;
+  const notes = document.getElementById("newUtilityNotes").value.trim();
+  const message = document.getElementById("utilityMessage");
 
-async function login(){
+  message.textContent = "";
+
+  if (!provider || !Number.isFinite(amount) || amount <= 0) {
+    message.textContent = "Təchizatçı və düzgün məbləğ daxil edin.";
+    return;
+  }
+
+  const record = {
+    utility_type: type,
+    provider: provider,
+    account_number: account || null,
+    amount: amount,
+    due_date: due || null,
+    notes: notes || null,
+    status: "pending",
+    paid_amount: 0,
+    commission: 0
+  };
+
+  const { error } = await client
+    .from("utilities")
+    .insert([record]);
+
+  if (error) {
+    message.textContent = "Xəta: " + error.message;
+    return;
+  }
+
+  message.textContent = "Kommunal borc uğurla yadda saxlanıldı.";
+
+  document.getElementById("newUtilityProvider").value = "";
+  document.getElementById("newUtilityAccount").value = "";
+  document.getElementById("newUtilityAmount").value = "";
+  document.getElementById("newUtilityDue").value = "";
+  document.getElementById("newUtilityNotes").value = "";
+
+  await loadData();
+}async function login(){
 const email=document.getElementById("email").value.trim();
 const password=document.getElementById("password").value;
 const msg=document.getElementById("message");
