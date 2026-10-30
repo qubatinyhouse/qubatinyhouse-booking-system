@@ -133,7 +133,14 @@ Salam, administrator!
 
   <label>Əməliyyat tarixi</label>
   <input id="financeDate" type="date">
+<script>
+const today = new Date();
+const localDate = new Date(
+  today.getTime() - today.getTimezoneOffset() * 60000
+).toISOString().slice(0, 10);
 
+document.getElementById("financeDate").value = localDate;
+</script>
   <label>Qeyd</label>
   <input id="financeDescription" placeholder="Əlavə məlumat">
 
