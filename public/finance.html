@@ -90,9 +90,60 @@ Salam, administrator!
 <h3>Digər maliyyə modulları</h3>
 <p>Gəlir və xərclər</p>
 <p>İşçi maaşları</p>
-<p>Bank və kassa uçotu</p>
-<p>Aylıq mənfəət və zərər</p>
-<p class="muted">Bu modullar növbəti inteqrasiya mərhələsində aktivləşdiriləcək.</p>
+<div class="card" id="bankCashModule">
+  <h2>Bank və kassa uçotu</h2>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Nağd kassa</h3>
+      <h2 id="cashBalance">0.00 AZN</h2>
+    </div>
+
+    <div class="card">
+      <h3>Bank hesabı</h3>
+      <h2 id="bankBalance">0.00 AZN</h2>
+    </div>
+
+    <div class="card">
+      <h3>Kart əməliyyatları</h3>
+      <h2 id="cardBalance">0.00 AZN</h2>
+    </div>
+  </div>
+
+  <h3>Yeni əməliyyat əlavə et</h3>
+
+  <label>Əməliyyat növü</label>
+  <select id="financeType">
+    <option value="income">Gəlir</option>
+    <option value="expense">Xərc</option>
+  </select>
+
+  <label>Kateqoriya</label>
+  <input id="financeCategory" placeholder="Məsələn: Ev rezervasiyası">
+
+  <label>Məbləğ (AZN)</label>
+  <input id="financeAmount" type="number" min="0.01" step="0.01">
+
+  <label>Ödəniş üsulu</label>
+  <select id="financeMethod">
+    <option value="cash">Nağd</option>
+    <option value="bank">Bank</option>
+    <option value="card">Kart</option>
+  </select>
+
+  <label>Əməliyyat tarixi</label>
+  <input id="financeDate" type="date">
+
+  <label>Qeyd</label>
+  <input id="financeDescription" placeholder="Əlavə məlumat">
+
+  <button onclick="addFinanceTransaction()">Əməliyyatı yadda saxla</button>
+
+  <p id="financeMessage"></p>
+
+  <h3>Əməliyyat tarixçəsi</h3>
+  <div id="financeHistory"></div>
+</div>
 </div>
   <div class="card">
   <h3>Yeni kommunal borc əlavə et</h3>
@@ -253,8 +304,37 @@ document.getElementById("utility").textContent=money(total);
 document.getElementById("paid").textContent=money(paid);
 document.getElementById("outstanding").textContent=money(outstanding);
 document.getElementById("commission").textContent=money(commission);
+// BANK VƏ KASSA QALIQ HESABLANMASI
+const { data: transactions, error: financeError } = await client
+  .from("finance_transactions")
+  .select("transaction_type, amount, payment_method");
+
+if (financeError) {
+  console.error("Maliyyə xətası:", financeError.message);
+  return;
 }
 
+let cashBalance = 0;
+let bankBalance = 0;
+
+(transactions || []).forEach(item => {
+  const amount = Number(item.amount || 0);
+  const sign = item.transaction_type === "income" ? 1 : -1;
+
+  if (item.payment_method === "cash") {
+    cashBalance += amount * sign;
+  } else if (
+    item.payment_method === "bank" ||
+    item.payment_method === "card"
+  ) {
+    bankBalance += amount * sign;
+  }
+});
+
+document.getElementById("cashBalance").textContent = money(cashBalance);
+document.getElementById("bankBalance").textContent = money(bankBalance);
+
+}
 function escapeHTML(value){
 return String(value).replace(/[&<>"']/g,c=>({
 "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
