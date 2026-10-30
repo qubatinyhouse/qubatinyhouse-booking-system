@@ -109,8 +109,29 @@ Salam, administrator!
       <h2 id="cardBalance">0.00 AZN</h2>
     </div>
   </div>
+<div class="card" id="monthlyFinanceReport">
+    <h3>Aylıq maliyyə hesabatı</h3>
 
-  <h3>Yeni əməliyyat əlavə et</h3>
+    <label>Hesabat ayı</label>
+    <input type="month" id="reportMonth">
+
+    <div class="grid">
+        <div class="card">
+            <div class="muted">Aylıq gəlir</div>
+            <div class="metric green" id="monthlyIncome">0 AZN</div>
+        </div>
+
+        <div class="card">
+            <div class="muted">Aylıq xərc</div>
+            <div class="metric red" id="monthlyExpense">0 AZN</div>
+        </div>
+
+        <div class="card">
+            <div class="muted">Xalis mənfəət / zərər</div>
+            <div class="metric" id="monthlyProfit">0 AZN</div>
+        </div>
+    </div>
+</div>  <h3>Yeni əməliyyat əlavə et</h3>
 
   <label>Əməliyyat növü</label>
   <select id="financeType">
@@ -314,7 +335,7 @@ document.getElementById("commission").textContent=money(commission);
 // BANK VƏ KASSA QALIQ HESABLANMASI
 const { data: transactions, error: financeError } = await client
   .from("finance_transactions")
-  .select("transaction_type, amount, payment_method");
+  .select("transaction_type, amount, payment_method, transaction_date");
 
 if (financeError) {
   console.error("Maliyyə xətası:", financeError.message);
