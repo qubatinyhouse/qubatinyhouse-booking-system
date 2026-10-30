@@ -362,8 +362,49 @@ let cardBalance = 0;
 document.getElementById("cashBalance").textContent = money(cashBalance);
 document.getElementById("bankBalance").textContent = money(bankBalance);
 document.getElementById("cardBalance").textContent = money(cardBalance);
+// AYLIQ GƏLİR VƏ XƏRC HESABLANMASI
+const reportMonth = document.getElementById("reportMonth");
+
+const now = new Date();
+const currentMonth =
+    now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2, "0");
+
+if (!reportMonth.value) {
+    reportMonth.value = currentMonth;
 }
-function escapeHTML(value){
+
+const selectedMonth = reportMonth.value;
+
+let monthlyIncome = 0;
+let monthlyExpense = 0;
+
+(transactions || []).forEach(item => {
+    if (!item.transaction_date) return;
+
+    if (item.transaction_date.slice(0, 7) !== selectedMonth) {
+        return;
+    }
+
+    const amount = Number(item.amount || 0);
+
+    if (item.transaction_type === "income") {
+        monthlyIncome += amount;
+    } else if (item.transaction_type === "expense") {
+        monthlyExpense += amount;
+    }
+});
+
+document.getElementById("monthlyIncome").textContent =
+    money(monthlyIncome);
+
+document.getElementById("monthlyExpense").textContent =
+    money(monthlyExpense);
+
+document.getElementById("monthlyProfit").textContent =
+    money(monthlyIncome - monthlyExpense);
+  }
+  function escapeHTML(value){
 return String(value).replace(/[&<>"']/g,c=>({
 "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
 }[c]));
@@ -425,6 +466,7 @@ document.getElementById("login").style.display=session?"none":"block";
 document.getElementById("dashboard").style.display=session?"block":"none";
 });
 
+document.getElementById("reportMonth").addEventListener("change", loadData);
 checkSession();
 </script>
 </body>
