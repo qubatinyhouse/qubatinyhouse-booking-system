@@ -130,8 +130,49 @@ Salam, administrator!
             <div class="muted">Xalis mənfəət / zərər</div>
             <div class="metric" id="monthlyProfit">0 AZN</div>
         </div>
-    </div>
-</div>  <h3>Yeni əməliyyat əlavə et</h3>
+        </div>
+  </div>       
+  <div class="card" id="employeeSalarySection">
+
+  <h3>İşçi maaşlarının idarə edilməsi</h3>
+
+  <h4>Nəzarətçi</h4>
+  <label>Aylıq sabit maaş (AZN)</label>
+  <input type="number" id="managerSalary" value="500">
+
+  <h4>Təmizlikçi</h4>
+  <label>Skandinav evlərinin təmizliyi (AZN / ev)</label>
+  <input type="number" id="scandiCleaningRate" value="30">
+
+  <label>A-FRAME evlərinin təmizliyi (AZN / ev)</label>
+  <input type="number" id="aframeCleaningRate" value="50">
+
+  <hr>
+
+  <h4>Təmizlik işi əlavə et</h4>
+
+  <label>Ev növü</label>
+  <select id="cleaningHouseType">
+    <option value="scandinav">Skandinav evi</option>
+    <option value="aframe">A-FRAME evi</option>
+  </select>
+
+  <label>Təmizlik tarixi</label>
+  <input type="date" id="cleaningDate">
+
+  <label>Təmizlik tamamlanıb?</label>
+  <select id="cleaningStatus">
+    <option value="completed">Bəli</option>
+    <option value="pending">Xeyr</option>
+  </select>
+
+  <button type="button" onclick="addCleaningWork()">
+    Təmizlik işini əlavə et
+  </button>
+
+  <div id="salaryMessage"></div>
+</div>
+<h3>Yeni əməliyyat əlavə et</h3>
 
   <label>Əməliyyat növü</label>
   <select id="financeType">
