@@ -323,24 +323,24 @@ if (financeError) {
 
 let cashBalance = 0;
 let bankBalance = 0;
+let cardBalance = 0;
 
 (transactions || []).forEach(item => {
-  const amount = Number(item.amount || 0);
-  const sign = item.transaction_type === "income" ? 1 : -1;
+    const amount = Number(item.amount || 0);
+    const sign = item.transaction_type === "income" ? 1 : -1;
 
-  if (item.payment_method === "cash") {
-    cashBalance += amount * sign;
-  } else if (
-    item.payment_method === "bank" ||
-    item.payment_method === "card"
-  ) {
-    bankBalance += amount * sign;
-  }
+    if (item.payment_method === "cash") {
+        cashBalance += amount * sign;
+    } else if (item.payment_method === "bank") {
+        bankBalance += amount * sign;
+    } else if (item.payment_method === "card") {
+        cardBalance += amount * sign;
+    }
 });
 
 document.getElementById("cashBalance").textContent = money(cashBalance);
 document.getElementById("bankBalance").textContent = money(bankBalance);
-
+document.getElementById("cardBalance").textContent = money(cardBalance);
 }
 function escapeHTML(value){
 return String(value).replace(/[&<>"']/g,c=>({
