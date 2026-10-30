@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quba Tiny House | Admin</title>
+<style>
+:root{--dark:#17372c;--green:#26704e;--bg:#f3f6f4;--white:#fff;--muted:#718078;--border:#e5ebe7}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:#24352d}
+button{font:inherit;cursor:pointer}
+.app{display:flex;min-height:100vh}
+.sidebar{width:250px;background:var(--dark);color:white;padding:25px 15px;flex-shrink:0}
+.logo{font-size:21px;font-weight:800;padding:8px 10px 30px}
+.logo small{display:block;color:#a9c4b6;font-size:11px;margin-top:7px;letter-spacing:2px}
+.nav-title{font-size:10px;color:#91aa9d;padding:12px}
+.nav{width:100%;display:block;border:0;background:transparent;color:#d8e6de;text-align:left;padding:13px;border-radius:8px;margin:3px 0;font-size:14px}
+.nav:hover,.nav.active{background:#315d49;color:white}
+.main{flex:1;min-width:0;padding:28px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;gap:12px}
+h1{font-size:25px;margin:0}
+.sub{font-size:13px;color:var(--muted);margin-top:7px}
+.date{font-size:13px;color:var(--muted)}
+.section{display:none}
+.section.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}
+.card{background:white;border:1px solid var(--border);border-radius:13px;padding:20px}
+.card-label{font-size:13px;color:var(--muted)}
+.card-value{font-size:25px;font-weight:750;margin-top:13px}
+.card-note{font-size:11px;color:#829087;margin-top:8px}
+.panel{background:white;border:1px solid var(--border);border-radius:13px;padding:21px;margin-top:20px}
+.panel h3{margin:0 0 15px;font-size:16px}
+.quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.quick button{background:#f2f7f3;border:1px solid var(--border);border-radius:10px;padding:17px;text-align:left;color:var(--dark)}
+.quick strong{display:block;margin-bottom:6px}
+.quick span{font-size:12px;color:var(--muted)}
+.notice{padding:14px;background:#f7f8f5;border-radius:9px;color:#66756c;font-size:13px;line-height:1.6}
+.btn{border:0;background:var(--green);color:white;padding:11px 16px;border-radius:8px}
+.btn:hover{background:var(--dark)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:500px}
+th,td{text-align:left;padding:13px 9px;border-bottom:1px solid var(--border);font-size:13px}
+th{color:var(--muted)}
+.empty{text-align:center;color:var(--muted);padding:30px}
+.link{color:var(--green);text-decoration:none;font-weight:bold}
+@media(max-width:950px){.cards{grid-template-columns:repeat(2,1fr)}.sidebar{width:210px}}
+@media(max-width:620px){
+.app{display:block}
+.sidebar{width:100%;padding:14px}
+.logo{padding:5px 8px 12px}
+.nav-title{display:none}
+.sidebar nav{display:grid;grid-template-columns:repeat(2,1fr);gap:3px}
+.nav{font-size:12px;padding:11px 8px}
+.main{padding:15px}
+.header{align-items:flex-start}
+h1{font-size:21px}
+.cards{gap:9px}
+.card{padding:14px}
+.card-value{font-size:20px}
+.quick{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+<div class="logo">QUBA TINY HOUSE
+<small>ADMINISTRATION</small>
+</div>
+<div class="nav-title">ƏSAS İDARƏETMƏ</div>
+<nav>
+<button class="nav active" data-page="dashboard">▦ Dashboard</button>
+<button class="nav" data-page="reservations">▣ Rezervasiyalar</button>
+<button class="nav" data-page="finance">₼ Maliyyə</button>
+<button class="nav" data-page="employees">♙ İşçilər</button>
+<button class="nav" data-page="cleaning">✧ Təmizlik işləri</button>
+<button class="nav" data-page="utilities">⚡ Kommunal borclar</button>
+<button class="nav" data-page="reports">▤ Hesabatlar</button>
+<button class="nav" data-page="settings">⚙ Parametrlər</button>
+</nav>
+</aside>
+
+<main class="main">
+<header class="header">
+<div>
+<h1 id="pageTitle">Dashboard</h1>
+<div class="sub">Quba Tiny House — idarəetmə mərkəzi</div>
+</div>
+<div class="date" id="today"></div>
+</header>
+
+<section class="section active" id="dashboard">
+<div class="cards">
+<div class="card">
+<div class="card-label">Ümumi gəlir</div>
+<div class="card-value" id="income">— AZN</div>
+<div class="card-note">Maliyyə modulundan inteqrasiya ediləcək</div>
+</div>
+<div class="card">
+<div class="card-label">Ümumi xərc</div>
+<div class="card-value" id="expense">— AZN</div>
+<div class="card-note">Maliyyə modulundan inteqrasiya ediləcək</div>
+</div>
+<div class="card">
+<div class="card-label">Xalis mənfəət</div>
+<div class="card-value" id="profit">— AZN</div>
+<div class="card-note">Gəlir minus xərc</div>
+</div>
+<div class="card">
+<div class="card-label">Rezervasiyalar</div>
+<div class="card-value" id="bookingCount">—</div>
+<div class="card-note">Rezervasiya bazasına bağlantı gözləyir</div>
+</div>
+</div>
+
+<div class="panel">
+<h3>Sürətli idarəetmə</h3>
+<div class="quick">
+<button onclick="openPage('reservations')"><strong>▣ Rezervasiyalar</strong><span>Bronları idarə et</span></button>
+<button onclick="openPage('finance')"><strong>₼ Maliyyə</strong><span>Gəlir və xərclər</span></button>
+<button onclick="openPage('employees')"><strong>♙ İşçilər</strong><span>Əməkdaşlar və maaşlar</span></button>
+<button onclick="openPage('cleaning')"><strong>✧ Təmizlik</strong><span>Təmizlik əməliyyatları</span></button>
+<button onclick="openPage('utilities')"><strong>⚡ Kommunal</strong><span>Borclar və ödənişlər</span></button>
+<button onclick="openPage('reports')"><strong>▤ Hesabatlar</strong><span>Maliyyə nəticələri</span></button>
+</div>
+</div>
+
+<div class="panel">
+<h3>Sistem vəziyyəti</h3>
+<div class="notice">
+Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göstəricilərini göstərmək üçün Supabase cədvəlləri ilə inteqrasiya növbəti mərhələdə qurulmalıdır. Hazırda rəqəmlər uydurulmur.
+</div>
+</div>
+</section>
+
+<section class="section" id="reservations">
+<div class="panel">
+<h3>Rezervasiyaların idarə edilməsi</h3>
+<div class="notice">Mövcud veb-saytın rezervasiya bazası ilə bağlantı qurulacaq. Bu bölmə hələ real rezervasiya məlumatlarını oxumur.</div>
+<p><a class="link" href="/">Müştəri veb-saytını aç →</a></p>
+</div>
+</section>
+
+<section class="section" id="finance">
+<div class="panel">
+<h3>Maliyyə idarəetməsi</h3>
+<p>Hazırkı maliyyə moduluna keçid.</p>
+<a class="btn" href="/finance.html">Maliyyə modulunu aç</a>
+</div>
+</section>
+
+<section class="section" id="employees">
+<div class="panel">
+<h3>İşçilərin idarə edilməsi</h3>
+<div class="notice">İşçi məlumatları və maaş əməliyyatları mövcud maliyyə modulu ilə əlaqələndiriləcək.</div>
+<a class="link" href="/finance.html">Maaş moduluna keç →</a>
+</div>
+</section>
+
+<section class="section" id="cleaning">
+<div class="panel">
+<h3>Təmizlik işləri</h3>
+<div class="notice">Təmizlik tapşırıqları və ödənişləri maliyyə modulundan idarə ediləcək.</div>
+<a class="link" href="/finance.html">Təmizlik moduluna keç →</a>
+</div>
+</section>
+
+<section class="section" id="utilities">
+<div class="panel">
+<h3>Kommunal borclar</h3>
+<div class="notice">Elektrik, qaz, su və digər kommunal ödənişlər maliyyə modulu ilə əlaqələndiriləcək.</div>
+<a class="link" href="/finance.html">Kommunal modula keç →</a>
+</div>
+</section>
+
+<section class="section" id="reports">
+<div class="panel">
+<h3>Hesabatlar</h3>
+<div class="notice">Gündəlik, aylıq və illik hesabatlar real maliyyə məlumatları bazaya qoşulduqdan sonra göstəriləcək.</div>
+<a class="link" href="/finance.html">Maliyyə hesabatlarına keç →</a>
+</div>
+</section>
+
+<section class="section" id="settings">
+<div class="panel">
+<h3>Sistem parametrləri</h3>
+<div class="notice">Admin girişinin qorunması və istifadəçi səlahiyyətləri ayrıca təhlükəsizlik mərhələsində qurulacaq. Bu səhifə hələ giriş sistemi deyil.</div>
+</div>
+</section>
+
+</main>
+</div>
+
+<script>
+const titles={
+dashboard:"Dashboard",
+reservations:"Rezervasiyalar",
+finance:"Maliyyə",
+employees:"İşçilər",
+cleaning:"Təmizlik işləri",
+utilities:"Kommunal borclar",
+reports:"Hesabatlar",
+settings:"Parametrlər"
+};
+
+function openPage(page){
+if(page==="finance"){
+location.href="/finance.html";
+return;
+}
+document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+document.querySelectorAll(".nav").forEach(b=>b.classList.remove("active"));
+const section=document.getElementById(page);
+if(section)section.classList.add("active");
+const button=document.querySelector('[data-page="'+page+'"]');
+if(button)button.classList.add("active");
+document.getElementById("pageTitle").textContent=titles[page]||"Dashboard";
+}
+
+document.querySelectorAll(".nav").forEach(button=>{
+button.addEventListener("click",()=>openPage(button.dataset.page));
+});
+
+document.getElementById("today").textContent=
+new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).format(new Date());
+</script>
+</body>
+</html>
