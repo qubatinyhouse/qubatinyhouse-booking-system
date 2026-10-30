@@ -497,6 +497,57 @@ async function addFinanceTransaction() {
         msg.style.color = "red";
     }
 }
+// =====================================
+// QUBA TINY HOUSE - MAAS MODULU
+// =====================================
+
+async function payEmployeeSalary(
+    employeeId,
+    amount,
+    paymentDate,
+    paymentMethod,
+    periodStart,
+    periodEnd,
+    notes = ""
+) {
+    const msg = document.getElementById("financeMessage");
+
+    if (!employeeId || !amount || amount <= 0 || !paymentDate) {
+        msg.textContent = "Bütün vacib məlumatları daxil edin.";
+        msg.style.color = "red";
+        return;
+    }
+
+    msg.textContent = "Maaş ödənişi yoxlanılır...";
+    msg.style.color = "blue";
+
+    try {
+        const { data, error } = await client.rpc(
+            "pay_employee_salary",
+            {
+                p_employee_id: employeeId,
+                p_amount: amount,
+                p_payment_date: paymentDate,
+                p_payment_method: paymentMethod,
+                p_period_start: periodStart,
+                p_period_end: periodEnd,
+                p_notes: notes
+            }
+        );
+
+        if (error) throw error;
+
+        msg.textContent = "Maaş ödənişi uğurla qeydə alındı.";
+        msg.style.color = "green";
+
+        await loadData();
+
+    } catch (error) {
+        msg.textContent = "Xəta: " + error.message;
+        msg.style.color = "red";
+        console.error(error);
+    }
+}
   async function logout(){
 await client.auth.signOut();
 await checkSession();
