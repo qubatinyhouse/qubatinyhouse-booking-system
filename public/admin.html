@@ -135,11 +135,57 @@ Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göst�
 </section>
 
 <section class="section" id="reservations">
-<div class="panel">
-<h3>Rezervasiyaların idarə edilməsi</h3>
-<div class="notice">Mövcud veb-saytın rezervasiya bazası ilə bağlantı qurulacaq. Bu bölmə hələ real rezervasiya məlumatlarını oxumur.</div>
-<p><a class="link" href="/">Müştəri veb-saytını aç →</a></p>
-</div>
+  <div class="panel">
+    <h3>Rezervasiyaların idarə edilməsi</h3>
+
+    <div class="grid">
+      <div>
+        <label>Axtarış</label>
+        <input id="reservationSearch"
+          placeholder="Ad və ya telefon..."
+          oninput="filterReservations()">
+      </div>
+
+      <div>
+        <label>Status</label>
+        <select id="reservationStatusFilter"
+          onchange="filterReservations()">
+          <option value="">Bütün rezervasiyalar</option>
+          <option value="pending">Gözləyir</option>
+          <option value="confirmed">Təsdiqlənib</option>
+          <option value="cancelled">Ləğv edilib</option>
+        </select>
+      </div>
+    </div>
+
+    <button onclick="loadReservations()">Yenilə</button>
+    <p id="reservationMessage" class="muted"></p>
+
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr>
+            <th>Müştəri</th>
+            <th>Telefon</th>
+            <th>Ev</th>
+            <th>Giriş</th>
+            <th>Çıxış</th>
+            <th>Qonaq</th>
+            <th>Məbləğ</th>
+            <th>Beh</th>
+            <th>Status</th>
+            <th>Əməliyyat</th>
+          </tr>
+        </thead>
+        <tbody id="reservationTable">
+          <tr>
+            <td colspan="10">Rezervasiyalar yüklənməyib.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
 </section>
 
 <section class="section" id="finance">
@@ -266,6 +312,151 @@ const client = window.supabase.createClient(
   document.getElementById("expense").textContent = money(expense);
   document.getElementById("profit").textContent = money(income - expense);
 })();
-</script>
+let allReservations = [];
+
+window.loadReservations = async function () {
+  const message = document.getElementById("reservationMessage");
+  const table = document.getElementById("reservationTable");
+
+  message.textContent = "Rezervasiyalar yüklənir...";
+
+  const { data, error } = await client
+    .from("reservations")
+    .select(`
+      id,
+      guest_name,
+      phone,
+      check_in,
+      check_out,
+      adults,
+      children,
+      total_amount,
+      deposit_amount,
+      status,
+      house_id,
+      houses(*)
+    `)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    message.textContent = "Xəta: " + error.message;
+    return;
+  }
+
+  allReservations = data || [];
+  renderReservations(allReservations);
+  message.textContent =
+    "Cəmi " + allReservations.length + " rezervasiya tapıldı.";
+};
+
+function renderReservations(items) {
+  const table = document.getElementById("reservationTable");
+
+  if (!items.length) {
+    table.innerHTML =
+      '<tr><td colspan="10">Rezervasiya tapılmadı.</td></tr>';
+    return;
+  }
+
+  table.innerHTML = items.map(r => {
+    const house = Array.isArray(r.houses)
+      ? r.houses[0]
+      : r.houses;
+
+    const houseName = house
+      ? house.name || house.house_name || house.title || "Ev"
+      : "Ev ID: " + (r.house_id || "");
+
+    const status = r.status || "pending";
+
+    return `
+      <tr>
+        <td>${escapeReservation(r.guest_name)}</td>
+        <td>${escapeReservation(r.phone || "-")}</td>
+        <td>${escapeReservation(houseName)}</td>
+        <td>${r.check_in || "-"}</td>
+        <td>${r.check_out || "-"}</td>
+        <td>${Number(r.adults || 0) + Number(r.children || 0)}</td>
+        <td>${Number(r.total_amount || 0).toFixed(2)} AZN</td>
+        <td>${Number(r.deposit_amount || 0).toFixed(2)} AZN</td>
+        <td>
+          <select onchange="changeReservationStatus('${r.id}', this.value)">
+            <option value="pending" ${status === "pending" ? "selected" : ""}>Gözləyir</option>
+            <option value="confirmed" ${status === "confirmed" ? "selected" : ""}>Təsdiqlənib</option>
+            <option value="cancelled" ${status === "cancelled" ? "selected" : ""}>Ləğv edilib</option>
+          </select>
+        </td>
+        <td>
+          <button onclick="showReservationDetails('${r.id}')">
+            Ətraflı
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+window.filterReservations = function () {
+  const search = document.getElementById("reservationSearch")
+    .value.toLowerCase().trim();
+
+  const status = document.getElementById("reservationStatusFilter").value;
+
+  const filtered = allReservations.filter(r => {
+    const matchesSearch =
+      (r.guest_name || "").toLowerCase().includes(search) ||
+      (r.phone || "").toLowerCase().includes(search);
+
+    const matchesStatus = !status || r.status === status;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  renderReservations(filtered);
+};
+
+window.changeReservationStatus = async function (id, status) {
+  const { error } = await client
+    .from("reservations")
+    .update({
+      status: status,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", id);
+
+  if (error) {
+    alert("Status dəyişdirilmədi: " + error.message);
+    loadReservations();
+    return;
+  }
+
+  alert("Rezervasiya statusu yeniləndi.");
+  loadReservations();
+};
+
+window.showReservationDetails = function (id) {
+  const r = allReservations.find(item => item.id === id);
+  if (!r) return;
+
+  alert(
+    "Müştəri: " + (r.guest_name || "") +
+    "\nTelefon: " + (r.phone || "") +
+    "\nGiriş: " + (r.check_in || "") +
+    "\nÇıxış: " + (r.check_out || "") +
+    "\nÜmumi məbləğ: " + (r.total_amount || 0) + " AZN" +
+    "\nBeh: " + (r.deposit_amount || 0) + " AZN" +
+    "\nQeyd: " + (r.notes || "-")
+  );
+};
+
+function escapeReservation(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}</script>
 </body>
 </html>
