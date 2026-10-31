@@ -149,6 +149,51 @@ a.link{color:#967542}
 #adminAuthGate{display:flex}
 body.qth-authenticated #adminAuthGate{display:none!important}
 body.qth-authenticated .app{display:flex!important}
+
+/* QTH MOUNTAIN & FOREST PREMIUM ADMIN */
+:root{--dark:#101d19;--green:#244b3b;--green2:#315f49;--gold:#c7a86b;--gold-light:#f0dfb7;--bg:#f1f1e9;--muted:#7d877e;--border:#e4e3d8;--ink:#202c25;--shadow:0 14px 38px rgba(22,39,29,.09)}
+body{background:radial-gradient(ellipse at 85% 5%,rgba(198,177,126,.2),transparent 32%),linear-gradient(135deg,#f4f3ed,#e9eee8 70%,#f4f1e7);color:var(--ink)}
+.sidebar{background:linear-gradient(180deg,rgba(10,25,20,.97),rgba(16,38,29,.96)),radial-gradient(ellipse at 20% 80%,#315a3f,transparent 60%);border-right:1px solid rgba(205,177,111,.22)}
+.logo{position:relative;font-family:Georgia,serif;font-size:18px;letter-spacing:1.4px;color:#f7f0df}
+.logo:before{content:"";display:inline-flex;width:43px;height:43px;vertical-align:middle;margin:0 11px 12px 0;border:1px solid var(--gold);border-radius:14px;box-shadow:inset 0 0 16px #c7a86b26,0 0 20px #c7a86b1a;background:linear-gradient(145deg,#183c2d,#0d2119);position:relative}
+.logo:after{content:"QTH";position:absolute;left:21px;top:19px;color:var(--gold-light);font:700 12px Georgia,serif;letter-spacing:1px}
+.logo small{color:#c9b783;font-size:9px;letter-spacing:3px}
+.nav-title{color:#c5a96d}
+.nav.active{background:linear-gradient(100deg,#c7a86b32,#c7a86b0b);border-color:#c7a86b70;color:#f5e4bd;box-shadow:inset 3px 0 var(--gold)}
+.nav:hover{background:#ffffff12}
+.main{padding-top:28px}
+.header{border-bottom-color:#dcded3}
+h1{font-family:Georgia,serif;color:#1c3328;letter-spacing:.1px}
+.date{border-color:#e3ddcd;background:#fffdf7}
+.card,.panel{background:rgba(255,255,251,.94);border-color:#e5e2d6;box-shadow:var(--shadow)}
+.card:after{border-color:#c7a86b35}
+.card-value{color:#234332}
+.panel h3{color:#243d2e}
+.quick button{background:linear-gradient(145deg,#fffefa,#f3f4ed);border-color:#e5e2d6;color:#294b38}
+.quick button:hover{border-color:var(--gold);box-shadow:0 10px 22px #1c38201a}
+.btn{background:linear-gradient(135deg,#b89557,#dfc98e);color:#17261d}
+.notice{background:#f8f6ee;border-color:#ebe4d2;border-left-color:var(--gold)}
+.dashboard-hero{position:relative;isolation:isolate;overflow:hidden;min-height:236px;border-radius:20px;margin:0 0 20px;padding:30px 34px;background:linear-gradient(100deg,rgba(9,27,21,.97) 0%,rgba(14,42,31,.84) 48%,rgba(24,55,40,.45) 100%),linear-gradient(180deg,#9eaa9a 0%,#456b56 55%,#172f24 100%);box-shadow:0 18px 42px #182f222b;border:1px solid #c7a86b5c}
+.hero-copy{position:relative;z-index:3;max-width:520px}
+.hero-kicker{font-size:10px;letter-spacing:3px;color:#e2c98f;font-weight:800;margin-bottom:12px}
+.dashboard-hero h2{font:600 clamp(24px,3vw,36px)/1.12 Georgia,serif;color:#fff8e9;margin:0 0 10px;letter-spacing:.2px}
+.dashboard-hero p{font-size:12px;color:#e0e7dc;margin:0 0 17px;max-width:390px;line-height:1.6}
+.hero-chip{display:inline-block;border:1px solid #d4b7778a;color:#f0ddb1;border-radius:30px;padding:7px 11px;font-size:9px;letter-spacing:1.7px}
+.hero-landscape{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}
+.peak{position:absolute;display:block;bottom:22px;right:-3%;width:66%;height:85%;clip-path:polygon(0 100%,18% 42%,28% 62%,48% 8%,67% 57%,78% 35%,100% 100%);background:linear-gradient(145deg,#9eae9b,#496b56 65%,#1e3c2d);opacity:.68}
+.peak-back{right:5%;bottom:28px;width:62%;height:77%;opacity:.42;background:linear-gradient(145deg,#d1d2b6,#68806b 70%,#294b37)}
+.peak-mid{right:-4%;width:65%;height:75%;background:linear-gradient(145deg,#81977e,#345b43 70%,#183526);opacity:.8}
+.peak-front{right:18%;width:44%;height:58%;background:linear-gradient(145deg,#607e66,#244b35);opacity:.82;clip-path:polygon(0 100%,28% 20%,43% 49%,64% 0,100% 100%)}
+.forest{position:absolute;bottom:-2px;right:0;width:56%;height:44%;opacity:.9;background:repeating-conic-gradient(from 135deg at 50% 0%,#102c20 0deg 25deg,transparent 25deg 45deg);background-size:42px 58px;background-repeat:repeat-x;background-position:bottom}
+.forest-two{right:26%;width:45%;height:34%;opacity:.72;background-size:31px 43px}
+#adminAuthGate{background:linear-gradient(135deg,#0d2119,#1d4935 58%,#c0a36a)!important;position:relative;overflow:hidden}
+#adminAuthGate:before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,transparent 35%,#f2e2b31c 35.2%,transparent 35.6%),linear-gradient(45deg,transparent 56%,#f2e2b31a 56.2%,transparent 56.6%);clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+#adminAuthGate>section{position:relative!important;background:rgba(250,250,242,.97)!important;border:1px solid #d5bd82!important;box-shadow:0 28px 80px #0005!important}
+#adminAuthGate>section>div:first-child{color:#9c7a3c!important;letter-spacing:3px!important}
+#adminAuthGate h2{font-family:Georgia,serif!important;color:#1a3828!important}
+#qthAdminLogin{background:linear-gradient(135deg,#b89557,#e0ca91)!important;color:#17271d!important}
+@media(max-width:620px){.dashboard-hero{min-height:210px;padding:23px 20px;border-radius:15px}.hero-landscape{opacity:.7}.dashboard-hero h2{font-size:25px}.hero-chip{font-size:8px}.peak{width:85%}}
+
 </style>
 </head>
 <body>
@@ -195,6 +240,16 @@ body.qth-authenticated .app{display:flex!important}
 </header>
 
 <section class="section active" id="dashboard">
+<div class="dashboard-hero">
+ <div class="hero-copy">
+  <div class="hero-kicker">QUBA · AZƏRBAYCAN</div>
+  <h2>Dağların qoynunda<br>Quba Tiny House</h2>
+  <p>Təbiət, rahatlıq və qonaqpərvərliyin vahid idarəetmə mərkəzi</p>
+  <span class="hero-chip">QTH PREMIUM ADMINISTRATION</span>
+ </div>
+ <div class="hero-landscape" aria-hidden="true"><i class="peak peak-back"></i><i class="peak peak-mid"></i><i class="peak peak-front"></i><i class="forest forest-one"></i><i class="forest forest-two"></i></div>
+</div>
+
 <div class="cards">
 <div class="card">
 <div class="card-label">Cari ayın gəliri</div>
