@@ -47,12 +47,7 @@ export const handler = async (event) => {
     return json(201, {
       success: true,
       bookingCode: row.booking_code,
-      message: 'Rezervasiya sorğunuz qeydə alındı. 50% avans köçürüb qəbzi WhatsApp-a göndərin.',
-      paymentInfo: {
-        bankName: process.env.PAYMENT_BANK_NAME || '',
-        cardHolder: process.env.PAYMENT_CARD_HOLDER || '',
-        cardNumber: process.env.PAYMENT_CARD_NUMBER || ''
-      },
+      message: 'Rezervasiya sorğunuz qeydə alındı. WhatsApp-da menecerdən 50% avans üçün kart məlumatlarını istəyin.',
       totalAmount: quote.total,
       depositAmount: deposit,
       remainingAmount: remaining,
