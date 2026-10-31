@@ -37,7 +37,7 @@ export async function quoteForUnit(client, unit, checkIn, checkOut, guestCount, 
     const nights = getNights(checkIn, checkOut);
     const scandiIds = ['scandi-large-1','scandi-large-2','scandi-small-1','scandi-small-2'];
     const aframeIds = ['aframe-1','aframe-2'];
-    let packagePrice, packageName, packageRule;
+    let packagePrice, packageName, packageRule, breakfastIncluded = true;
     if (['autumn_149','autumn_179','autumn_249'].includes(campaignCode)) {
       if (!scandiIds.includes(unit.id)) throw new Error('Payız kampaniyası yalnız Orange, Blue, White və Green evlərində keçərlidir.');
       if (nights !== 3 || checkOut > '2026-11-05') throw new Error('Payız kampaniyası 5 noyabr 2026-dək bitən 3 gecəlik rezervasiyalar üçündür.');
@@ -54,10 +54,12 @@ export async function quoteForUnit(client, unit, checkIn, checkOut, guestCount, 
         packagePrice=179; packageName='Romantik paket'; packageRule='1 gecə / 2 gün, 2 nəfərlik premium səhər yeməyi daxildir.';
       } else {
         if (nights !== 3) throw new Error('Balayı paketi 3 gecə / 4 gün üçündür.');
-        packagePrice=349; packageName='Balayı paketi'; packageRule='3 gecə / 4 gün, 2 nəfər üçün xüsusi paket.';
+        packagePrice=349; packageName='Balayı paketi'; packageRule='3 gecə / 4 gün, 2 nəfər üçün xüsusi paket.'; breakfastIncluded=false;
       }
     } else throw new Error('Kampaniya paketi tanınmadı və ya aktiv deyil.');
-    return { nights, stayTotal:packagePrice, breakfastTotal:0, total:packagePrice, campaignCode, campaignName:packageName, breakfastIncluded:true, ruleText:packageRule };
+    const breakfastTotal = breakfast && !breakfastIncluded ? Number(unit.breakfast_rate_per_person || 0) * Number(guestCount) * nights : 0;
+    const total = Math.round((packagePrice + breakfastTotal) * 100) / 100;
+    return { nights, stayTotal:packagePrice, breakfastTotal, total, campaignCode, campaignName:packageName, breakfastIncluded, ruleText:packageRule + (breakfastIncluded ? ' Səhər yeməyi daxildir.' : '') };
   }
 
   const nights = getNights(checkIn, checkOut);
