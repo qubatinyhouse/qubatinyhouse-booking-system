@@ -479,7 +479,7 @@ window.loadDateBlocks=async function(){
  try{
   const result=await blockedDatesRequest("GET");
   const blocks=result.blocks||[];
-  table.innerHTML=blocks.length?blocks.map(b=>'<tr><td><input class="blocked-date-check" type="checkbox" value="'+escapeReservation(b.id)+'" aria-label="Bu bağlamanı seç"></td><td>'+escapeReservation(b.unit_name)+'</td><td>'+escapeReservation(b.check_in)+'</td><td>'+escapeReservation(b.check_out)+'</td><td>'+escapeReservation(({owner:"Şəxsi istifadə",maintenance:"Təmir",other:"Digər"})[b.reason]||b.reason)+'</td><td>'+escapeReservation(b.note||"-")+'</td><td><button type="button" onclick="releaseDateBlock(\\''+escapeReservation(b.id)+'\\')">Yenidən aç</button></td></tr>').join(""):'<tr><td colspan="7">Aktiv bağlanmış tarix yoxdur.</td></tr>';
+  table.innerHTML=blocks.length?blocks.map(b=>'<tr><td><input class="blocked-date-check" type="checkbox" value="'+escapeReservation(b.id)+'" aria-label="Bu bağlamanı seç"></td><td>'+escapeReservation(b.unit_name)+'</td><td>'+escapeReservation(b.check_in)+'</td><td>'+escapeReservation(b.check_out)+'</td><td>'+escapeReservation(({owner:"Şəxsi istifadə",maintenance:"Təmir",other:"Digər"})[b.reason]||b.reason)+'</td><td>'+escapeReservation(b.note||"-")+'</td><td><button type="button" onclick="releaseDateBlock(\''+escapeReservation(b.id)+'\')">Yenidən aç</button></td></tr>').join(""):'<tr><td colspan="7">Aktiv bağlanmış tarix yoxdur.</td></tr>';
   const selectAll=document.getElementById("selectAllBlockedDates");if(selectAll)selectAll.checked=false;
   msg.textContent=blocks.length+" aktiv bağlama tapıldı. Son tarix çıxış günüdür və bağlı aralığa daxil deyil.";
  }catch(e){msg.textContent=e.message;table.innerHTML='<tr><td colspan="6">Təqvim yüklənmədi.</td></tr>';}
