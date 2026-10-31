@@ -74,19 +74,21 @@ export const handler = async (event) => {
     }
 
     if (event.httpMethod === 'DELETE') {
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
+      const isBulkAll = body.all === true;
+      const isBulkSelected = ids.length > 0 && ids.every(id => uuidPattern.test(id));
       const id = String(body.id || '');
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+      if (!isBulkAll && !isBulkSelected && !uuidPattern.test(id)) {
         return json(400, { error: 'Bağlama ID-si düzgün deyil.' });
       }
-      const { data, error } = await client.from('blocked_dates')
-        .update({ active: false })
-        .eq('id', id)
-        .eq('active', true)
-        .select('id')
-        .maybeSingle();
+      let query = client.from('blocked_dates').update({ active: false }).eq('active', true);
+      if (isBulkSelected) query = query.in('id', ids);
+      else if (!isBulkAll) query = query.eq('id', id);
+      const { data, error } = await query.select('id');
       if (error) throw error;
-      if (!data) return json(404, { error: 'Aktiv bağlama tapılmadı.' });
-      return json(200, { ok: true, id });
+      if (!data?.length) return json(404, { error: 'Açılacaq aktiv bağlama tapılmadı.' });
+      return json(200, { ok: true, released_count: data.length, ids: data.map(row => row.id) });
     }
 
     return json(405, { error: 'Yalnız GET, POST və DELETE sorğuları qəbul edilir.' });
