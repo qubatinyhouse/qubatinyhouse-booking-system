@@ -32,7 +32,7 @@ export const handler = async (event) => {
       if (!allowedUnits.includes(unitId) || !validDate(checkIn) || !validDate(checkOut) ||
           getNights(checkIn, checkOut) < 1 || getNights(checkIn, checkOut) > 30 ||
           typeof guestName !== 'string' || guestName.trim().length < 2 || guestName.length > 120 ||
-          typeof phone !== 'string' || phone.replace(/\\D/g, '').length < 7 || phone.length > 30 ||
+          typeof phone !== 'string' || phone.replace(/\D/g, '').length < 7 || phone.length > 30 ||
           !Number.isInteger(guests) || guests < 1 || guests > 10) {
         return json(400, { error: 'Müştəri, ev, qonaq sayı və tarixləri düzgün daxil edin. Qalma müddəti 1–30 gecə olmalıdır.' });
       }
