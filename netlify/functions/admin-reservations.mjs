@@ -26,7 +26,7 @@ export const handler = async (event) => {
       try { body = JSON.parse(event.body || '{}'); }
       catch { return json(400, { error: 'Yanlış JSON formatı.' }); }
 
-      const { unitId, checkIn, checkOut, guestName, phone, guestCount, breakfast = false, note = '' } = body;
+      const { unitId, checkIn, checkOut, guestName, phone, guestCount, breakfast = false, note = '', campaignCode = '', marriageConfirmed = false } = body;
       const guests = Number(guestCount);
       const allowedUnits = ['scandi-large-1','scandi-large-2','scandi-small-1','scandi-small-2','aframe-1','aframe-2'];
       if (!allowedUnits.includes(unitId) || !validDate(checkIn) || !validDate(checkOut) ||
@@ -42,6 +42,8 @@ export const handler = async (event) => {
       if (unitError) throw unitError;
       if (!unit) return json(404, { error: 'Seçilmiş ev tapılmadı və ya aktiv deyil.' });
       if (guests > Number(unit.capacity)) return json(400, { error: 'Bu ev maksimum ' + unit.capacity + ' nəfər üçündür.' });
+      if (typeof campaignCode !== 'string' || campaignCode.length > 40) return json(400, { error: 'Kampaniya seçimi düzgün deyil.' });
+      if (['romantic_179','honeymoon_349'].includes(campaignCode) && marriageConfirmed !== true) return json(400, { error: 'Bu paketlər yalnız rəsmi nikahda olan cütlüklər üçündür.' });
       if (unit.is_demo_rate) return json(409, { error: 'Bu evin real tarifi aktiv deyil.' });
 
       const { data: blocks, error: blockError } = await client.from('blocked_dates')
@@ -50,7 +52,7 @@ export const handler = async (event) => {
       if (blockError) throw blockError;
       if (blocks && blocks.length) return json(409, { error: 'Seçilmiş tarixlər admin təqvimində bağlıdır. Əvvəl təqvimi yoxlayın.' });
 
-      const quote = await quoteForUnit(client, unit, checkIn, checkOut, guests, Boolean(breakfast));
+      const quote = await quoteForUnit(client, unit, checkIn, checkOut, guests, Boolean(breakfast), campaignCode, marriageConfirmed === true);
       const deposit = Math.round(quote.total * 0.50 * 100) / 100;
       const remaining = Math.round((quote.total - deposit) * 100) / 100;
 
@@ -61,8 +63,8 @@ export const handler = async (event) => {
         p_guest_name: guestName.trim(),
         p_phone: phone.trim(),
         p_guest_count: guests,
-        p_breakfast: Boolean(breakfast),
-        p_note: typeof note === 'string' ? note.slice(0, 1500) : '',
+        p_breakfast: Boolean(quote.breakfastIncluded) || Boolean(breakfast),
+        p_note: (campaignCode ? `[[QTH_CAMPAIGN=${campaignCode};MARRIED=${marriageConfirmed ? 1 : 0}]]\n` : '') + (typeof note === 'string' ? note.slice(0, 1300) : ''),
         p_stay_amount: quote.stayTotal,
         p_breakfast_amount: quote.breakfastTotal,
         p_total_amount: quote.total,
@@ -86,14 +88,14 @@ export const handler = async (event) => {
       const { data: confirmed, error: confirmError } = await client.from('reservations')
         .update({ status: 'confirmed', payment_status: 'manual' })
         .eq('id', created.id)
-        .select('id,booking_code,status,payment_status,total_amount,deposit_amount,remaining_amount')
+        .select('id,booking_code,status,payment_status,total_amount,deposit_amount,remaining_amount,campaign_code,campaign_name,marriage_confirmed')
         .single();
       if (confirmError) throw confirmError;
 
       return json(201, {
         success: true,
         reservation: confirmed,
-        quote: { nights: quote.nights, total: quote.total, deposit, remaining, ruleText: quote.ruleText }
+        quote: { nights: quote.nights, total: quote.total, deposit, remaining, campaignCode: quote.campaignCode || null, campaignName: quote.campaignName || null, ruleText: quote.ruleText }
       });
     }
 
