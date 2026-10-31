@@ -1004,6 +1004,10 @@ async function connectSharedSession(){
  await checkSession();
  client.auth.onAuthStateChange((_event,session)=>{if(!session)document.getElementById("dashboard").innerHTML="<div class=card>Sessiya bağlandı. Əsas Admin panelə yenidən daxil olun.</div>";});
  window.addEventListener("message", async (event) => {
+   if (event.origin === window.location.origin && event.source === window.parent && event.data?.type === "QTH_REFRESH_FINANCE") {
+     await loadData();
+     return;
+   }
    if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== "QTH_RECORD_BOOKING_DEPOSIT") return;
    const p = event.data.payload || {};
    if (!p.reservationId || !Number.isFinite(Number(p.amount)) || Number(p.amount) <= 0) return;
