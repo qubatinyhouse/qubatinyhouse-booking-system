@@ -79,12 +79,12 @@ create index if not exists seasonal_rates_unit_dates_idx on public.seasonal_rate
 -- Six physical houses: four Scandinavian and two A-Frame. Prices are sample values and are blocked until edited.
 insert into public.units (id,name,unit_type,capacity,weekday_rate,weekend_rate,holiday_rate,breakfast_rate_per_person,is_demo_rate,active,sort_order)
 values
- ('scandi-orange','Orange House','large',7,150,180,250,15,true,true,1),
- ('scandi-white','White House','large',7,150,180,250,15,true,true,2),
- ('scandi-blue','Blue House','small',4,150,180,250,15,true,true,3),
- ('scandi-green','Green House','small',4,150,180,250,15,true,true,4),
- ('aframe-1','A-Frame isti hovuzlu №1','aframe',10,250,300,400,15,true,true,5),
- ('aframe-2','A-Frame isti hovuzlu №2','aframe',10,250,300,400,15,true,true,6)
+ ('scandi-large-1','Orange House','large',7,150,180,250,15,true,true,1),
+ ('scandi-large-2','White House','large',7,150,180,250,15,true,true,2),
+ ('scandi-small-1','Blue House','small',4,150,180,250,15,true,true,3),
+ ('scandi-small-2','Green House','small',4,150,180,250,15,true,true,4),
+ ('aframe-1','A-FRAME-1','aframe',10,250,300,400,15,true,true,5),
+ ('aframe-2','A-FRAME-2','aframe',10,250,300,400,15,true,true,6)
 on conflict (id) do nothing;
 
 -- Lock down direct browser access; server functions use the service role key.
