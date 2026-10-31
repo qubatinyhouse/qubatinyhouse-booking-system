@@ -96,7 +96,7 @@ function updateQuote(unit){
  const dep=Math.round(unit.quote.total*0.50*100)/100;
  document.getElementById('depositAmount').textContent=money(dep);
  document.getElementById('remainingAmount').textContent=money(unit.quote.total-dep);
- document.getElementById('priceNote').textContent=unit.isDemoRate?'Bu tarif nümunədir; admin real qiymətləri təsdiqləməlidir.':unit.quote.ruleText;
+ document.getElementById('priceNote').textContent=unit.isDemoRate?'Bu tarif nümunədir; admin real qiymətləri təsdiqləməlidir.':(unit.quote.campaignName?unit.quote.campaignName+' — '+unit.quote.ruleText:unit.quote.ruleText);
 }
 function selectedUnit(){return availabilityCache.find(u=>u.id===document.getElementById('unit').value)}
 async function checkAvailability(){
@@ -123,9 +123,9 @@ document.getElementById('checkAvailability').addEventListener('click',checkAvail
 document.getElementById('unit').addEventListener('change',()=>updateQuote(selectedUnit()));
 document.getElementById('breakfast').addEventListener('change',()=>{document.getElementById('availabilityStatus').textContent='Səhər yeməyi seçimi qiymətdə nəzərə alınacaq. Yenidən boşluğu yoxlayın.';checkAvailability()});
 document.getElementById('deposit').addEventListener('change',()=>updateQuote(selectedUnit()));
-document.getElementById('quickIn').addEventListener('change',e=>{document.getElementById('checkin').value=e.target.value;checkAvailability()});
-document.getElementById('quickOut').addEventListener('change',e=>{document.getElementById('checkout').value=e.target.value;checkAvailability()});
-document.getElementById('quickGuests').addEventListener('change',e=>{document.getElementById('guests').value=e.target.value;checkAvailability()});
+document.getElementById('quickIn').addEventListener('change',e=>{document.getElementById('checkin').value=e.target.value;updateCampaignOptions();checkAvailability()});
+document.getElementById('quickOut').addEventListener('change',e=>{document.getElementById('checkout').value=e.target.value;updateCampaignOptions();checkAvailability()});
+document.getElementById('quickGuests').addEventListener('change',e=>{document.getElementById('guests').value=e.target.value;updateCampaignOptions();checkAvailability()});
 
  async function createBooking(){
  const name=document.getElementById('name').value.trim(),phone=document.getElementById('phone').value.trim(),checkIn=dt('checkin'),checkOut=dt('checkout'),unitId=document.getElementById('unit').value;
@@ -140,11 +140,11 @@ document.getElementById('quickGuests').addEventListener('change',e=>{document.ge
   const chosen=selectedUnit();
   const houseName=chosen?chosen.name:unitId;
   const details=document.getElementById('bookingSuccessDetails');
-  details.textContent='Bron kodu: '+data.bookingCode+' | '+houseName+' | '+checkIn+' – '+checkOut+' | Ümumi: '+money(data.totalAmount)+' | 50% avans: '+money(data.depositAmount)+' | Qalıq: '+money(data.remainingAmount);
+  details.textContent='Bron kodu: '+data.bookingCode+' | '+houseName+' | '+(data.campaignName?data.campaignName+' | ':'')+checkIn+' – '+checkOut+' | Ümumi: '+money(data.totalAmount)+' | 50% avans: '+money(data.depositAmount)+' | Qalıq: '+money(data.remainingAmount);
   document.getElementById('paymentCardDetails').textContent='Kart məlumatlarını menecer WhatsApp vasitəsilə göndərəcək. 50% avans bank hesabında yoxlanıldıqdan sonra rezervasiya təsdiqlənəcək.';
   document.getElementById('bookingSuccess').hidden=false;
   document.getElementById('setupNotice').hidden=true;
-  const waText='Salam, Quba Tiny House saytında rezervasiya yaratdım.\\nBron kodu: '+data.bookingCode+'\\nAd: '+name+'\\nTelefon: '+phone+'\\nEv: '+houseName+'\\nTarix: '+checkIn+' – '+checkOut+'\\nÜmumi məbləğ: '+money(data.totalAmount)+'\\nÖdəniləcək 50% avans: '+money(data.depositAmount)+'\\nQalıq məbləğ: '+money(data.remainingAmount)+'\\nZəhmət olmasa avans köçürməsi üçün kart məlumatlarını göndərin. Ödənişdən sonra qəbzi bu WhatsApp söhbətinə göndərəcəyəm.';
+  const waText='Salam, Quba Tiny House saytında rezervasiya yaratdım.\\nBron kodu: '+data.bookingCode+'\\nAd: '+name+'\\nTelefon: '+phone+'\\nEv: '+houseName+'\\nPaket: '+(data.campaignName||'Adi tarif')+'\\nTarix: '+checkIn+' – '+checkOut+'\\nÜmumi məbləğ: '+money(data.totalAmount)+'\\nÖdəniləcək 50% avans: '+money(data.depositAmount)+'\\nQalıq məbləğ: '+money(data.remainingAmount)+'\\nZəhmət olmasa avans köçürməsi üçün kart məlumatlarını göndərin. Ödənişdən sonra qəbzi bu WhatsApp söhbətinə göndərəcəyəm.';
   const waUrl='https://wa.me/994503699000?text='+encodeURIComponent(waText);
   document.getElementById('sendReceiptWhatsApp').onclick=()=>window.open(waUrl,'_blank','noopener');
   if(waWindow){waWindow.location.href=waUrl;} 
