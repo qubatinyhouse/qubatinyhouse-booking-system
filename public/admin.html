@@ -528,7 +528,7 @@ window.filterReservations = function () {
 };
 
 window.changeReservationStatus = async function (id, status) {
-  if (!window.confirm("Rezervasiyanın statusunu dəyişmək istəyirsiniz?")) {
+  if (!window.confirm(status === "confirmed" ? "BANK YOXLAMASI: Avansın bank hesabına faktiki daxil olduğunu yoxladınızmı? Yalnız bank çıxarışında yoxladıqdan sonra OK basın." : "Rezervasiyanın statusunu dəyişmək istəyirsiniz?")) {
     renderReservations(allReservations); return;
   }
   try {
