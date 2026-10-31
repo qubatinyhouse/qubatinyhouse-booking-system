@@ -7,13 +7,13 @@ alter table public.seasonal_rates
 
 -- Rename existing Scandinavian records without changing their IDs.
 update public.units set name='Orange House', unit_type='large', capacity=7, sort_order=1
-where id in ('scandi-large-1','scandi-small-1','scandi-orange');
+where id in ('scandi-large-1','scandi-orange');
 update public.units set name='White House', unit_type='large', capacity=7, sort_order=2
 where id in ('scandi-large-2','scandi-white');
 update public.units set name='Blue House', unit_type='small', capacity=4, sort_order=3
-where id in ('scandi-small-2','scandi-blue');
+where id in ('scandi-small-1','scandi-blue');
 update public.units set name='Green House', unit_type='small', capacity=4, sort_order=4
-where id in ('scandi-green');
+where id in ('scandi-small-2','scandi-green');
 
 -- Real base tariffs (September-May). Breakfast is included only for Scandinavian houses.
 update public.units
