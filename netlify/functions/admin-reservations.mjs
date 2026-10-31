@@ -105,6 +105,12 @@ export const handler = async (event) => {
         .limit(500);
 
       if (error) throw error;
+      const reservationIds = (reservations || []).map((item) => item.id);
+      const { data: coupons, error: couponsError } = reservationIds.length
+        ? await client.from('promo_coupons').select('reservation_id,coupon_code,status').in('reservation_id', reservationIds)
+        : { data: [], error: null };
+      if (couponsError) throw couponsError;
+      const couponByReservation = new Map((coupons || []).map((item) => [item.reservation_id, item]));
 
       const { data: units, error: unitsError } = await client
         .from('units')
@@ -118,6 +124,8 @@ export const handler = async (event) => {
         totalCount: count ?? (reservations || []).length,
         reservations: (reservations || []).map((item) => ({
           ...item,
+          coupon_code: couponByReservation.get(item.id)?.coupon_code || null,
+          coupon_status: couponByReservation.get(item.id)?.status || null,
           unit_name: unitNames.get(item.unit_id) || item.unit_id
         }))
       });
