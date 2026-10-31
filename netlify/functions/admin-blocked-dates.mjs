@@ -74,13 +74,14 @@ export const handler = async (event) => {
     }
 
     if (event.httpMethod === 'DELETE') {
-      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      // blocked_dates.id is BIGINT (identity), not UUID.
+      const validBlockId = (value) => /^[1-9]\\d*$/.test(String(value ?? ''));
       const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
       const isBulkAll = body.all === true;
-      const isBulkSelected = ids.length > 0 && ids.every(id => uuidPattern.test(id));
-      const id = String(body.id || '');
-      if (!isBulkAll && !isBulkSelected && !uuidPattern.test(id)) {
-        return json(400, { error: 'Bağlama ID-si düzgün deyil.' });
+      const isBulkSelected = ids.length > 0 && ids.every(validBlockId);
+      const id = String(body.id ?? '');
+      if (!isBulkAll && !isBulkSelected && !validBlockId(id)) {
+        return json(400, { error: 'Bağlama ID-si müsbət tam ədəd olmalıdır.' });
       }
       let query = client.from('blocked_dates').update({ active: false }).eq('active', true);
       if (isBulkSelected) query = query.in('id', ids);
