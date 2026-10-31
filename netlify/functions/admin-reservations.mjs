@@ -26,7 +26,7 @@ export const handler = async (event) => {
       try { body = JSON.parse(event.body || '{}'); }
       catch { return json(400, { error: 'Yanlış JSON formatı.' }); }
 
-      const { unitId, checkIn, checkOut, guestName, phone, guestCount, breakfast = false, note = '', campaignCode = '', marriageConfirmed = false } = body;
+      const { unitId, checkIn, checkOut, guestName, phone, guestCount, note = '', campaignCode = '', marriageConfirmed = false } = body;
       const guests = Number(guestCount);
       const allowedUnits = ['scandi-large-1','scandi-large-2','scandi-small-1','scandi-small-2','aframe-1','aframe-2'];
       if (!allowedUnits.includes(unitId) || !validDate(checkIn) || !validDate(checkOut) ||
@@ -64,10 +64,10 @@ export const handler = async (event) => {
         p_guest_name: guestName.trim(),
         p_phone: phone.trim(),
         p_guest_count: guests,
-        p_breakfast: Boolean(quote.breakfastIncluded) || Boolean(breakfast),
+        p_breakfast: false,
         p_note: (campaignCode ? `[[QTH_CAMPAIGN=${campaignCode};MARRIED=${marriageConfirmed ? 1 : 0}]]\n` : '') + (typeof note === 'string' ? note.slice(0, 1300) : ''),
         p_stay_amount: quote.stayTotal,
-        p_breakfast_amount: quote.breakfastTotal,
+        p_breakfast_amount: 0,
         p_total_amount: quote.total,
         p_deposit_percent: 50,
         p_deposit_amount: deposit,
