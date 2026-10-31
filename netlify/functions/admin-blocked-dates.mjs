@@ -74,8 +74,10 @@ export const handler = async (event) => {
     }
 
     if (event.httpMethod === 'DELETE') {
-      const id = Number(body.id);
-      if (!Number.isSafeInteger(id) || id < 1) return json(400, { error: 'Bağlama ID-si düzgün deyil.' });
+      const id = String(body.id || '');
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+        return json(400, { error: 'Bağlama ID-si düzgün deyil.' });
+      }
       const { data, error } = await client.from('blocked_dates')
         .update({ active: false })
         .eq('id', id)
