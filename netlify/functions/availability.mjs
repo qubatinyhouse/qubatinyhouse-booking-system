@@ -33,7 +33,7 @@ export const handler = async (event) => {
       });
     }
 
-    if (!['small', 'large', 'aframe'].includes(unitType)) {
+    if (!['scandi', 'small', 'large', 'aframe'].includes(unitType)) {
       return json(400, {
         error: 'Ev növü düzgün seçilməyib.'
       });
@@ -46,7 +46,7 @@ export const handler = async (event) => {
         .from('units')
         .select('id,name,unit_type,capacity,weekday_rate,weekend_rate,holiday_rate,breakfast_rate_per_person,is_demo_rate,active,sort_order')
         .eq('active', true)
-        .eq('unit_type', unitType)
+        .in('unit_type', unitType === 'scandi' ? ['small', 'large'] : [unitType])
         .gte('capacity', guests)
         .order('sort_order', { ascending: true }),
 
@@ -152,9 +152,9 @@ export const handler = async (event) => {
       response.diagnostics = {
         totalUnitsVisibleToServer: allUnits.length,
         activeUnitsVisibleToServer: allUnits.filter((u) => u.active === true).length,
-        requestedTypeUnits: allUnits.filter((u) => u.unit_type === unitType).length,
+        requestedTypeUnits: allUnits.filter((u) => unitType === 'scandi' ? ['small','large'].includes(u.unit_type) : u.unit_type === unitType).length,
         requestedTypeAndCapacityUnits: allUnits.filter((u) =>
-          u.active === true && u.unit_type === unitType && Number(u.capacity) >= guests
+          u.active === true && (unitType === 'scandi' ? ['small','large'].includes(u.unit_type) : u.unit_type === unitType) && Number(u.capacity) >= guests
         ).length,
         filteredQueryUnits: (unitsRes.data || []).length,
         reservationsRowsRead: (bookingsRes.data || []).length,

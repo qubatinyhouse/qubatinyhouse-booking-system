@@ -37,7 +37,7 @@ export async function quoteForUnit(client, unit, checkIn, checkOut, guestCount, 
   if (nights < 1 || nights > 30) throw new Error('Rezervasiya 1–30 gecə arasında olmalıdır.');
   const [holidayRes, seasonalRes] = await Promise.all([
     client.from('special_dates').select('date,label').eq('active', true).gte('date', checkIn).lt('date', checkOut),
-    client.from('seasonal_rates').select('start_date,end_date,nightly_rate,label').eq('unit_id', unit.id).eq('active', true).lt('start_date', checkOut).gt('end_date', checkIn)
+    client.from('seasonal_rates').select('start_date,end_date,nightly_rate,weekday_rate,weekend_rate,label').eq('unit_id', unit.id).eq('active', true).lt('start_date', checkOut).gt('end_date', checkIn)
   ]);
   if (holidayRes.error) throw holidayRes.error;
   if (seasonalRes.error) throw seasonalRes.error;
@@ -51,8 +51,13 @@ export async function quoteForUnit(client, unit, checkIn, checkOut, guestCount, 
     if (holidays.has(ds)) { rate = Number(unit.holiday_rate); sawHoliday = true; }
     else {
       const matchingSeason = seasonal.find(s => s.start_date <= ds && ds < s.end_date);
-      if (matchingSeason) { rate = Number(matchingSeason.nightly_rate); sawSeason = true; }
-      else if ([5, 6].includes(d.getUTCDay())) { rate = Number(unit.weekend_rate); sawWeekend = true; }
+      const weekend = [5, 6].includes(d.getUTCDay());
+      if (matchingSeason) {
+        const seasonalRate = weekend ? matchingSeason.weekend_rate : matchingSeason.weekday_rate;
+        rate = Number(seasonalRate ?? matchingSeason.nightly_rate);
+        sawSeason = true;
+        if (weekend) sawWeekend = true;
+      } else if (weekend) { rate = Number(unit.weekend_rate); sawWeekend = true; }
       else rate = Number(unit.weekday_rate);
     }
     if (!Number.isFinite(rate) || rate <= 0) throw new Error('Bu ev üçün qiymət hələ düzgün qurulmayıb.');
