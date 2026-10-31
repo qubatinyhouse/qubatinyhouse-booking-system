@@ -302,6 +302,7 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
   document.getElementById("profit").textContent = money(income - expense);
 })();
 </script>
+<script>
 const ADMIN_API_URL = "/.netlify/functions/admin-reservations";
 let adminToken = sessionStorage.getItem("qth_admin_api_token") || "";
 let allReservations = [];
