@@ -4,7 +4,7 @@ export const handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Yalnız POST sorğusu qəbul edilir.' });
   let input;
   try { input = JSON.parse(event.isBase64Encoded ? Buffer.from(event.body || '', 'base64').toString('utf8') : (event.body || '{}')); } catch { return json(400, { error: 'Sorğu formatı düzgün deyil.' }); }
-  const { unitId, checkIn, checkOut, guestName, phone, guestCount, breakfast, note, depositPercent } = input;
+  const { unitId, checkIn, checkOut, guestName, phone, guestCount, breakfast, note, depositPercent, campaignCode = '', marriageConfirmed = false } = input;
   if (!unitId || !validDate(checkIn) || !validDate(checkOut) || getNights(checkIn, checkOut) < 1 || getNights(checkIn, checkOut) > 30) return json(400, { error: 'Ev və düzgün giriş/çıxış tarixlərini seçin.' });
   if (typeof guestName !== 'string' || guestName.trim().length < 2 || guestName.length > 120) return json(400, { error: 'Ad və soyadı düzgün daxil edin.' });
   if (typeof phone !== 'string' || phone.replace(/\D/g, '').length < 7 || phone.length > 30) return json(400, { error: 'Telefon nömrəsini düzgün daxil edin.' });
@@ -17,7 +17,9 @@ export const handler = async (event) => {
     if (!unit) return json(404, { error: 'Seçilmiş ev tapılmadı. Mövcudluğu yenidən yoxlayın.' });
     if (Number(guestCount) > unit.capacity) return json(400, { error: `Bu ev maksimum ${unit.capacity} nəfər üçündür.` });
     if (unit.is_demo_rate) return json(409, { error: 'Saytın tarifləri hələ nümunə qiymətlərdədir. Real tarifləri təsdiqlədikdən sonra admin onları aktivləşdirməlidir.' });
-    const quote = await quoteForUnit(client, unit, checkIn, checkOut, Number(guestCount), Boolean(breakfast));
+    if (typeof campaignCode !== 'string' || campaignCode.length > 40) return json(400, { error: 'Kampaniya seçimi düzgün deyil.' });
+    if (['romantic_179','honeymoon_349'].includes(campaignCode) && marriageConfirmed !== true) return json(400, { error: 'Bu paketlər yalnız rəsmi nikahda olan cütlüklər üçündür.' });
+    const quote = await quoteForUnit(client, unit, checkIn, checkOut, Number(guestCount), Boolean(breakfast), campaignCode, marriageConfirmed === true);
     const deposit = Math.round(quote.total * 0.50 * 100) / 100;
     const remaining = Math.round((quote.total - deposit) * 100) / 100;
     const rpc = await client.rpc('create_booking_atomic', {
@@ -27,8 +29,8 @@ export const handler = async (event) => {
       p_guest_name: guestName.trim(),
       p_phone: phone.trim(),
       p_guest_count: Number(guestCount),
-      p_breakfast: Boolean(breakfast),
-      p_note: typeof note === 'string' ? note.slice(0, 1500) : '',
+      p_breakfast: Boolean(campaignCode) || Boolean(breakfast),
+      p_note: (campaignCode ? `[[QTH_CAMPAIGN=${campaignCode};MARRIED=${marriageConfirmed ? 1 : 0}]]\n` : '') + (typeof note === 'string' ? note.slice(0, 1300) : ''),
       p_stay_amount: quote.stayTotal,
       p_breakfast_amount: quote.breakfastTotal,
       p_total_amount: quote.total,
@@ -51,7 +53,9 @@ export const handler = async (event) => {
       totalAmount: quote.total,
       depositAmount: deposit,
       remainingAmount: remaining,
-      currency: 'AZN'
+      currency: 'AZN',
+      campaignCode: quote.campaignCode || null,
+      campaignName: quote.campaignName || null
     });
   } catch (e) {
     console.error('create-booking error', e);
