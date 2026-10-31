@@ -72,6 +72,7 @@ h1{font-size:21px}
 <nav>
 <button class="nav active" data-page="dashboard">▦ Dashboard</button>
 <button class="nav" data-page="reservations">▣ Rezervasiyalar</button>
+<button class="nav" data-page="calendar">▦ Təqvim və dolu günlər</button>
 <button class="nav" data-page="finance">₼ Maliyyə</button>
 <button class="nav" data-page="employees">♙ İşçilər</button>
 <button class="nav" data-page="cleaning">✧ Təmizlik işləri</button>
@@ -188,6 +189,23 @@ Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göst�
 </section>
 </section>
 
+<section class="section" id="calendar">
+<div class="panel">
+<h3>Ev tarixlərini əl ilə bağla</h3>
+<div class="grid">
+<div><label>Ev</label><select id="blockUnit"><option value="scandi-large-1">Orange House</option><option value="scandi-large-2">White House</option><option value="scandi-small-1">Blue House</option><option value="scandi-small-2">Green House</option><option value="aframe-1">A-FRAME-1</option><option value="aframe-2">A-FRAME-2</option></select></div>
+<div><label>Bağlanma səbəbi</label><select id="blockReason"><option value="owner">Şəxsi istifadə</option><option value="maintenance">Təmir / texniki xidmət</option><option value="other">Digər</option></select></div>
+<div><label>Başlanğıc tarixi</label><input id="blockStart" type="date"></div>
+<div><label>Son tarix (çıxış günü daxil deyil)</label><input id="blockEnd" type="date"></div>
+<div><label>Qeyd</label><input id="blockNote" maxlength="500" placeholder="İstəyə bağlı qeyd"></div>
+</div>
+<p id="calendarMessage" class="notice">Bağlama əlavə etmək və mövcud bağlamaları görmək üçün yükləyin.</p>
+<button class="btn" type="button" onclick="createDateBlock()">Seçilmiş günləri bağla</button>
+<button type="button" onclick="loadDateBlocks()">Təqvimi yenilə</button>
+</div>
+<div class="panel"><h3>Aktiv bağlanmış tarixlər</h3><div class="table-wrap"><table><thead><tr><th>Ev</th><th>Başlanğıc</th><th>Son tarix</th><th>Səbəb</th><th>Qeyd</th><th>Əməliyyat</th></tr></thead><tbody id="blockedDatesTable"><tr><td colspan="6">Məlumat yüklənməyib.</td></tr></tbody></table></div></div>
+</section>
+
 <section class="section" id="finance">
 <div class="panel">
 <h3>Maliyyə idarəetməsi</h3>
@@ -242,6 +260,7 @@ Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göst�
 const titles={
 dashboard:"Dashboard",
 reservations:"Rezervasiyalar",
+calendar:"Təqvim və dolu günlər",
 finance:"Maliyyə",
 employees:"İşçilər",
 cleaning:"Təmizlik işləri",
@@ -437,6 +456,41 @@ function escapeReservation(value) {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[char]);
 }
+
+const BLOCKED_DATES_API = "/.netlify/functions/admin-blocked-dates";
+async function blockedDatesRequest(method="GET", body=null) {
+  const token=getAdminToken();
+  if(!token) throw new Error("Admin giriş kodu daxil edilməyib.");
+  const response=await fetch(BLOCKED_DATES_API,{method,headers:{"Content-Type":"application/json","x-admin-token":token},body:body?JSON.stringify(body):undefined});
+  const result=await response.json().catch(()=>({}));
+  if(response.status===401){sessionStorage.removeItem("qth_admin_api_token");adminToken="";throw new Error("Admin giriş kodu yanlışdır.");}
+  if(!response.ok) throw new Error(result.error||"Təqvim sorğusu uğursuz oldu.");
+  return result;
+}
+window.loadDateBlocks=async function(){
+ const msg=document.getElementById("calendarMessage"), table=document.getElementById("blockedDatesTable");
+ msg.textContent="Təqvim yüklənir...";
+ try{
+  const result=await blockedDatesRequest("GET");
+  const blocks=result.blocks||[];
+  table.innerHTML=blocks.length?blocks.map(b=>'<tr><td>'+escapeReservation(b.unit_name)+'</td><td>'+escapeReservation(b.check_in)+'</td><td>'+escapeReservation(b.check_out)+'</td><td>'+escapeReservation(({owner:"Şəxsi istifadə",maintenance:"Təmir",other:"Digər"})[b.reason]||b.reason)+'</td><td>'+escapeReservation(b.note||"-")+'</td><td><button type="button" onclick="releaseDateBlock('+Number(b.id)+')">Yenidən aç</button></td></tr>').join(""):'<tr><td colspan="6">Aktiv bağlanmış tarix yoxdur.</td></tr>';
+  msg.textContent=blocks.length+" aktiv bağlama tapıldı. Son tarix çıxış günüdür və bağlı aralığa daxil deyil.";
+ }catch(e){msg.textContent=e.message;table.innerHTML='<tr><td colspan="6">Təqvim yüklənmədi.</td></tr>';}
+};
+window.createDateBlock=async function(){
+ const unit_id=document.getElementById("blockUnit").value,check_in=document.getElementById("blockStart").value,check_out=document.getElementById("blockEnd").value,reason=document.getElementById("blockReason").value,note=document.getElementById("blockNote").value;
+ if(!check_in||!check_out||check_out<=check_in){alert("Düzgün başlanğıc və son tarix seçin.");return;}
+ if(!confirm("Seçilmiş evin bu tarixlərini müştərilər üçün bağlamaq istəyirsiniz?"))return;
+ const msg=document.getElementById("calendarMessage");
+ try{await blockedDatesRequest("POST",{unit_id,check_in,check_out,reason,note});msg.textContent="Tarixlər uğurla bağlandı.";document.getElementById("blockNote").value="";await loadDateBlocks();}
+ catch(e){msg.textContent=e.message;}
+};
+window.releaseDateBlock=async function(id){
+ if(!confirm("Bu tarixləri yenidən rezervasiya üçün açmaq istəyirsiniz?"))return;
+ const msg=document.getElementById("calendarMessage");
+ try{await blockedDatesRequest("DELETE",{id});msg.textContent="Tarixlər yenidən açıldı.";await loadDateBlocks();}
+ catch(e){msg.textContent=e.message;}
+};
 </script>
 </body>
 </html>
