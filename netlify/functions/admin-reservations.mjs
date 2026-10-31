@@ -133,30 +133,23 @@ export const handler = async (event) => {
         return json(400, { error: 'Rezervasiya ID-si və düzgün status tələb olunur.' });
       }
 
+      if (status === 'confirmed') {
+        const { data, error } = await client.rpc('confirm_manual_paid_booking', {
+          p_reservation_id: id
+        });
+        if (error) throw error;
+        const reservation = Array.isArray(data) ? data[0] : data;
+        return json(200, { reservation });
+      }
+
       const { data, error } = await client
         .from('reservations')
-         .update(status === 'confirmed'
-          ? { status, payment_status: 'manual_paid', paid_at: new Date().toISOString() }
-          : { status })
+        .update({ status })
         .eq('id', id)
         .select('id,status,payment_status,paid_amount,paid_at')
         .single();
 
       if (error) throw error;
-      if (status === 'confirmed') {
-        const { data: current, error: currentError } = await client.from('reservations')
-          .select('deposit_amount')
-          .eq('id', id)
-          .single();
-        if (currentError) throw currentError;
-        const { data: paid, error: paidError } = await client.from('reservations')
-          .update({ paid_amount: current.deposit_amount })
-          .eq('id', id)
-          .select('id,status,payment_status,paid_amount,paid_at')
-          .single();
-        if (paidError) throw paidError;
-        return json(200, { reservation: paid });
-      }
       return json(200, { reservation: data });
     }
 
