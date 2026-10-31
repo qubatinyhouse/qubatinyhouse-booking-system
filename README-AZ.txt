@@ -53,16 +53,14 @@ End_date daxil edilmir; məsələn yuxarıdakı dövr 31 avqust gecəsinə qəd�
 MÖVCUD CANLI BOOKING BAZASI ÜÇÜN:
 Supabase SQL Editor-də supabase/migrations/20261031_admin_dashboard_compat.sql faylını işlədin. Sonra yeni 50% avans/WhatsApp prosesi üçün supabase/migrations/20261031_manual_card_whatsapp_deposit.sql faylını da işlədin. Hər iki migration mövcud rezervasiya və maliyyə qeydlərini silmir. Rezervasiya tarixçəsi saxlanıldığı üçün mövcud units ID-lərini əl ilə dəyişməyin.
 
-3) EPOINT MERCHANT HESABI AÇ
-----------------------------
-1. https://epoint.az/ saytında merchant kimi müraciət edin.
-2. Epoint-ə sayt URL-i və uğurlu/uğursuz nəticə URL-lərini təqdim edin:
-   Website: https://qubatinyhouse.com
-   Success URL: https://qubatinyhouse.com/payment-success.html
-   Error URL: https://qubatinyhouse.com/payment-error.html
-   Result/callback URL: https://qubatinyhouse.com/.netlify/functions/epoint-callback
-3. Epoint sizə public_key və private_key verdikdən sonra aşağıdakı Netlify mühit dəyişənlərinə daxil edin.
-Ödəniş səhifəsi Epoint-də açılır; kart məlumatları bizim saytda saxlanmır.
+3) BANK KARTI MƏLUMATLARINI QUR
+--------------------------------
+Netlify > qubatinyhouse layihəsi > Project configuration > Environment variables bölməsində bu üç dəyişəni yaradın:
+PAYMENT_BANK_NAME = Ödəniş qəbul edilən bankın adı
+PAYMENT_CARD_HOLDER = Kart sahibinin adı və soyadı
+PAYMENT_CARD_NUMBER = Müştəriyə göstəriləcək 16 rəqəmli kart nömrəsi
+
+Bu məlumatlar yalnız müştəriyə ödəniş təlimatı kimi göstərilir. Heç bir kart PIN-i, CVV/CVC kodu və SMS/OTP şifrəsi tələb edilmir və daxil edilməməlidir. Köçürmə daxil olduqdan sonra menecer bank hesabından yoxlayır.
 
 4) NETLIFY MÜHİT DƏYİŞƏNLƏRİ
 ----------------------------
@@ -75,13 +73,12 @@ PAYMENT_BANK_NAME = Ödəniş qəbul edilən bankın adı
 PAYMENT_CARD_HOLDER = Kart sahibinin adı və soyadı
 PAYMENT_CARD_NUMBER = Müştərilərə göstəriləcək kart nömrəsi
 SITE_URL = https://qubatinyhouse.com
-EPOINT_REQUEST_URL = https://epoint.az/api/1/request  (istəyə bağlı; bu, standart dəyərdir)
 
 Dəyişənlər Functions runtime üçün əlçatan olmalıdır. ADMIN_API_TOKEN üçün uzun, təsadüfi və başqa yerdə istifadə olunmayan kod seçin. Bu kod admin.html-də rezervasiya və təqvim API-si ilk dəfə çağırılanda soruşulur; brauzer sessiyası bitənədək sessionStorage-da saxlanılır. Kod Netlify-dəki ADMIN_API_TOKEN ilə eyni olmalıdır. Mövcud admin panel parolundan fərqli ola bilər.
 Dəyişəndən sonra redeploy edin.
-Heç vaxt SUPABASE_SERVICE_ROLE_KEY, ADMIN_API_TOKEN və EPOINT_PRIVATE_KEY-i HTML-ə, GitHub-a və ya public fayla yazmayın.
+Heç vaxt SUPABASE_SERVICE_ROLE_KEY və ADMIN_API_TOKEN-i HTML-ə, GitHub-a və ya public fayla yazmayın.
 
-5) NETLIFY FUNCTIONS NECƏ YAYIMLANIR
+4) NETLIFY FUNCTIONS NECƏ YAYIMLANIR
 ------------------------------------
 Bu layihədə server functions var. Təkcə HTML/ZIP-i Netlify Drop-a sürükləmək backend funksiyalarını etibarlı şəkildə build/deploy etmir. Functions build prosesi zamanı netlify/functions qovluğundan hazırlanır.
 
@@ -95,14 +92,15 @@ Tövsiyə olunan yol:
    Functions directory: netlify/functions
 6. Deploy tamamlandıqdan sonra Netlify > Functions bölməsində availability, create-booking, epoint-callback və booking-status funksiyalarının göründüyünü yoxlayın.
 
-6) ÖDƏNİŞDƏN ƏVVƏL TEST
+5) ÖDƏNİŞDƏN ƏVVƏL TEST
 -----------------------
 1. Saytda əvvəl giriş/çıxış, qonaq sayı və ev növü seçin.
 2. “Boş tarixləri və evləri yoxla” düyməsini basın.
-3. Boş evlər listdə görünməlidir; rezervasiya yarandıqdan sonra ödəniş üçün Epoint-ə keçəcək.
-4. Ödəniş başa çatanda Epoint result callback statusu imza ilə yoxlayır, sonra rezervasiyanı confirmed edir.
-5. Supabase > Table Editor > reservations cədvəlində statusları yoxlayın.
-6. Ödənişli canlı istifadədən əvvəl Kart sahibinin məlumatlarını Netlify-də PAYMENT_BANK_NAME, PAYMENT_CARD_HOLDER və PAYMENT_CARD_NUMBER dəyişənlərinə daxil edin; hər 6 evin real qiymətlərini və bayram/mövsüm tarixlərini yoxlayın.
+3. Boş ev seçib rezervasiya sorğusunu göndərin; admin paneldə pending_payment statusu ilə yaranmalıdır.
+4. Saytda 50% avans və Netlify-də saxlanan bank/kart məlumatları görünməlidir.
+5. Müştəri WhatsApp düyməsinə basıb ödəniş qəbzini menecerə göndərir.
+6. Menecer bank hesabında daxilolmanı yoxlayır və admin paneldə statusu confirmed edir; sistem avansı paid_amount kimi yazır.
+7. Supabase > Table Editor > reservations cədvəlində status, paid_amount və paid_at sahələrini yoxlayın.
 
 STATUSLAR
 - pending_payment: avans köçürülməsini gözləyir, 60 dəqiqəlik müvəqqəti hold.
@@ -112,4 +110,4 @@ STATUSLAR
 - payment_review: ödəniş alınıb, amma məbləğ/tarix münaqişəsi yoxlanmalıdır.
 - cancelled: admin tərəfindən ləğv üçün status.
 
-Admin əməliyyatı üçün Supabase Dashboard > Table Editor > reservations istifadə edin. Ödənişi geri qaytarmaq üçün Epoint kabinetində refund prosesini ayrıca icra edin; bu paket avtomatik refund etmir.
+Admin təsdiqi üçün admin paneldə rezervasiyanın statusunu “Avans yoxlanılıb — təsdiqlə” seçin. Bu əməliyyat yalnız menecer bank hesabında real daxilolmanı yoxladıqdan sonra edilməlidir. Qalan 50% giriş zamanı alınır.
