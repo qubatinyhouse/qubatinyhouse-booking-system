@@ -48,6 +48,9 @@ INSERT INTO public.seasonal_rates(unit_id,start_date,end_date,nightly_rate,label
 VALUES ('scandi-small-1','2027-06-01','2027-09-01',220,'Yay mövsümü',true);
 End_date daxil edilmir; məsələn yuxarıdakı dövr 31 avqust gecəsinə qədərdir. Digər evlər üçün ayrıca qeyd əlavə edin.
 
+MÖVCUD CANLI BOOKING BAZASI ÜÇÜN:
+Supabase SQL Editor-də supabase/migrations/20261031_admin_dashboard_compat.sql faylını yalnız bir dəfə (və ya təkrar təhlükəsiz şəkildə) işlədin. Bu migration seasonal_rates üçün həftəiçi/həftəsonu sütunlarını və blocked_dates cədvəlini təmin edir; mövcud rezervasiya və maliyyə qeydlərini dəyişmir. Rezervasiya tarixçəsi saxlanıldığı üçün mövcud units ID-lərini əl ilə dəyişməyin.
+
 3) EPOINT MERCHANT HESABI AÇ
 ----------------------------
 1. https://epoint.az/ saytında merchant kimi müraciət edin.
