@@ -180,22 +180,22 @@ a.link{color:#967542}
 <section class="section active" id="dashboard">
 <div class="cards">
 <div class="card">
-<div class="card-label">Ümumi gəlir</div>
+<div class="card-label">Cari ayın gəliri</div>
 <div class="card-value" id="income">— AZN</div>
-<div class="card-note">Maliyyə modulundan inteqrasiya ediləcək</div>
+<div class="card-note">Maliyyə modulunda administrator girişi tələb olunur</div>
 </div>
 <div class="card">
-<div class="card-label">Ümumi xərc</div>
+<div class="card-label">Cari ayın xərci</div>
 <div class="card-value" id="expense">— AZN</div>
-<div class="card-note">Maliyyə modulundan inteqrasiya ediləcək</div>
+<div class="card-note">Cari ay üzrə maliyyə göstəricisi</div>
 </div>
 <div class="card">
-<div class="card-label">Xalis mənfəət</div>
+<div class="card-label">Cari ayın xalis mənfəəti</div>
 <div class="card-value" id="profit">— AZN</div>
 <div class="card-note">Gəlir minus xərc</div>
 </div>
 <div class="card">
-<div class="card-label">Rezervasiyalar</div>
+<div class="card-label">Ümumi rezervasiyalar</div>
 <div class="card-value" id="bookingCount">—</div>
 <div class="card-note" id="bookingCountNote">Rezervasiya bazası yoxlanılır...</div>
 </div>
@@ -216,7 +216,7 @@ a.link{color:#967542}
 <div class="panel">
 <h3>Sistem vəziyyəti</h3>
 <div class="notice">
-Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göstəricilərini göstərmək üçün Supabase cədvəlləri ilə inteqrasiya növbəti mərhələdə qurulmalıdır. Hazırda rəqəmlər uydurulmur.
+Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc yalnız maliyyə moduluna administrator kimi daxil olduqdan sonra yenilənir.
 </div>
 </div>
 </section>
@@ -316,7 +316,7 @@ Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göst�
 <div><h3 style="margin:0 0 6px">Maliyyə idarəetməsi</h3><div class="sub">Gəlir, xərc, kassa, bank, maaşlar, kommunal borclar və aylıq hesabatlar</div></div>
 <a class="link" href="/finance.html" target="_blank" rel="noopener">Ayrı pəncərədə aç ↗</a>
 </div>
-<iframe id="financeFrame" title="Quba Tiny House maliyyə idarəetməsi" src="/finance.html?embedded=1" loading="lazy" style="display:block;width:100%;height:1800px;border:1px solid var(--border);border-radius:10px;background:#f3f5f8"></iframe>
+<iframe id="financeFrame" title="Quba Tiny House maliyyə idarəetməsi" src="/finance.html?embedded=1" loading="eager" style="display:block;width:100%;height:1800px;border:1px solid var(--border);border-radius:10px;background:#f3f5f8"></iframe>
 <p class="notice" style="margin:12px 0 0">Maliyyə məlumatları mövcud ayrıca maliyyə bazasında saxlanılır. Bu inteqrasiya mövcud qeydləri silmir və rezervasiya bazasının strukturunu dəyişmir. Maliyyə bölməsinə daxil olmaq üçün mövcud maliyyə administratoru hesabınızdan istifadə edin.</p>
 </div>
 </section>
@@ -325,7 +325,7 @@ Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göst�
 <div class="panel">
 <h3>İşçilərin idarə edilməsi</h3>
 <div class="notice">İşçi məlumatları və maaş əməliyyatları mövcud maliyyə modulu ilə əlaqələndiriləcək.</div>
-<a class="link" href="/finance.html">Maaş moduluna keç →</a>
+<a class="link" href="/finance.html#employeeManagement">İşçilər və maaşlar modulunu aç →</a>
 </div>
 </section>
 
@@ -333,7 +333,7 @@ Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göst�
 <div class="panel">
 <h3>Təmizlik işləri</h3>
 <div class="notice">Təmizlik tapşırıqları və ödənişləri maliyyə modulundan idarə ediləcək.</div>
-<a class="link" href="/finance.html">Təmizlik moduluna keç →</a>
+<a class="link" href="/finance.html#cleaningTaskModule">Təmizlik tapşırıqlarını aç →</a>
 </div>
 </section>
 
@@ -341,7 +341,7 @@ Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göst�
 <div class="panel">
 <h3>Kommunal borclar</h3>
 <div class="notice">Elektrik, qaz, su və digər kommunal ödənişlər maliyyə modulu ilə əlaqələndiriləcək.</div>
-<a class="link" href="/finance.html">Kommunal modula keç →</a>
+<a class="link" href="/finance.html#utilityPaymentModule">Kommunal borc və ödənişləri aç →</a>
 </div>
 </section>
 
@@ -349,7 +349,7 @@ Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göst�
 <div class="panel">
 <h3>Hesabatlar</h3>
 <div class="notice">Gündəlik, aylıq və illik hesabatlar real maliyyə məlumatları bazaya qoşulduqdan sonra göstəriləcək.</div>
-<a class="link" href="/finance.html">Maliyyə hesabatlarına keç →</a>
+<a class="link" href="/finance.html#monthlyFinanceReport">Maliyyə hesabatlarını aç →</a>
 </div>
 </section>
 
@@ -399,31 +399,22 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-(async function () {
-  const financeClient = window.supabase.createClient(
-    "https://fynbzmyoleqcnqkhyfzd.supabase.co",
-    "sb_publishable_WM8Bxho4Xrp2SJR_uCNb-Q_MaxQeE4N"
-  );
-  const { data, error } = await financeClient
-    .from("finance_transactions")
-    .select("transaction_type, amount, transaction_date");
-  if (error) {
-    console.error("Maliyyə məlumatları yüklənmədi:", error.message);
-    return;
-  }
-  let income = 0, expense = 0;
-  (data || []).forEach(item => {
-    const amount = Number(item.amount || 0);
-    if (item.transaction_type === "income") income += amount;
-    if (item.transaction_type === "expense") expense += amount;
+// Maliyyə göstəriciləri yalnız maliyyə modulunda administrator sessiyası açıldıqdan sonra iframe-dən alınır.
+window.addEventListener("message", (event) => {
+  const frame = document.getElementById("financeFrame");
+  if (event.origin !== window.location.origin || !frame || event.source !== frame.contentWindow) return;
+  const data = event.data;
+  if (!data || data.type !== "QTH_FINANCE_SUMMARY") return;
+  const fmt = value => Number(value || 0).toLocaleString("az-AZ", {minimumFractionDigits:2,maximumFractionDigits:2}) + " AZN";
+  document.getElementById("income").textContent = fmt(data.income);
+  document.getElementById("expense").textContent = fmt(data.expense);
+  document.getElementById("profit").textContent = fmt(Number(data.income || 0) - Number(data.expense || 0));
+  const note = document.querySelector("#dashboard .notice");
+  if (note) note.textContent = "Maliyyə göstəriciləri təsdiqlənmiş maliyyə sessiyasından yeniləndi (" + String(data.month || "") + ").";
+  document.querySelectorAll("#dashboard .card-note").forEach((el, i) => {
+    if (i < 3) el.textContent = "Cari ay üzrə maliyyə məlumatı";
   });
-  const money = value => Number(value || 0).toLocaleString("az-AZ", {
-    minimumFractionDigits: 2, maximumFractionDigits: 2
-  }) + " AZN";
-  document.getElementById("income").textContent = money(income);
-  document.getElementById("expense").textContent = money(expense);
-  document.getElementById("profit").textContent = money(income - expense);
-})();
+});
 </script>
 <script>
 const ADMIN_API_URL = "/.netlify/functions/admin-reservations";

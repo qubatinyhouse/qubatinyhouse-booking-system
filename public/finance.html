@@ -115,6 +115,7 @@ Salam, administrator!
     <label>Hesabat ayı</label>
     <input type="month" id="reportMonth">
 
+    <div class="muted" id="reportPeriodLabel">Seçilmiş ay üzrə nəticələr</div>
     <div class="grid">
         <div class="card">
             <div class="muted">Aylıq gəlir</div>
@@ -132,6 +133,28 @@ Salam, administrator!
         </div>
         </div>
   </div>       
+  <div class="card" id="dailyYearlyReports">
+    <h3>Gündəlik və illik hesabat</h3>
+    <div class="grid">
+      <label>Günlük tarix<input type="date" id="reportDay"></label>
+      <label>İl<select id="reportYear"></select></label>
+    </div>
+    <div class="grid">
+      <div><div class="muted">Günlük gəlir</div><div class="metric green" id="dailyIncome">0 ₼</div></div>
+      <div><div class="muted">Günlük xərc</div><div class="metric red" id="dailyExpense">0 ₼</div></div>
+      <div><div class="muted">Günlük nəticə</div><div class="metric" id="dailyProfit">0 ₼</div></div>
+    </div>
+    <hr>
+    <div class="grid">
+      <div><div class="muted">İllik gəlir</div><div class="metric green" id="yearlyIncome">0 ₼</div></div>
+      <div><div class="muted">İllik xərc</div><div class="metric red" id="yearlyExpense">0 ₼</div></div>
+      <div><div class="muted">İllik nəticə</div><div class="metric" id="yearlyProfit">0 ₼</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Gəlir mənbələri üzrə hesabat</h3>
+    <div id="incomeSourceReport" class="muted">Məlumat yüklənir...</div>
+  </div>
   <div class="card" id="employeeSalarySection">
 
   <h3>İşçi maaşlarının idarə edilməsi</h3>
@@ -140,37 +163,14 @@ Salam, administrator!
   <label>Aylıq sabit maaş (AZN)</label>
   <input type="number" id="managerSalary" value="500">
 
-  <h4>Təmizlikçi</h4>
+  <h4>Təmizlik tarifləri</h4>
   <label>Skandinav evlərinin təmizliyi (AZN / ev)</label>
-  <input type="number" id="scandiCleaningRate" value="30">
-
+  <input type="number" id="scandiCleaningRate" value="30" min="0" step="0.01">
   <label>A-FRAME evlərinin təmizliyi (AZN / ev)</label>
-  <input type="number" id="aframeCleaningRate" value="50">
-
+  <input type="number" id="aframeCleaningRate" value="50" min="0" step="0.01">
   <hr>
 
-  <h4>Təmizlik işi əlavə et</h4>
 
-  <label>Ev növü</label>
-  <select id="cleaningHouseType">
-    <option value="scandinav">Skandinav evi</option>
-    <option value="aframe">A-FRAME evi</option>
-  </select>
-
-  <label>Təmizlik tarixi</label>
-  <input type="date" id="cleaningDate">
-
-  <label>Təmizlik tamamlanıb?</label>
-  <select id="cleaningStatus">
-    <option value="completed">Bəli</option>
-    <option value="pending">Xeyr</option>
-  </select>
-
-  <button type="button" onclick="addCleaningWork()">
-    Təmizlik işini əlavə et
-  </button>
-
-  <div id="salaryMessage"></div>
 </div>
   <hr>
 
@@ -205,7 +205,37 @@ Salam, administrator!
   Maaşı ödə və yadda saxla
 </button>
 
-<div id="salaryPaymentMessage"></div><h3>Yeni əməliyyat əlavə et</h3>
+<div id="salaryPaymentMessage"></div>
+
+<div class="card" id="employeeManagement">
+  <h3>İşçilərin idarə edilməsi</h3>
+  <div class="grid">
+    <label>Ad Soyad<input id="employeeName" maxlength="120" placeholder="İşçinin adı"></label>
+    <label>Telefon<input id="employeePhone" maxlength="30" placeholder="050 000 00 00"></label>
+    <label>Vəzifə<input id="employeePosition" maxlength="80" placeholder="Nəzarətçi / Təmizlikçi"></label>
+    <label>Maaş növü<select id="employeeSalaryType"><option value="monthly">Aylıq</option><option value="daily">Günlük</option><option value="weekly">Həftəlik</option></select></label>
+    <label>Baza maaşı (AZN)<input id="employeeBaseSalary" type="number" min="0" step="0.01" value="0"></label>
+  </div>
+  <button type="button" onclick="addEmployee()">İşçini əlavə et</button>
+  <p id="employeeMessage" class="muted" aria-live="polite"></p>
+  <div id="employeeList"></div>
+</div>
+
+<div class="card" id="cleaningTaskModule">
+  <h3>Təmizlik tapşırıqları</h3>
+  <div class="grid">
+    <label>Ev növü<select id="cleaningHouseType" onchange="setCleaningRate()"><option value="scandinav">Skandinav</option><option value="aframe">A-FRAME</option></select></label>
+    <label>Ev adı<input id="cleaningHouseName" placeholder="Orange House / A-FRAME-1"></label>
+    <label>Tarix<input id="cleaningDate" type="date"></label>
+    <label>İşçi<select id="cleaningEmployee"><option value="">İşçi seçin</option></select></label>
+    <label>Məbləğ (AZN)<input id="cleaningAmount" type="number" min="0" step="0.01"></label>
+    <label>Status<select id="cleaningStatus"><option value="pending">Gözləyir</option><option value="completed">Tamamlandı</option></select></label>
+  </div>
+  <label>Qeyd<input id="cleaningNotes" maxlength="500" placeholder="Əlavə qeyd"></label>
+  <button type="button" onclick="addCleaningWork()">Təmizlik tapşırığı yarat</button>
+  <p id="cleaningTaskMessage" class="muted" aria-live="polite"></p>
+  <div id="cleaningTaskList"></div>
+</div><h3>Yeni əməliyyat əlavə et</h3>
 
   <label>Əməliyyat növü</label>
   <select id="financeType">
@@ -275,6 +305,19 @@ document.getElementById("financeDate").value = localDate;
 
   <button onclick="addUtility()">Borcu yadda saxla</button>
   <p id="utilityMessage"></p>
+
+  <div class="card" id="utilityPaymentModule">
+    <h3>Kommunal ödənişi qeyd et</h3>
+    <label>Borc seçin<select id="utilityPaymentSelect"><option value="">Kommunal borc seçin</option></select></label>
+    <div class="grid">
+      <label>Ödəniş məbləği (AZN)<input id="utilityPaymentAmount" type="number" min="0.01" step="0.01"></label>
+      <label>Ödəniş üsulu<select id="utilityPaymentMethod"><option value="cash">Nağd</option><option value="bank">Bank</option><option value="card">Kart</option><option value="transfer">Köçürmə</option></select></label>
+    </div>
+    <label>Qeyd<input id="utilityPaymentNotes" maxlength="500"></label>
+    <button type="button" onclick="submitUtilityPayment()">Ödənişi yadda saxla</button>
+    <p id="utilityPaymentMessage" class="muted" aria-live="polite"></p>
+    <div id="utilityRecords"></div>
+  </div>
 </div></section>
 </main>
 
@@ -361,6 +404,9 @@ document.getElementById("login").style.display="none";
 document.getElementById("dashboard").style.display="block";
 await loadData();
   await loadSalaryEmployees();
+  await loadCleaningTasks();
+  await loadUtilityRecords();
+  setCleaningRate();
 }else{
 document.getElementById("login").style.display="block";
 document.getElementById("dashboard").style.display="none";
@@ -408,12 +454,23 @@ document.getElementById("paid").textContent=money(paid);
 document.getElementById("outstanding").textContent=money(outstanding);
 document.getElementById("commission").textContent=money(commission);
 // BANK VƏ KASSA QALIQ HESABLANMASI
-const { data: transactions, error: financeError } = await client
-  .from("finance_transactions")
-  .select("transaction_type, amount, payment_method, transaction_date");
-
+let transactions = [];
+let financeError = null;
+for (let offset = 0; ; offset += 1000) {
+  const page = await client
+    .from("finance_transactions")
+    .select("id, transaction_type, category, amount, payment_method, description, transaction_date")
+    .order("transaction_date", { ascending: false })
+    .range(offset, offset + 999);
+  if (page.error) { financeError = page.error; break; }
+  transactions = transactions.concat(page.data || []);
+  if (!page.data || page.data.length < 1000) break;
+}
 if (financeError) {
   console.error("Maliyyə xətası:", financeError.message);
+  document.getElementById("monthlyIncome").textContent = "Yüklənmədi";
+  document.getElementById("monthlyExpense").textContent = "Yüklənmədi";
+  document.getElementById("monthlyProfit").textContent = "Yüklənmədi";
   return;
 }
 
@@ -478,6 +535,83 @@ document.getElementById("monthlyExpense").textContent =
 
 document.getElementById("monthlyProfit").textContent =
     money(monthlyIncome - monthlyExpense);
+document.getElementById("reportPeriodLabel").textContent =
+    "Hesabat dövrü: " + selectedMonth;
+const dayInput = document.getElementById("reportDay");
+const yearSelect = document.getElementById("reportYear");
+if (dayInput && !dayInput.value) dayInput.value = localDate;
+if (yearSelect && !yearSelect.options.length) {
+  const thisYear = new Date().getFullYear();
+  for (let y = thisYear - 4; y <= thisYear + 1; y++) {
+    const opt = document.createElement("option"); opt.value = String(y); opt.textContent = String(y);
+    if (y === thisYear) opt.selected = true;
+    yearSelect.appendChild(opt);
+  }
+}
+const selectedDay = dayInput ? dayInput.value : localDate;
+const selectedYear = yearSelect ? yearSelect.value : String(new Date().getFullYear());
+let dailyIncome = 0, dailyExpense = 0, yearlyIncome = 0, yearlyExpense = 0;
+(transactions || []).forEach(item => {
+  const amount = Number(item.amount || 0);
+  if (item.transaction_date === selectedDay) {
+    if (item.transaction_type === "income") dailyIncome += amount;
+    else if (item.transaction_type === "expense") dailyExpense += amount;
+  }
+  if (String(item.transaction_date || "").slice(0,4) === selectedYear) {
+    if (item.transaction_type === "income") yearlyIncome += amount;
+    else if (item.transaction_type === "expense") yearlyExpense += amount;
+  }
+});
+document.getElementById("dailyIncome").textContent = money(dailyIncome);
+document.getElementById("dailyExpense").textContent = money(dailyExpense);
+document.getElementById("dailyProfit").textContent = money(dailyIncome-dailyExpense);
+document.getElementById("yearlyIncome").textContent = money(yearlyIncome);
+document.getElementById("yearlyExpense").textContent = money(yearlyExpense);
+document.getElementById("yearlyProfit").textContent = money(yearlyIncome-yearlyExpense);
+
+
+// Gəlir mənbələri: seçilmiş ayda kateqoriyalar üzrə faktiki daxilolmalar.
+const sourceTotals = {};
+(transactions || []).forEach(item => {
+  if (item.transaction_type !== "income" || !item.transaction_date || item.transaction_date.slice(0,7) !== selectedMonth) return;
+  const key = item.category || "Kateqoriyasız gəlir";
+  sourceTotals[key] = (sourceTotals[key] || 0) + Number(item.amount || 0);
+});
+const sourceHost = document.getElementById("incomeSourceReport");
+const sourceRows = Object.entries(sourceTotals).sort((a,b)=>b[1]-a[1]);
+sourceHost.innerHTML = sourceRows.length
+  ? '<div style="overflow-x:auto"><table><thead><tr><th>Gəlir mənbəyi</th><th>Məbləğ</th></tr></thead><tbody>' +
+    sourceRows.map(([name,total])=>'<tr><td>'+escapeHTML(name)+'</td><td class="green">'+money(total)+'</td></tr>').join("") +
+    '</tbody></table></div>'
+  : '<p class="muted">Seçilmiş ay üzrə gəlir qeydə alınmayıb.</p>';
+
+// Dashboard kartları həmişə cari ayı göstərir; tarix seçimi yalnız hesabat bölməsinə təsir edir.
+let currentIncome = 0, currentExpense = 0;
+(transactions || []).forEach(item => {
+  if (!item.transaction_date || item.transaction_date.slice(0,7) !== currentMonth) return;
+  const amount = Number(item.amount || 0);
+  if (item.transaction_type === "income") currentIncome += amount;
+  else if (item.transaction_type === "expense") currentExpense += amount;
+});
+if (window.parent !== window) {
+  window.parent.postMessage({
+    type: "QTH_FINANCE_SUMMARY",
+    income: currentIncome,
+    expense: currentExpense,
+    month: currentMonth
+  }, window.location.origin);
+}
+
+// Maliyyə əməliyyat tarixçəsi
+const history = document.getElementById("financeHistory");
+if (history) {
+  const rows = [...(transactions || [])].sort((a,b) =>
+    String(b.transaction_date || "").localeCompare(String(a.transaction_date || ""))
+  ).slice(0,50);
+  history.innerHTML = rows.length ? '<div style="overflow-x:auto"><table><thead><tr><th>Tarix</th><th>Növ</th><th>Kateqoriya</th><th>Ödəniş</th><th>Məbləğ</th></tr></thead><tbody>' +
+    rows.map(item => '<tr><td>'+escapeHTML(item.transaction_date || '')+'</td><td class="'+(item.transaction_type==='income'?'green':'red')+'">'+(item.transaction_type==='income'?'Gəlir':'Xərc')+'</td><td>'+escapeHTML(item.category || '')+'</td><td>'+escapeHTML(item.payment_method || '')+'</td><td>'+money(item.amount)+'</td></tr>').join('') +
+    '</tbody></table></div>' : '<p class="muted">Hələ maliyyə əməliyyatı yoxdur.</p>';
+}
   }
   function escapeHTML(value){
 return String(value).replace(/[&<>"']/g,c=>({
@@ -615,14 +749,113 @@ async function payEmployeeSalary(
     notes
   );
 }  
-    async function loadSalaryEmployees() {
+    async function addEmployee() {
+  const message=document.getElementById("employeeMessage");
+  const full_name=document.getElementById("employeeName").value.trim();
+  const phone=document.getElementById("employeePhone").value.trim();
+  const position=document.getElementById("employeePosition").value.trim();
+  const salary_type=document.getElementById("employeeSalaryType").value;
+  const base_salary=Number(document.getElementById("employeeBaseSalary").value || 0);
+  if(full_name.length<2 || base_salary<0 || !Number.isFinite(base_salary)){message.textContent="İşçi adı və maaş məlumatını düzgün daxil edin.";return;}
+  const {error}=await client.from("employees").insert({full_name,phone:phone||null,position:position||null,salary_type,base_salary,active:true});
+  if(error){message.textContent="Xəta: "+error.message;return;}
+  message.textContent="İşçi əlavə edildi.";
+  ["employeeName","employeePhone","employeePosition"].forEach(id=>document.getElementById(id).value="");
+  await loadSalaryEmployees();
+}
+async function editEmployee(id) {
+  const employee = (window.qthEmployees || []).find(item => item.id === id);
+  if (!employee) return;
+  const full_name = prompt("İşçinin adı və soyadı:", employee.full_name);
+  if (full_name === null) return;
+  const position = prompt("Vəzifə:", employee.position || "");
+  if (position === null) return;
+  const baseText = prompt("Baza maaşı (AZN):", String(employee.base_salary || 0));
+  if (baseText === null) return;
+  const base_salary = Number(baseText);
+  if (full_name.trim().length < 2 || !Number.isFinite(base_salary) || base_salary < 0) {
+    alert("Daxil edilən məlumatlar düzgün deyil."); return;
+  }
+  const { error } = await client.from("employees").update({
+    full_name: full_name.trim(), position: position.trim() || null, base_salary
+  }).eq("id", id);
+  if (error) { alert("İşçi yenilənmədi: " + error.message); return; }
+  await loadSalaryEmployees();
+}
+async function deactivateEmployee(id) {
+  const employee = (window.qthEmployees || []).find(item => item.id === id);
+  if (!employee || !confirm(employee.full_name + " deaktiv edilsin? Keçmiş maaş qeydləri saxlanılacaq.")) return;
+  const { error } = await client.from("employees").update({ active: false }).eq("id", id);
+  if (error) { alert("İşçi deaktiv edilmədi: " + error.message); return; }
+  await loadSalaryEmployees();
+}
+async function loadCleaningTasks(){
+  const host=document.getElementById("cleaningTaskList");
+  if(!host)return;
+  const {data,error}=await client.from("cleaning_tasks").select("id,house_type,house_name,task_date,employee_id,status,amount,notes").order("task_date",{ascending:false}).limit(100);
+  if(error){host.textContent="Tapşırıqlar yüklənmədi: "+error.message;return;}
+  const names={}; (window.qthEmployees||[]).forEach(e=>names[e.id]=e.full_name);
+  host.innerHTML=(data||[]).length?'<div style="overflow-x:auto"><table><thead><tr><th>Tarix</th><th>Ev</th><th>İşçi</th><th>Məbləğ</th><th>Status</th><th>Əməliyyat</th></tr></thead><tbody>'+
+    data.map(t=>'<tr><td>'+escapeHTML(t.task_date)+'</td><td>'+escapeHTML(t.house_name||t.house_type)+'</td><td>'+escapeHTML(names[t.employee_id]||"—")+'</td><td>'+money(t.amount)+'</td><td>'+(t.status==="completed"?"Tamamlandı":"Gözləyir")+'</td><td>'+(t.status==="pending"?'<button type="button" onclick="completeCleaningTask(\''+t.id+'\')">Tamamla</button>':'—')+'</td></tr>').join("")+'</tbody></table></div>':'<p class="muted">Təmizlik tapşırığı yoxdur.</p>';
+}
+function setCleaningRate(){
+  const type=document.getElementById("cleaningHouseType").value;
+  const rate=type==="aframe"?document.getElementById("aframeCleaningRate").value:document.getElementById("scandiCleaningRate").value;
+  document.getElementById("cleaningAmount").value=Number(rate||0);
+}
+async function addCleaningWork(){
+  const message=document.getElementById("cleaningTaskMessage");
+  const house_type=document.getElementById("cleaningHouseType").value;
+  const house_name=document.getElementById("cleaningHouseName").value.trim();
+  const task_date=document.getElementById("cleaningDate").value;
+  const employee_id=document.getElementById("cleaningEmployee").value||null;
+  const amount=Number(document.getElementById("cleaningAmount").value||0);
+  const status=document.getElementById("cleaningStatus").value;
+  const notes=document.getElementById("cleaningNotes").value.trim();
+  if(!task_date||amount<0||!Number.isFinite(amount)){message.textContent="Tarix və məbləği düzgün daxil edin.";return;}
+  const {error}=await client.from("cleaning_tasks").insert({house_type,house_name:house_name||null,task_date,employee_id,amount,status,notes:notes||null,completed_at:status==="completed"?new Date().toISOString():null});
+  if(error){message.textContent="Xəta: "+error.message;return;}
+  message.textContent="Təmizlik tapşırığı yadda saxlanıldı.";
+  document.getElementById("cleaningHouseName").value="";
+  document.getElementById("cleaningNotes").value="";
+  await loadCleaningTasks();
+}
+async function completeCleaningTask(id){
+  const {error}=await client.from("cleaning_tasks").update({status:"completed",completed_at:new Date().toISOString()}).eq("id",id);
+  if(error){alert("Tapşırıq yenilənmədi: "+error.message);return;}
+  await loadCleaningTasks();
+}
+async function loadUtilityRecords(){
+  const select=document.getElementById("utilityPaymentSelect"),host=document.getElementById("utilityRecords");
+  if(!select||!host)return;
+  const {data,error}=await client.from("utilities").select("id,utility_type,provider,amount,paid_amount,due_date,status").order("due_date",{ascending:true});
+  if(error){host.textContent="Kommunal siyahısı yüklənmədi: "+error.message;return;}
+  select.innerHTML='<option value="">Kommunal borc seçin</option>'+(data||[]).map(u=>'<option value="'+u.id+'">'+escapeHTML(u.utility_type)+' — '+escapeHTML(u.provider||"")+' — qalıq '+money(Number(u.amount)-Number(u.paid_amount||0))+'</option>').join("");
+  host.innerHTML=(data||[]).length?'<div style="overflow-x:auto"><table><thead><tr><th>Xidmət</th><th>Təchizatçı</th><th>Borc</th><th>Ödənilib</th><th>Qalıq</th><th>Son tarix</th></tr></thead><tbody>'+
+    data.map(u=>'<tr><td>'+escapeHTML(u.utility_type)+'</td><td>'+escapeHTML(u.provider||"—")+'</td><td>'+money(u.amount)+'</td><td>'+money(u.paid_amount)+'</td><td>'+money(Number(u.amount)-Number(u.paid_amount||0))+'</td><td>'+escapeHTML(u.due_date||"—")+'</td></tr>').join("")+'</tbody></table></div>':'<p class="muted">Kommunal borcu yoxdur.</p>';
+}
+async function submitUtilityPayment(){
+  const message=document.getElementById("utilityPaymentMessage");
+  const p_utility_id=document.getElementById("utilityPaymentSelect").value;
+  const p_amount=Number(document.getElementById("utilityPaymentAmount").value);
+  const p_payment_method=document.getElementById("utilityPaymentMethod").value;
+  const p_notes=document.getElementById("utilityPaymentNotes").value.trim();
+  if(!p_utility_id||!Number.isFinite(p_amount)||p_amount<=0){message.textContent="Borc və düzgün ödəniş məbləği seçin.";return;}
+  const {error}=await client.rpc("record_utility_payment",{p_utility_id,p_amount,p_payment_method,p_notes:p_notes||null});
+  if(error){message.textContent="Ödəniş qeydə alınmadı: "+error.message;return;}
+  message.textContent="Kommunal ödənişi qeydə alındı.";
+  document.getElementById("utilityPaymentAmount").value="";
+  document.getElementById("utilityPaymentNotes").value="";
+  await loadData(); await loadUtilityRecords();
+}
+async function loadSalaryEmployees() {
   const select = document.getElementById("salaryEmployee");
 
   select.innerHTML = '<option value="">İşçi seçin</option>';
 
   const { data, error } = await client
     .from("employees")
-    .select("id, full_name")
+    .select("id, full_name, position, salary_type, base_salary, active")
     .eq("active", true)
     .order("full_name");
 
@@ -631,7 +864,14 @@ async function payEmployeeSalary(
     return;
   }
 
+  window.qthEmployees = data || [];
+  const cleaningSelect=document.getElementById("cleaningEmployee");
+  if(cleaningSelect) cleaningSelect.innerHTML='<option value="">İşçi seçin</option>';
+  const list=document.getElementById("employeeList");
+  if(list) list.innerHTML=(data||[]).length?'<div style="overflow-x:auto"><table><thead><tr><th>Ad Soyad</th><th>Vəzifə</th><th>Maaş tipi</th><th>Baza maaşı</th><th>Status</th><th>İdarəetmə</th></tr></thead><tbody>'+(data||[]).map(e=>'<tr><td>'+escapeHTML(e.full_name)+'</td><td>'+escapeHTML(e.position||"—")+'</td><td>'+escapeHTML(e.salary_type||"—")+'</td><td>'+money(e.base_salary)+'</td><td>Aktiv</td><td><button type="button" onclick="editEmployee(\''+e.id+'\')">Redaktə</button> <button type="button" onclick="deactivateEmployee(\''+e.id+'\')">Deaktiv et</button></td></tr>').join("")+'</tbody></table></div>':'<p class="muted">İşçi yoxdur.</p>';
   (data || []).forEach(employee => {
+    if(cleaningSelect){const cleanOption=document.createElement("option");cleanOption.value=employee.id;cleanOption.textContent=employee.full_name;cleaningSelect.appendChild(cleanOption);}
+
     const option = document.createElement("option");
     option.value = employee.id;
     option.textContent = employee.full_name;
@@ -649,6 +889,8 @@ document.getElementById("dashboard").style.display=session?"block":"none";
 });
 
 document.getElementById("reportMonth").addEventListener("change", loadData);
+document.getElementById("reportDay").addEventListener("change", loadData);
+document.getElementById("reportYear").addEventListener("change", loadData);
 checkSession();
 </script>
 </body>
