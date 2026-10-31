@@ -636,7 +636,7 @@ async function qthQueueBookingDeposit(reservation) {
   const { data, error } = await auth.rpc("record_booking_deposit_income", {
     p_reservation_id: reservation.id,
     p_amount: Number(reservation.paid_amount),
-    p_payment_method: "bank",
+    p_payment_method: reservation.payment_method || "bank",
     p_description: "Rezervasiya behi — " + (reservation.guest_name || "Müştəri") +
       " | " + (reservation.booking_code || reservation.id) + " | " +
       (reservation.unit_id || "") + " | " + (reservation.check_in || "") + " – " + (reservation.check_out || ""),
@@ -805,11 +805,41 @@ window.filterReservations = function () {
 };
 
 window.changeReservationStatus = async function (id, status) {
-  if (!window.confirm(status === "confirmed" ? "BANK YOXLAMASI: Avansın bank hesabına faktiki daxil olduğunu yoxladınızmı? Yalnız bank çıxarışında yoxladıqdan sonra OK basın." : "Rezervasiyanın statusunu dəyişmək istəyirsiniz?")) {
+  const reservation = allReservations.find(item => item.id === id);
+  let payment = null;
+  if (status === "confirmed") {
+    if (!reservation) { renderReservations(allReservations); return; }
+    const suggested = Number(reservation.paid_amount || reservation.deposit_amount || 0);
+    const rawAmount = window.prompt(
+      "Müştərinin FAKTİKİ ödədiyi məbləği AZN ilə daxil edin.\nHesablanan beh: " + money(reservation.deposit_amount) +
+      "\nÜmumi məbləğ: " + money(reservation.total_amount) +
+      "\n\nMüştəri az məbləğ ödəyibsə, yalnız aldığı məbləği yazın.",
+      suggested > 0 ? suggested.toFixed(2) : ""
+    );
+    if (rawAmount === null) { renderReservations(allReservations); return; }
+    const amount = Number(String(rawAmount).replace(",", "."));
+    if (!Number.isFinite(amount) || amount <= 0 || amount > Number(reservation.total_amount || 0)) {
+      window.alert("Məbləğ düzgün deyil. 0-dan böyük və ümumi məbləğdən çox olmayan AZN daxil edin.");
+      renderReservations(allReservations); return;
+    }
+    const methodChoice = window.prompt("Ödəniş üsulunu seçin:\n1 — Bank\n2 — Nağd\n3 — Kart\n4 — Köçürmə", "1");
+    if (methodChoice === null) { renderReservations(allReservations); return; }
+    const methods = {"1":"bank","2":"cash","3":"card","4":"transfer"};
+    if (!methods[String(methodChoice).trim()]) {
+      window.alert("Ödəniş üsulu düzgün seçilməyib.");
+      renderReservations(allReservations); return;
+    }
+    payment = { amount, paymentMethod: methods[String(methodChoice).trim()] };
+    if (!window.confirm(
+      "Faktiki alınan: " + money(amount) + "\nÖdəniş üsulu: " + methods[String(methodChoice).trim()] +
+      "\nMüştəridən qalan: " + money(Number(reservation.total_amount) - amount) +
+      "\n\nBu ödənişi təsdiqləyirsiniz?"
+    )) { renderReservations(allReservations); return; }
+  } else if (!window.confirm("Rezervasiyanın statusunu dəyişmək istəyirsiniz?")) {
     renderReservations(allReservations); return;
   }
   try {
-    const result = await adminRequest("PATCH", { id, status });
+    const result = await adminRequest("PATCH", { id, status, ...(payment || {}) });
     if (status === "confirmed") await qthQueueBookingDeposit(result.reservation);
     await loadReservations();
   } catch (error) {
