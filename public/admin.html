@@ -151,9 +151,9 @@ Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göst�
         <select id="reservationStatusFilter"
           onchange="filterReservations()">
           <option value="">Bütün rezervasiyalar</option>
-          <option value="pending">Gözləyir</option>
+          <option value="pending_payment">Beh gözlənilir</option>
           <option value="confirmed">Təsdiqlənib</option>
-          <option value="cancelled">Ləğv edilib</option>
+          <option value="cancelled">Ləğv edilib</option><option value="expired">Vaxtı bitib</option><option value="payment_failed">Ödəniş alınmadı</option><option value="payment_review">Yoxlama tələb olunur</option>
         </select>
       </div>
     </div>
@@ -272,6 +272,34 @@ document.getElementById("today").textContent=
 new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).format(new Date());
 </script>
 <script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(async function () {
+  const financeClient = window.supabase.createClient(
+    "https://fynbzmyoleqcnqkhyfzd.supabase.co",
+    "sb_publishable_WM8Bxho4Xrp2SJR_uCNb-Q_MaxQeE4N"
+  );
+  const { data, error } = await financeClient
+    .from("finance_transactions")
+    .select("transaction_type, amount, transaction_date");
+  if (error) {
+    console.error("Maliyyə məlumatları yüklənmədi:", error.message);
+    return;
+  }
+  let income = 0, expense = 0;
+  (data || []).forEach(item => {
+    const amount = Number(item.amount || 0);
+    if (item.transaction_type === "income") income += amount;
+    if (item.transaction_type === "expense") expense += amount;
+  });
+  const money = value => Number(value || 0).toLocaleString("az-AZ", {
+    minimumFractionDigits: 2, maximumFractionDigits: 2
+  }) + " AZN";
+  document.getElementById("income").textContent = money(income);
+  document.getElementById("expense").textContent = money(expense);
+  document.getElementById("profit").textContent = money(income - expense);
+})();
+</script>
 const ADMIN_API_URL = "/.netlify/functions/admin-reservations";
 let adminToken = sessionStorage.getItem("qth_admin_api_token") || "";
 let allReservations = [];
