@@ -79,10 +79,10 @@ create index if not exists seasonal_rates_unit_dates_idx on public.seasonal_rate
 -- Six physical houses: four Scandinavian and two A-Frame. Prices are sample values and are blocked until edited.
 insert into public.units (id,name,unit_type,capacity,weekday_rate,weekend_rate,holiday_rate,breakfast_rate_per_person,is_demo_rate,active,sort_order)
 values
- ('scandi-small-1','Skandinav 2–4 nəfərlik №1','small',4,150,180,250,15,true,true,1),
- ('scandi-small-2','Skandinav 2–4 nəfərlik №2','small',4,150,180,250,15,true,true,2),
- ('scandi-large-1','Skandinav 5–7 nəfərlik №1','large',7,180,220,300,15,true,true,3),
- ('scandi-large-2','Skandinav 5–7 nəfərlik №2','large',7,180,220,300,15,true,true,4),
+ ('scandi-orange','Orange House','large',7,150,180,250,15,true,true,1),
+ ('scandi-white','White House','large',7,150,180,250,15,true,true,2),
+ ('scandi-blue','Blue House','small',4,150,180,250,15,true,true,3),
+ ('scandi-green','Green House','small',4,150,180,250,15,true,true,4),
  ('aframe-1','A-Frame isti hovuzlu №1','aframe',10,250,300,400,15,true,true,5),
  ('aframe-2','A-Frame isti hovuzlu №2','aframe',10,250,300,400,15,true,true,6)
 on conflict (id) do nothing;
