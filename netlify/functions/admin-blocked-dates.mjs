@@ -75,7 +75,7 @@ export const handler = async (event) => {
 
     if (event.httpMethod === 'DELETE') {
       // blocked_dates.id is BIGINT (identity), not UUID.
-      const validBlockId = (value) => /^[1-9]\\d*$/.test(String(value ?? ''));
+      const validBlockId = (value) => /^[1-9]\d*$/.test(String(value ?? ''));
       const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
       const isBulkAll = body.all === true;
       const isBulkSelected = ids.length > 0 && ids.every(validBlockId);
