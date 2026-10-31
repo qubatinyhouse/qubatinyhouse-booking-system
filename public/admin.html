@@ -203,7 +203,13 @@ Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göst�
 <button class="btn" type="button" onclick="createDateBlock()">Seçilmiş günləri bağla</button>
 <button type="button" onclick="loadDateBlocks()">Təqvimi yenilə</button>
 </div>
-<div class="panel"><h3>Aktiv bağlanmış tarixlər</h3><div class="table-wrap"><table><thead><tr><th>Ev</th><th>Başlanğıc</th><th>Son tarix</th><th>Səbəb</th><th>Qeyd</th><th>Əməliyyat</th></tr></thead><tbody id="blockedDatesTable"><tr><td colspan="6">Məlumat yüklənməyib.</td></tr></tbody></table></div></div>
+<div class="panel">
+<h3>Aktiv bağlanmış tarixlər</h3>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px">
+<button class="btn" type="button" onclick="releaseSelectedDateBlocks()">Seçilmiş günləri aç</button>
+<button type="button" onclick="releaseAllDateBlocks()">Hamısını aç</button>
+</div>
+<div class="table-wrap"><table><thead><tr><th><input type="checkbox" id="selectAllBlockedDates" aria-label="Hamısını seç" onchange="toggleAllBlockedDateChecks(this.checked)"></th><th>Ev</th><th>Başlanğıc</th><th>Son tarix</th><th>Səbəb</th><th>Qeyd</th><th>Əməliyyat</th></tr></thead><tbody id="blockedDatesTable"><tr><td colspan="7">Məlumat yüklənməyib.</td></tr></tbody></table></div></div>
 </section>
 
 <section class="section" id="finance">
@@ -473,7 +479,8 @@ window.loadDateBlocks=async function(){
  try{
   const result=await blockedDatesRequest("GET");
   const blocks=result.blocks||[];
-  table.innerHTML=blocks.length?blocks.map(b=>'<tr><td>'+escapeReservation(b.unit_name)+'</td><td>'+escapeReservation(b.check_in)+'</td><td>'+escapeReservation(b.check_out)+'</td><td>'+escapeReservation(({owner:"Şəxsi istifadə",maintenance:"Təmir",other:"Digər"})[b.reason]||b.reason)+'</td><td>'+escapeReservation(b.note||"-")+'</td><td><button type="button" onclick="releaseDateBlock(\''+escapeReservation(b.id)+'\')">Yenidən aç</button></td></tr>').join(""):'<tr><td colspan="6">Aktiv bağlanmış tarix yoxdur.</td></tr>';
+  table.innerHTML=blocks.length?blocks.map(b=>'<tr><td><input class="blocked-date-check" type="checkbox" value="'+escapeReservation(b.id)+'" aria-label="Bu bağlamanı seç"></td><td>'+escapeReservation(b.unit_name)+'</td><td>'+escapeReservation(b.check_in)+'</td><td>'+escapeReservation(b.check_out)+'</td><td>'+escapeReservation(({owner:"Şəxsi istifadə",maintenance:"Təmir",other:"Digər"})[b.reason]||b.reason)+'</td><td>'+escapeReservation(b.note||"-")+'</td><td><button type="button" onclick="releaseDateBlock(\\''+escapeReservation(b.id)+'\\')">Yenidən aç</button></td></tr>').join(""):'<tr><td colspan="7">Aktiv bağlanmış tarix yoxdur.</td></tr>';
+  const selectAll=document.getElementById("selectAllBlockedDates");if(selectAll)selectAll.checked=false;
   msg.textContent=blocks.length+" aktiv bağlama tapıldı. Son tarix çıxış günüdür və bağlı aralığa daxil deyil.";
  }catch(e){msg.textContent=e.message;table.innerHTML='<tr><td colspan="6">Təqvim yüklənmədi.</td></tr>';}
 };
@@ -489,6 +496,25 @@ window.releaseDateBlock=async function(id){
  if(!confirm("Bu tarixləri yenidən rezervasiya üçün açmaq istəyirsiniz?"))return;
  const msg=document.getElementById("calendarMessage");
  try{await blockedDatesRequest("DELETE",{id});msg.textContent="Tarixlər yenidən açıldı.";await loadDateBlocks();}
+ catch(e){msg.textContent=e.message;}
+};
+window.toggleAllBlockedDateChecks=function(checked){
+ document.querySelectorAll(".blocked-date-check").forEach(input=>{input.checked=checked;});
+};
+window.releaseSelectedDateBlocks=async function(){
+ const ids=Array.from(document.querySelectorAll(".blocked-date-check:checked")).map(input=>input.value);
+ if(!ids.length){document.getElementById("calendarMessage").textContent="Əvvəlcə açmaq istədiyiniz tarixləri seçin.";return;}
+ if(!confirm(ids.length+" seçilmiş bağlamanı yenidən rezervasiyaya açmaq istəyirsiniz?"))return;
+ const msg=document.getElementById("calendarMessage");
+ try{const result=await blockedDatesRequest("DELETE",{ids});msg.textContent=result.released_count+" seçilmiş bağlama yenidən açıldı.";await loadDateBlocks();}
+ catch(e){msg.textContent=e.message;}
+};
+window.releaseAllDateBlocks=async function(){
+ const count=document.querySelectorAll(".blocked-date-check").length;
+ if(!count){document.getElementById("calendarMessage").textContent="Açılacaq aktiv bağlama yoxdur.";return;}
+ if(!confirm("Diqqət! Bütün 6 ev üzrə "+count+" aktiv tarix bağlamasının hamısı ləğv ediləcək. Davam etmək istəyirsiniz?"))return;
+ const msg=document.getElementById("calendarMessage");
+ try{const result=await blockedDatesRequest("DELETE",{all:true});msg.textContent=result.released_count+" bağlamanın hamısı yenidən açıldı.";await loadDateBlocks();}
  catch(e){msg.textContent=e.message;}
 };
 </script>
