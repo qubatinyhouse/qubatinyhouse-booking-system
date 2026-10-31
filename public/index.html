@@ -111,7 +111,7 @@ async function checkAvailability(){
   availabilityCache=data.units||[];unitSel.innerHTML='';
   const available=availabilityCache.filter(u=>u.available);
   if(!available.length){unitSel.innerHTML='<option value="">Bu tarixlərdə boş ev yoxdur</option>';status.textContent='Bu tarixlərdə seçilmiş ev növü üçün boş yer tapılmadı. Başqa tarix seçin.';updateQuote(null);return}
-  available.forEach(u=>{const o=document.createElement('option');o.value=u.id;o.textContent=`${u.name} — ${u.capacity} nəfərə qədər — ${u.quote?(u.isDemoRate?'nümunə tarif: ':'')+money(u.quote.total):'tarif qurulmalıdır'}`;unitSel.appendChild(o)});
+  available.forEach(u=>{const o=document.createElement('option');o.value=u.id;o.textContent=`${u.name} — ${u.id.startsWith('aframe-')?'2–10 nəfər':`2–${u.capacity} nəfər`} — ${u.quote?(u.isDemoRate?'nümunə tarif: ':'')+money(u.quote.total):'tarif qurulmalıdır'}`;unitSel.appendChild(o)});
   unitSel.disabled=false;updateQuote(selectedUnit());
   const demo=available.some(u=>u.isDemoRate);status.textContent=`${available.length} uyğun ev tapıldı. ${demo?'Qeyd: rezervasiyanı aktivləşdirmək üçün Supabase-də real tariflər təsdiqlənməlidir.':'Seçilmiş tarixlər üçün mövcudluq yeniləndi.'}`;
  }catch(e){unitSel.disabled=true;unitSel.innerHTML='<option value="">Mövcudluq yoxlanmadı</option>';status.textContent=e.message+' Sistemin administrator quraşdırması hələ tamamlanmamış ola bilər.'}
