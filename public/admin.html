@@ -197,7 +197,7 @@ a.link{color:#967542}
 <div class="card">
 <div class="card-label">Rezervasiyalar</div>
 <div class="card-value" id="bookingCount">—</div>
-<div class="card-note">Rezervasiya bazasına bağlantı gözləyir</div>
+<div class="card-note" id="bookingCountNote">Rezervasiya bazası yoxlanılır...</div>
 </div>
 </div>
 
@@ -471,10 +471,15 @@ window.loadReservations = async function () {
     const result = await adminRequest("GET");
     allReservations = result.reservations || [];
     renderReservations(allReservations);
-    document.getElementById("bookingCount").textContent = allReservations.length;
-    message.textContent = "Cəmi " + allReservations.length + " rezervasiya tapıldı.";
+    document.getElementById("bookingCount").textContent =
+      Number.isFinite(Number(result.totalCount)) ? Number(result.totalCount).toLocaleString("az-AZ") : allReservations.length.toLocaleString("az-AZ");
+    document.getElementById("bookingCountNote").textContent =
+      "Baza ilə əlaqə aktivdir · son yenilənmə " + new Date().toLocaleTimeString("az-AZ", {hour:"2-digit",minute:"2-digit"});
+    message.textContent = "Cəmi " + document.getElementById("bookingCount").textContent + " rezervasiya tapıldı.";
   } catch (error) {
     message.textContent = error.message;
+    document.getElementById("bookingCount").textContent = "—";
+    document.getElementById("bookingCountNote").textContent = "Bağlantı alınmadı: " + error.message;
     table.innerHTML = '<tr><td colspan="10">Məlumat yüklənmədi.</td></tr>';
   }
 };
@@ -630,6 +635,9 @@ window.releaseAllDateBlocks=async function(){
  try{const result=await blockedDatesRequest("DELETE",{all:true});msg.textContent=result.released_count+" bağlamanın hamısı yenidən açıldı.";await loadDateBlocks();}
  catch(e){msg.textContent=e.message;}
 };
+
+// Dashboard ilk açılışda rezervasiya bazasını yoxlayır və göstəricini yeniləyir.
+window.loadReservations();
 </script>
 </body>
 </html>
