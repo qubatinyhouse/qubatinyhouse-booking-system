@@ -24,6 +24,14 @@ td,th{text-align:left;padding:12px;border-bottom:1px solid #edf0f3}
 .red{color:#c43c43}
 #dashboard{display:none}
 #message{color:#c43c43}
+
+body.salary-only header{display:none}
+body.salary-only main{max-width:100%;margin:0;padding:12px}
+body.salary-only #dashboard>.card,
+body.salary-only #dashboard>.grid,
+body.salary-only #dashboard>div:not(#salaryPaymentModule){display:none!important}
+body.salary-only #salaryPaymentModule{display:block!important;margin:0;box-shadow:none;border:0;padding:16px}
+body.salary-only #salaryPaymentModule h3{margin-top:0}
 </style>
 </head>
 <body>
@@ -174,6 +182,7 @@ Salam, administrator!
 </div>
   <hr>
 
+<div class="card" id="salaryPaymentModule">
 <h3>İşçi maaşının ödənilməsi</h3>
 
 <label>İşçi</label>
@@ -207,6 +216,8 @@ Salam, administrator!
 
 <div id="salaryPaymentMessage"></div>
 
+<hr><h3>Son maaş ödənişləri</h3><div id="salaryPaymentHistory" class="muted">Ödəniş tarixçəsi yüklənir...</div>
+</div>
 <div class="card" id="employeeManagement">
   <h3>İşçilərin idarə edilməsi</h3>
   <div class="grid">
@@ -394,7 +405,8 @@ if(error){
 msg.textContent=error.message;
 return;
 }
-await checkSession();
+await if(new URLSearchParams(location.search).get("view")==="salary") document.body.classList.add("salary-only");
+checkSession();
 }
 
 async function checkSession(){
@@ -659,6 +671,7 @@ async function addFinanceTransaction() {
         document.getElementById("financeDescription").value = "";
 
         await loadData();
+        await loadSalaryPaymentHistory();
 
     } catch (error) {
         msg.textContent = "Xəta: " + error.message;
@@ -716,7 +729,23 @@ async function payEmployeeSalary(
         console.error(error);
     }
 }
-  async function submitSalaryPayment() {
+  
+async function loadSalaryPaymentHistory(){
+  const host=document.getElementById("salaryPaymentHistory");
+  if(!host)return;
+  const {data,error}=await client.from("salary_payments")
+    .select("id,employee_id,amount,payment_date,payment_method,period_start,period_end,notes")
+    .order("payment_date",{ascending:false}).limit(100);
+  if(error){host.textContent="Maaş tarixçəsi yüklənmədi: "+error.message;return;}
+  const names={}; (window.qthEmployees||[]).forEach(e=>names[e.id]=e.full_name);
+  host.innerHTML=(data||[]).length
+    ? '<div style="overflow-x:auto"><table><thead><tr><th>İşçi</th><th>Məbləğ</th><th>Tarix</th><th>Ödəniş üsulu</th><th>Maaş dövrü</th></tr></thead><tbody>'+
+      data.map(p=>'<tr><td>'+escapeHTML(names[p.employee_id]||"İşçi")+'</td><td>'+money(p.amount)+'</td><td>'+escapeHTML(p.payment_date||"—")+'</td><td>'+escapeHTML(p.payment_method||"—")+'</td><td>'+escapeHTML((p.period_start||"—")+" – "+(p.period_end||"—"))+'</td></tr>').join("")+
+      '</tbody></table></div>'
+    : '<p class="muted">Hələ maaş ödənişi qeydə alınmayıb.</p>';
+}
+
+async function submitSalaryPayment() {
   const employeeId = document.getElementById("salaryEmployee").value;
   const amount = Number(document.getElementById("salaryAmount").value);
   const paymentDate = document.getElementById("salaryPaymentDate").value;
@@ -762,6 +791,7 @@ async function payEmployeeSalary(
   message.textContent="İşçi əlavə edildi.";
   ["employeeName","employeePhone","employeePosition"].forEach(id=>document.getElementById(id).value="");
   await loadSalaryEmployees();
+  await loadSalaryPaymentHistory();
 }
 async function editEmployee(id) {
   const employee = (window.qthEmployees || []).find(item => item.id === id);
