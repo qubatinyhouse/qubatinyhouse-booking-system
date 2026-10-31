@@ -65,13 +65,15 @@ Netlify > qubatinyhouse layihəsi > Project configuration > Environment variable
 
 SUPABASE_URL = Supabase Project URL
 SUPABASE_SERVICE_ROLE_KEY = Supabase server/service_role secret key (yalnız server tərəfində)
+ADMIN_API_TOKEN = Admin panelin rezervasiya və təqvim API-si üçün ayrıca güclü gizli giriş kodu
 EPOINT_PUBLIC_KEY = Epoint merchant public_key
 EPOINT_PRIVATE_KEY = Epoint merchant private_key (məxfi)
 SITE_URL = https://qubatinyhouse.com
 EPOINT_REQUEST_URL = https://epoint.az/api/1/request  (istəyə bağlı; bu, standart dəyərdir)
 
-Dəyişənlər Functions runtime üçün əlçatan olmalıdır. Dəyişəndən sonra redeploy edin.
-Heç vaxt SUPABASE_SERVICE_ROLE_KEY və EPOINT_PRIVATE_KEY-i HTML-ə, GitHub-a və ya public fayla yazmayın.
+Dəyişənlər Functions runtime üçün əlçatan olmalıdır. ADMIN_API_TOKEN üçün uzun, təsadüfi və başqa yerdə istifadə olunmayan kod seçin. Bu kod admin.html-də rezervasiya və təqvim API-si ilk dəfə çağırılanda soruşulur; brauzer sessiyası bitənədək sessionStorage-da saxlanılır. Kod Netlify-dəki ADMIN_API_TOKEN ilə eyni olmalıdır. Mövcud admin panel parolundan fərqli ola bilər.
+Dəyişəndən sonra redeploy edin.
+Heç vaxt SUPABASE_SERVICE_ROLE_KEY, ADMIN_API_TOKEN və EPOINT_PRIVATE_KEY-i HTML-ə, GitHub-a və ya public fayla yazmayın.
 
 5) NETLIFY FUNCTIONS NECƏ YAYIMLANIR
 ------------------------------------
