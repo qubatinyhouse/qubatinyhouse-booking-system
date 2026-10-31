@@ -405,7 +405,6 @@ if(error){
 msg.textContent=error.message;
 return;
 }
-await if(new URLSearchParams(location.search).get("view")==="salary") document.body.classList.add("salary-only");
 checkSession();
 }
 
@@ -416,6 +415,7 @@ document.getElementById("login").style.display="none";
 document.getElementById("dashboard").style.display="block";
 await loadData();
   await loadSalaryEmployees();
+  await loadSalaryPaymentHistory();
   await loadCleaningTasks();
   await loadUtilityRecords();
   setCleaningRate();
@@ -921,6 +921,7 @@ document.getElementById("dashboard").style.display=session?"block":"none";
 document.getElementById("reportMonth").addEventListener("change", loadData);
 document.getElementById("reportDay").addEventListener("change", loadData);
 document.getElementById("reportYear").addEventListener("change", loadData);
+if(new URLSearchParams(location.search).get("view")==="salary") document.body.classList.add("salary-only");
 checkSession();
 </script>
 </body>
