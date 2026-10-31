@@ -145,9 +145,26 @@ a.link{color:#967542}
 }
 @media(max-width:380px){.grid{grid-template-columns:1fr}.cards{gap:7px}.card{padding:12px}}
 
+
+#adminAuthGate{display:flex}
+body.qth-authenticated #adminAuthGate{display:none!important}
+body.qth-authenticated .app{display:flex!important}
 </style>
 </head>
 <body>
+<div id="adminAuthGate" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#f3f6f4">
+ <section style="width:min(100%,440px);background:#fff;border:1px solid #e5ebe7;border-radius:18px;padding:28px;box-shadow:0 18px 55px #17372c18">
+  <div style="font-size:12px;letter-spacing:2px;color:#26704e;font-weight:800;margin-bottom:12px">QUBA TINY HOUSE</div>
+  <h2 style="margin:0 0 8px;color:#24352d">İdarəetmə panelinə giriş</h2>
+  <p style="color:#718078;font-size:13px;margin:0 0 18px">Bir dəfə daxil olun — maliyyə, işçilər və kommunal bölmələri eyni təhlükəsiz sessiyadan istifadə edəcək.</p>
+  <label style="display:block;font-size:13px;margin:12px 0 5px">E-poçt</label>
+  <input id="qthAdminEmail" type="email" autocomplete="username" style="width:100%;padding:13px;border:1px solid #dce4df;border-radius:9px;box-sizing:border-box">
+  <label style="display:block;font-size:13px;margin:12px 0 5px">Şifrə</label>
+  <input id="qthAdminPassword" type="password" autocomplete="current-password" style="width:100%;padding:13px;border:1px solid #dce4df;border-radius:9px;box-sizing:border-box">
+  <button id="qthAdminLogin" type="button" style="width:100%;margin-top:16px;padding:13px;background:#17372c;color:white;border:0;border-radius:9px;font-weight:700">Daxil ol</button>
+  <p id="qthAdminAuthMessage" role="status" style="font-size:13px;color:#a33c35;min-height:18px"></p>
+ </section>
+</div>
 <div class="app">
 
 <aside class="sidebar">
@@ -405,6 +422,35 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+(function(){
+ const AUTH_URL="https://fynbzmyoleqcnqkhyfzd.supabase.co";
+ const AUTH_KEY="sb_publishable_WM8Bxho4Xrp2SJR_uCNb-Q_MaxQeE4N";
+ const authClient=window.supabase.createClient(AUTH_URL,AUTH_KEY);
+ const gate=document.getElementById("adminAuthGate");
+ const app=document.querySelector(".app");
+ const message=document.getElementById("qthAdminAuthMessage");
+ async function showSession(session){
+   if(session){document.body.classList.add("qth-authenticated");gate.style.display="none";app.style.display="flex";}
+   else{document.body.classList.remove("qth-authenticated");app.style.display="none";gate.style.display="flex";}
+ }
+ document.getElementById("qthAdminLogin").addEventListener("click",async()=>{
+   const email=document.getElementById("qthAdminEmail").value.trim();
+   const password=document.getElementById("qthAdminPassword").value;
+   if(!email||!password){message.textContent="E-poçt və şifrəni daxil edin.";return;}
+   const btn=document.getElementById("qthAdminLogin");btn.disabled=true;message.textContent="Giriş yoxlanılır...";
+   const {data,error}=await authClient.auth.signInWithPassword({email,password});
+   btn.disabled=false;
+   if(error){message.textContent="Giriş alınmadı: "+error.message;return;}
+   document.getElementById("qthAdminPassword").value="";
+   message.textContent="";await showSession(data.session);
+   if(typeof window.loadReservations==="function")window.loadReservations();
+ });
+ authClient.auth.getSession().then(({data})=>showSession(data.session));
+ authClient.auth.onAuthStateChange((_event,session)=>showSession(session));
+ window.qthAdminAuthClient=authClient;
+})();
+</script>
+<script>
 // Maliyyə göstəriciləri yalnız maliyyə modulunda administrator sessiyası açıldıqdan sonra iframe-dən alınır.
 window.addEventListener("message", (event) => {
   const frame = document.getElementById("financeFrame");
@@ -633,8 +679,7 @@ window.releaseAllDateBlocks=async function(){
  catch(e){msg.textContent=e.message;}
 };
 
-// Dashboard ilk açılışda rezervasiya bazasını yoxlayır və göstəricini yeniləyir.
-window.loadReservations();
+// Rezervasiyalar yalnız vahid administrator sessiyası açıldıqdan sonra yüklənir.
 </script>
 </body>
 </html>
