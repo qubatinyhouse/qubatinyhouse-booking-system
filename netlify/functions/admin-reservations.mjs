@@ -165,7 +165,8 @@ export const handler = async (event) => {
 
     return json(405, { error: 'Yalnız GET, POST və PATCH sorğuları qəbul edilir.' });
   } catch (error) {
-    console.error('admin reservations error', error);
-    return json(503, { error: 'Rezervasiyalar yüklənmədi.' });
+    console.error('admin reservations error', { message: error?.message, code: error?.code, details: error?.details, hint: error?.hint });
+    const safeMessage = typeof error?.message === 'string' ? error.message.slice(0, 240) : 'Naməlum server xətası.';
+    return json(503, { error: 'Server xətası: ' + safeMessage, code: error?.code || null });
   }
 };
