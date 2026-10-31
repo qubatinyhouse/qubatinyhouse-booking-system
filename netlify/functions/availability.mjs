@@ -41,7 +41,7 @@ export const handler = async (event) => {
 
     const client = db();
 
-    const [unitsRes, bookingsRes, blockedRes] = await Promise.all([
+    const [unitsRes, bookingsRes, blockedRes, allUnitsRes] = await Promise.all([
       client
         .from('units')
         .select('id,name,unit_type,capacity,weekday_rate,weekend_rate,holiday_rate,breakfast_rate_per_person,is_demo_rate,active,sort_order')
@@ -56,12 +56,19 @@ export const handler = async (event) => {
 
       client
         .from('blocked_dates')
-        .select('unit_id,check_in,check_out,active')
+        .select('unit_id,check_in,check_out,active'),
+
+      // Diagnostic read: compare all active units with the requested type/capacity filter.
+      client
+        .from('units')
+        .select('id,unit_type,capacity,active')
+        .order('sort_order', { ascending: true })
     ]);
 
     if (unitsRes.error) throw unitsRes.error;
     if (bookingsRes.error) throw bookingsRes.error;
     if (blockedRes.error) throw blockedRes.error;
+    if (allUnitsRes.error) throw allUnitsRes.error;
 
     const now = Date.now();
 
@@ -131,13 +138,31 @@ export const handler = async (event) => {
       )
     ).filter(Boolean);
 
-    return json(200, {
+    const response = {
       checkIn,
       checkOut,
       guestCount: guests,
       unitType,
       units
-    });
+    };
+
+    // Opt-in, non-secret diagnostics for troubleshooting production availability.
+    if (event.queryStringParameters?.diagnostics === '1') {
+      const allUnits = allUnitsRes.data || [];
+      response.diagnostics = {
+        totalUnitsVisibleToServer: allUnits.length,
+        activeUnitsVisibleToServer: allUnits.filter((u) => u.active === true).length,
+        requestedTypeUnits: allUnits.filter((u) => u.unit_type === unitType).length,
+        requestedTypeAndCapacityUnits: allUnits.filter((u) =>
+          u.active === true && u.unit_type === unitType && Number(u.capacity) >= guests
+        ).length,
+        filteredQueryUnits: (unitsRes.data || []).length,
+        reservationsRowsRead: (bookingsRes.data || []).length,
+        blockedDateRowsRead: (blockedRes.data || []).length
+      };
+    }
+
+    return json(200, response);
 
   } catch (error) {
     console.error('availability error', error);
