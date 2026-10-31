@@ -81,10 +81,12 @@ export const handler = async (event) => {
       const created = Array.isArray(rpc.data) ? rpc.data[0] : rpc.data;
       if (!created || !created.id) throw new Error('Rezervasiya yaradıldı, lakin ID qaytarılmadı.');
 
+      // Manual admin bookings are confirmed by the operator; keep expires_at non-null
+      // because the database schema requires it. "manual" does not imply a card payment.
       const { data: confirmed, error: confirmError } = await client.from('reservations')
-        .update({ status: 'confirmed', expires_at: null })
+        .update({ status: 'confirmed', payment_status: 'manual' })
         .eq('id', created.id)
-        .select('id,booking_code,status,total_amount,deposit_amount,remaining_amount')
+        .select('id,booking_code,status,payment_status,total_amount,deposit_amount,remaining_amount')
         .single();
       if (confirmError) throw confirmError;
 
@@ -142,7 +144,7 @@ export const handler = async (event) => {
       return json(200, { reservation: data });
     }
 
-    return json(405, { error: 'Yalnız GET və PATCH sorğuları qəbul edilir.' });
+    return json(405, { error: 'Yalnız GET, POST və PATCH sorğuları qəbul edilir.' });
   } catch (error) {
     console.error('admin reservations error', error);
     return json(503, { error: 'Rezervasiyalar yüklənmədi.' });
