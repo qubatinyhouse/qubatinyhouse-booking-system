@@ -1,10 +1,21 @@
--- Quba Tiny House real tariff activation and weekday/weekend seasonal pricing.
--- Run this migration in the BOOKING Supabase project before deploying the matching function update.
+-- Quba Tiny House real tariff activation and four named Scandinavian units.
+-- Run only in the BOOKING Supabase project. Existing unit IDs are retained
+-- so reservation history and foreign keys remain intact.
 alter table public.seasonal_rates
   add column if not exists weekday_rate numeric(10,2),
   add column if not exists weekend_rate numeric(10,2);
 
--- Base rates: September-May. Holiday rates use the weekend rate.
+-- Rename existing Scandinavian records without changing their IDs.
+update public.units set name='Orange House', unit_type='large', capacity=7, sort_order=1
+where id in ('scandi-large-1','scandi-small-1','scandi-orange');
+update public.units set name='White House', unit_type='large', capacity=7, sort_order=2
+where id in ('scandi-large-2','scandi-white');
+update public.units set name='Blue House', unit_type='small', capacity=4, sort_order=3
+where id in ('scandi-small-2','scandi-blue');
+update public.units set name='Green House', unit_type='small', capacity=4, sort_order=4
+where id in ('scandi-green');
+
+-- Real base tariffs (September-May). Breakfast is included only for Scandinavian houses.
 update public.units
 set
   weekday_rate = case when unit_type = 'small' then 100 when unit_type = 'large' then 120 else 150 end,
@@ -14,7 +25,7 @@ set
   is_demo_rate = false
 where active = true;
 
--- Summer tariffs, repeated annually. End date is exclusive (1 September).
+-- Summer tariffs: weekday/weekend. End date is exclusive (1 September).
 insert into public.seasonal_rates
   (unit_id, start_date, end_date, nightly_rate, weekday_rate, weekend_rate, label, active)
 select
