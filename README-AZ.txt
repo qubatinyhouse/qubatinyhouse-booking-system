@@ -78,7 +78,7 @@ Dəyişənlər Functions runtime üçün əlçatan olmalıdır. ADMIN_API_TOKEN 
 Dəyişəndən sonra redeploy edin.
 Heç vaxt SUPABASE_SERVICE_ROLE_KEY və ADMIN_API_TOKEN-i HTML-ə, GitHub-a və ya public fayla yazmayın.
 
-4) NETLIFY FUNCTIONS NECƏ YAYIMLANIR
+5) NETLIFY FUNCTIONS NECƏ YAYIMLANIR
 ------------------------------------
 Bu layihədə server functions var. Təkcə HTML/ZIP-i Netlify Drop-a sürükləmək backend funksiyalarını etibarlı şəkildə build/deploy etmir. Functions build prosesi zamanı netlify/functions qovluğundan hazırlanır.
 
@@ -90,9 +90,9 @@ Tövsiyə olunan yol:
 5. Build command: npm install && npm run build
    Publish directory: public
    Functions directory: netlify/functions
-6. Deploy tamamlandıqdan sonra Netlify > Functions bölməsində availability, create-booking, epoint-callback və booking-status funksiyalarının göründüyünü yoxlayın.
+6. Deploy tamamlandıqdan sonra Netlify > Functions bölməsində availability, create-booking, admin-reservations və admin-blocked-dates funksiyalarının göründüyünü yoxlayın.
 
-5) ÖDƏNİŞDƏN ƏVVƏL TEST
+6) ÖDƏNİŞDƏN ƏVVƏL TEST
 -----------------------
 1. Saytda əvvəl giriş/çıxış, qonaq sayı və ev növü seçin.
 2. “Boş tarixləri və evləri yoxla” düyməsini basın.
