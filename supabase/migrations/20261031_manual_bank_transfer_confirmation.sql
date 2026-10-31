@@ -8,16 +8,17 @@ DECLARE
   b public.reservations%ROWTYPE;
   has_conflict boolean;
 BEGIN
-  PERFORM pg_advisory_xact_lock(hashtext(p_reservation_id::text));
+  SELECT * INTO b FROM public.reservations WHERE id = p_reservation_id;
+  IF NOT FOUND THEN RAISE EXCEPTION 'RESERVATION_NOT_FOUND'; END IF;
+
+  -- Lock by unit before locking the reservation row; this matches the online
+  -- payment callback lock order and prevents double-confirmation races/deadlocks.
+  PERFORM pg_advisory_xact_lock(hashtext(b.unit_id));
 
   SELECT * INTO b
     FROM public.reservations
    WHERE id = p_reservation_id
    FOR UPDATE;
-
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'RESERVATION_NOT_FOUND';
-  END IF;
 
   IF b.status = 'confirmed' THEN
     RETURN QUERY SELECT 'already_confirmed'::text;
@@ -28,8 +29,6 @@ BEGIN
     RAISE EXCEPTION 'RESERVATION_STATUS_NOT_ELIGIBLE';
   END IF;
 
-  PERFORM pg_advisory_xact_lock(hashtext(b.unit_id));
-
   UPDATE public.reservations
      SET status = 'expired'
    WHERE unit_id = b.unit_id
@@ -38,8 +37,7 @@ BEGIN
      AND expires_at <= now();
 
   SELECT EXISTS (
-    SELECT 1
-      FROM public.reservations r
+    SELECT 1 FROM public.reservations r
      WHERE r.unit_id = b.unit_id
        AND r.id <> b.id
        AND r.status IN ('pending_payment', 'confirmed')
@@ -56,7 +54,6 @@ BEGIN
            paid_amount = deposit_amount,
            paid_at = now()
      WHERE id = b.id;
-
     RETURN QUERY SELECT 'payment_review'::text;
   ELSE
     UPDATE public.reservations
@@ -66,7 +63,6 @@ BEGIN
            paid_amount = deposit_amount,
            paid_at = now()
      WHERE id = b.id;
-
     RETURN QUERY SELECT 'confirmed'::text;
   END IF;
 END;
