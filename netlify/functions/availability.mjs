@@ -12,7 +12,6 @@ export const handler = async (event) => {
       guestCount = '2',
       unitType = 'small',
       unitId = '',
-      breakfast = '0',
       campaignCode = '',
       marriageConfirmed = '0'
     } = event.queryStringParameters || {};
@@ -47,7 +46,7 @@ export const handler = async (event) => {
 
     let unitQuery = client
       .from('units')
-      .select('id,name,unit_type,capacity,weekday_rate,weekend_rate,holiday_rate,breakfast_rate_per_person,is_demo_rate,active,sort_order')
+      .select('id,name,unit_type,capacity,weekday_rate,weekend_rate,holiday_rate,is_demo_rate,active,sort_order')
       .eq('active', true)
       .gte('capacity', guests)
       .order('sort_order', { ascending: true });
@@ -116,7 +115,7 @@ export const handler = async (event) => {
               checkIn,
               checkOut,
               guests,
-              breakfast === '1',
+              false,
               campaignCode,
               marriageConfirmed === '1'
             );

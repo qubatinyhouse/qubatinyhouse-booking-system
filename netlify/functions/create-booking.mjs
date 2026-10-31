@@ -4,7 +4,7 @@ export const handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Yalnız POST sorğusu qəbul edilir.' });
   let input;
   try { input = JSON.parse(event.isBase64Encoded ? Buffer.from(event.body || '', 'base64').toString('utf8') : (event.body || '{}')); } catch { return json(400, { error: 'Sorğu formatı düzgün deyil.' }); }
-  const { unitId, checkIn, checkOut, guestName, phone, guestCount, breakfast, note, depositPercent, campaignCode = '', marriageConfirmed = false } = input;
+  const { unitId, checkIn, checkOut, guestName, phone, guestCount, note, depositPercent, campaignCode = '', marriageConfirmed = false } = input;
   if (!unitId || !validDate(checkIn) || !validDate(checkOut) || getNights(checkIn, checkOut) < 1 || getNights(checkIn, checkOut) > 30) return json(400, { error: 'Ev və düzgün giriş/çıxış tarixlərini seçin.' });
   if (typeof guestName !== 'string' || guestName.trim().length < 2 || guestName.length > 120) return json(400, { error: 'Ad və soyadı düzgün daxil edin.' });
   if (typeof phone !== 'string' || phone.replace(/\D/g, '').length < 7 || phone.length > 30) return json(400, { error: 'Telefon nömrəsini düzgün daxil edin.' });
@@ -19,7 +19,7 @@ export const handler = async (event) => {
     if (unit.is_demo_rate) return json(409, { error: 'Saytın tarifləri hələ nümunə qiymətlərdədir. Real tarifləri təsdiqlədikdən sonra admin onları aktivləşdirməlidir.' });
     if (typeof campaignCode !== 'string' || campaignCode.length > 40) return json(400, { error: 'Kampaniya seçimi düzgün deyil.' });
     if (['romantic_179','honeymoon_349'].includes(campaignCode) && marriageConfirmed !== true) return json(400, { error: 'Bu paketlər yalnız rəsmi nikahda olan cütlüklər üçündür.' });
-    const quote = await quoteForUnit(client, unit, checkIn, checkOut, Number(guestCount), Boolean(breakfast), campaignCode, marriageConfirmed === true);
+    const quote = await quoteForUnit(client, unit, checkIn, checkOut, Number(guestCount), false, campaignCode, marriageConfirmed === true);
     if (quote.total < 50) return json(400, { error: 'Rezervasiyanın ümumi məbləği minimum 50 AZN olmalıdır.' });
     const deposit = Math.max(50, Math.round(quote.total * 0.50 * 100) / 100);
     const remaining = Math.round((quote.total - deposit) * 100) / 100;
@@ -30,10 +30,10 @@ export const handler = async (event) => {
       p_guest_name: guestName.trim(),
       p_phone: phone.trim(),
       p_guest_count: Number(guestCount),
-      p_breakfast: Boolean(quote.breakfastIncluded) || Boolean(breakfast),
+      p_breakfast: false,
       p_note: (campaignCode ? `[[QTH_CAMPAIGN=${campaignCode};MARRIED=${marriageConfirmed ? 1 : 0}]]\n` : '') + (typeof note === 'string' ? note.slice(0, 1300) : ''),
       p_stay_amount: quote.stayTotal,
-      p_breakfast_amount: quote.breakfastTotal,
+      p_breakfast_amount: 0,
       p_total_amount: quote.total,
       p_deposit_percent: 50,
       p_deposit_amount: deposit,
