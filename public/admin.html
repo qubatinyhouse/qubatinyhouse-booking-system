@@ -420,7 +420,7 @@ function renderReservations(items) {
       <td><select onchange="changeReservationStatus('${r.id}',this.value)">
         ${statuses.map(([value,label]) => `<option value="${value}" ${r.status===value?"selected":""}>${label}</option>`).join("")}
       </select><small>${escapeReservation(r.payment_status || "")}</small></td>
-      <td><button type="button" onclick="showReservationDetails('${r.id}')">Ətraflı</button> <button type="button" class="btn" style="background:#a33;margin-top:5px" onclick="cancelAdminReservation('${r.id}')">Ləğv et</button></td>
+      <td><button type="button" onclick="showReservationDetails('${r.id}')">Ətraflı</button> ${r.status !== "cancelled" && r.status !== "expired" ? `<button type="button" class="btn" style="background:#a33;margin-top:5px" onclick="cancelAdminReservation('${r.id}')">Ləğv et</button>` : ""}</td>
     </tr>`;
   }).join("");
 }
