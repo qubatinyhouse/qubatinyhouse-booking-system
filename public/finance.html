@@ -52,6 +52,20 @@ body.cleaning-only #cleaningTaskModule{display:block!important;margin:0;box-shad
 body.cleaning-only #cleaningTaskModule h3{margin-top:0}
 body.cleaning-only #cleaningTaskModule .grid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
 @media(max-width:650px){body.cleaning-only main{padding:8px}body.cleaning-only #cleaningTaskModule{padding:12px}}
+
+body.settings-only header{display:none}
+body.settings-only main{max-width:1100px;margin:0 auto;padding:12px}
+body.settings-only #dashboard{display:block!important}
+body.settings-only #dashboard>*:not(:has(#systemSettingsModule)){display:none!important}
+body.settings-only #systemSettingsModule{display:block!important;margin:0;box-shadow:none;border:0;padding:16px}
+body.settings-only #systemSettingsModule .house-settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}
+body.settings-only #systemSettingsModule .house-setting{border:1px solid #e4e9ef;border-radius:12px;padding:16px;background:#fff}
+body.settings-only #systemSettingsModule .house-setting h4{margin:0 0 12px;font-size:17px}
+body.settings-only #systemSettingsModule label{display:block;font-size:13px;color:#64748b;margin:8px 0}
+body.settings-only #systemSettingsModule input,body.settings-only #systemSettingsModule select{width:100%;padding:10px;border:1px solid #dce2e8;border-radius:8px;margin-top:4px}
+body.settings-only #systemSettingsModule .settings-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+body.settings-only #systemSettingsModule .settings-status{min-height:20px;font-size:13px}
+@media(max-width:650px){body.settings-only main{padding:8px}body.settings-only #systemSettingsModule{padding:12px}}
 </style>
 </head>
 <body>
@@ -243,6 +257,12 @@ Salam, administrator!
   <div id="employeeList"></div>
 </div>
 
+<div class="card" id="systemSettingsModule">
+ <h3>Ev və rezervasiya parametrləri</h3>
+ <p class="muted">Hər ev üçün qiymət, tutum, beh faizi və rezervasiya qaydalarını dəyişə bilərsiniz. Qiymətlər hazırda 0 olduğuna görə saytda qiymət hesablanması üçün real tarifləri daxil edin.</p>
+ <div id="houseSettingsMessage" class="muted">Ev məlumatları yüklənir...</div>
+ <div id="houseSettingsList" class="house-settings-grid"></div>
+</div>
 <div class="card" id="cleaningTaskModule">
   <h3>Təmizlik tapşırıqları</h3>
   <div class="grid">
@@ -405,6 +425,7 @@ await loadData();
   await loadSalaryPaymentHistory();
   await loadCleaningTasks();
   await loadUtilityRecords();
+  await loadHouseSettings();
   setCleaningRate();
 }else{
 document.getElementById("dashboard").style.display="none";
@@ -805,6 +826,41 @@ async function deactivateEmployee(id) {
   if (error) { alert("İşçi deaktiv edilmədi: " + error.message); return; }
   await loadSalaryEmployees();
 }
+async function loadHouseSettings(){
+ const host=document.getElementById("houseSettingsList"),msg=document.getElementById("houseSettingsMessage");
+ if(!host)return;
+ msg.textContent="Ev parametrləri yüklənir...";
+ const {data,error}=await client.from("houses").select("id,name,type,capacity,base_price,weekend_price,cleaning_fee,deposit_percent,min_nights,active").order("name");
+ if(error){msg.textContent="Parametrlər yüklənmədi: "+error.message;return;}
+ host.innerHTML=(data||[]).map(h=>`
+ <article class="house-setting" data-house-id="${h.id}">
+  <h4>${escapeHTML(h.name)}</h4><div class="muted">${escapeHTML(h.type||"Ev")} · ID: ${escapeHTML(h.id.slice(0,8))}</div>
+  <div class="settings-fields">
+   <label>Tutumu (nəfər)<input type="number" min="1" max="30" step="1" data-field="capacity" value="${Number(h.capacity||1)}"></label>
+   <label>Adi gün qiyməti (AZN)<input type="number" min="0" step="0.01" data-field="base_price" value="${Number(h.base_price||0)}"></label>
+   <label>Həftəsonu qiyməti (AZN)<input type="number" min="0" step="0.01" data-field="weekend_price" value="${Number(h.weekend_price||0)}"></label>
+   <label>Təmizlik haqqı (AZN)<input type="number" min="0" step="0.01" data-field="cleaning_fee" value="${Number(h.cleaning_fee||0)}"></label>
+   <label>Beh faizi (%)<input type="number" min="0" max="100" step="1" data-field="deposit_percent" value="${Number(h.deposit_percent||0)}"></label>
+   <label>Minimum gecə<input type="number" min="1" max="60" step="1" data-field="min_nights" value="${Number(h.min_nights||1)}"></label>
+  </div>
+  <label>Vəziyyət<select data-field="active"><option value="true" ${h.active?"selected":""}>Aktiv</option><option value="false" ${!h.active?"selected":""}>Deaktiv</option></select></label>
+  <button type="button" onclick="saveHouseSettings('${h.id}')">Dəyişiklikləri yadda saxla</button>
+  <div class="settings-status" id="houseStatus-${h.id}"></div>
+ </article>`).join("");
+ msg.textContent=(data||[]).length+" evin parametrləri yükləndi.";
+}
+async function saveHouseSettings(id){
+ const card=document.querySelector('[data-house-id="'+id+'"]'),status=document.getElementById("houseStatus-"+id);
+ if(!card||!status)return;
+ const value=field=>card.querySelector('[data-field="'+field+'"]').value;
+ const payload={capacity:Number(value("capacity")),base_price:Number(value("base_price")),weekend_price:Number(value("weekend_price")),cleaning_fee:Number(value("cleaning_fee")),deposit_percent:Number(value("deposit_percent")),min_nights:Number(value("min_nights")),active:value("active")==="true"};
+ if(!Number.isInteger(payload.capacity)||payload.capacity<1||payload.capacity>30||![payload.base_price,payload.weekend_price,payload.cleaning_fee].every(n=>Number.isFinite(n)&&n>=0)||!Number.isInteger(payload.deposit_percent)||payload.deposit_percent<0||payload.deposit_percent>100||!Number.isInteger(payload.min_nights)||payload.min_nights<1||payload.min_nights>60){status.textContent="Məlumatları yoxlayın: qiymətlər mənfi ola bilməz, beh 0–100% arası olmalıdır.";status.style.color="#c43c43";return;}
+ status.textContent="Yadda saxlanılır...";
+ const {error}=await client.from("houses").update({...payload,updated_at:new Date().toISOString()}).eq("id",id);
+ if(error){status.textContent="Xəta: "+error.message;status.style.color="#c43c43";return;}
+ status.textContent="Saxlanıldı.";status.style.color="#168653";
+}
+
 async function loadCleaningTasks(){
   const host=document.getElementById("cleaningTaskList");
   if(!host)return;
@@ -901,6 +957,7 @@ document.getElementById("reportYear").addEventListener("change", loadData);
 if(new URLSearchParams(location.search).get("view")==="salary") document.body.classList.add("salary-only");
 if(new URLSearchParams(location.search).get("view")==="reports") document.body.classList.add("reports-only");
 if(new URLSearchParams(location.search).get("view")==="cleaning") document.body.classList.add("cleaning-only");
+if(new URLSearchParams(location.search).get("view")==="settings") document.body.classList.add("settings-only");
 async function connectSharedSession(){
  for(let i=0;i<100&&!window.parent.qthAdminAuthClient;i++)await new Promise(r=>setTimeout(r,50));
  client=window.parent.qthAdminAuthClient||null;
