@@ -351,7 +351,7 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
 <label>Giriş tarixi<input id="adminCheckIn" type="date" required></label>
 <label>Çıxış tarixi<input id="adminCheckOut" type="date" required></label>
 <label>Qonaq sayı<input id="adminGuestCount" type="number" min="1" max="10" value="2" required></label>
-<label>Səhər yeməyi<select id="adminBreakfast"><option value="0">Xeyr</option><option value="1">Bəli — 15 AZN/nəfər/gecə</option></select></label>
+
 <label>Kampaniya / paket<select id="adminCampaignCode"><option value="">Adi tarif</option></select></label>
 <label id="adminMarriageWrap" style="display:none;grid-column:1/-1"><span style="display:flex;gap:8px;align-items:center"><input id="adminMarriageConfirmed" type="checkbox" style="width:auto"> Cütlüyün rəsmi nikahda olduğunu təsdiq edirəm (nikah şəhadətnaməsi tələb olunur).</span></label>
 <label>Qeyd<input id="adminBookingNote" type="text" maxlength="1500" placeholder="Əlavə qeyd"></label></div>
@@ -842,16 +842,14 @@ function updateAdminCampaignOptions(){
  const packageCode=sel.value,marriage=aframe&&["romantic_179","honeymoon_349"].includes(packageCode);
  document.getElementById("adminMarriageWrap").style.display=marriage?"block":"none";
  if(!marriage)document.getElementById("adminMarriageConfirmed").checked=false;
- const breakfast=document.getElementById("adminBreakfast");
- if(["autumn_149","autumn_179","autumn_249","romantic_179"].includes(packageCode))breakfast.value="1";
  const help=document.getElementById("adminCampaignHelp");
- help.textContent=marriage?"Romantik və balayı paketləri yalnız 2 nəfərlik rəsmi nikahlı cütlüklər üçündür. Nikah şəhadətnaməsi yoxlanılmalıdır. Avans 50%.":scandi?"Payız kampaniyası Orange, White, Blue və Green evlərində 3 gecəlik qalış və 5 noyabr 2026-dək çıxış üçün keçərlidir. Səhər yeməyi daxildir.":aframe?"A-FRAME evlərində 2 nəfərlik Romantik (1 gecə) və Balayı (3 gecə) paketləri mövcuddur.":"Kampaniya seçilmədikdə standart tarif tətbiq olunur.";
+ help.textContent=marriage?"Romantik və balayı paketləri yalnız 2 nəfərlik rəsmi nikahlı cütlüklər üçündür. Nikah şəhadətnaməsi yoxlanılmalıdır. Avans 50%.":scandi?"Payız kampaniyası Orange, White, Blue və Green evlərində 3 gecəlik qalış və 5 noyabr 2026-dək çıxış üçün keçərlidir. ":aframe?"A-FRAME evlərində 2 nəfərlik Romantik (1 gecə) və Balayı (3 gecə) paketləri mövcuddur.":"Kampaniya seçilmədikdə standart tarif tətbiq olunur.";
 }
 ["adminUnitId","adminGuestCount","adminCheckIn","adminCheckOut"].forEach(id=>document.getElementById(id).addEventListener("change",updateAdminCampaignOptions));
 document.getElementById("adminCampaignCode").addEventListener("change",updateAdminCampaignOptions);
 window.createAdminReservation = async function () {
  const message=document.getElementById("adminCreateMessage");
- const payload={guestName:document.getElementById("adminGuestName").value.trim(),phone:document.getElementById("adminGuestPhone").value.trim(),unitId:document.getElementById("adminUnitId").value,checkIn:document.getElementById("adminCheckIn").value,checkOut:document.getElementById("adminCheckOut").value,guestCount:Number(document.getElementById("adminGuestCount").value),breakfast:document.getElementById("adminBreakfast").value==="1",note:document.getElementById("adminBookingNote").value.trim(),campaignCode:document.getElementById("adminCampaignCode").value,marriageConfirmed:document.getElementById("adminMarriageConfirmed").checked};
+ const payload={guestName:document.getElementById("adminGuestName").value.trim(),phone:document.getElementById("adminGuestPhone").value.trim(),unitId:document.getElementById("adminUnitId").value,checkIn:document.getElementById("adminCheckIn").value,checkOut:document.getElementById("adminCheckOut").value,guestCount:Number(document.getElementById("adminGuestCount").value),note:document.getElementById("adminBookingNote").value.trim(),campaignCode:document.getElementById("adminCampaignCode").value,marriageConfirmed:document.getElementById("adminMarriageConfirmed").checked};
  if(!payload.guestName||!payload.phone||!payload.checkIn||!payload.checkOut){message.textContent="Ad, telefon və tarixləri doldurun.";return;}
   if(["romantic_179","honeymoon_349"].includes(payload.campaignCode)&&!payload.marriageConfirmed){message.textContent="Bu paketlər yalnız rəsmi nikahda olan cütlüklər üçündür. Təsdiqi işarələyin.";return;}
  if(payload.checkOut<=payload.checkIn){message.textContent="Çıxış tarixi giriş tarixindən sonra olmalıdır.";return;}
