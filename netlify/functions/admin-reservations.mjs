@@ -96,9 +96,9 @@ export const handler = async (event) => {
     }
 
     if (event.httpMethod === 'GET') {
-      const { data: reservations, error } = await client
+      const { data: reservations, error, count } = await client
         .from('reservations')
-        .select('id,booking_code,unit_id,check_in,check_out,guest_name,phone,guest_count,note,total_amount,deposit_amount,remaining_amount,paid_amount,status,payment_status,created_at')
+        .select('id,booking_code,unit_id,check_in,check_out,guest_name,phone,guest_count,note,total_amount,deposit_amount,remaining_amount,paid_amount,status,payment_status,created_at', { count: 'exact' })
         .order('created_at', { ascending: false })
         .limit(500);
 
@@ -113,6 +113,7 @@ export const handler = async (event) => {
       const unitNames = new Map((units || []).map((unit) => [unit.id, unit.name]));
 
       return json(200, {
+        totalCount: count ?? (reservations || []).length,
         reservations: (reservations || []).map((item) => ({
           ...item,
           unit_name: unitNames.get(item.unit_id) || item.unit_id
