@@ -1,4 +1,4 @@
-QUBA TINY HOUSE — ONLAYN REZERVASIYA + EPOINT ÖDƏNIŞİ
+QUBA TINY HOUSE — REZERVASIYA + 50% KART AVANSI + WHATSAPP TƏSDİQİ
 ====================================================
 
 BU NƏDİR?
@@ -6,12 +6,14 @@ BU NƏDİR?
 - Server Supabase rezervasiya bazasında boş/dolu tarixləri yoxlayır.
 - Altı fiziki ev ayrıca idarə olunur: 2 kiçik Skandinav, 2 böyük Skandinav, 2 A-Frame isti hovuzlu.
 - Bazada eyni ev üçün üst-üstə düşən rezervasiyaların yaranmasına verilənlər bazası səviyyəsində maneə qoyulur.
-- Müştəri 30% və ya 40% avans seçir. Epoint checkout səhifəsində kartla ödəyir.
-- Ödəniş Epoint-in imzalanmış server callback-i ilə təsdiqlənəndə rezervasiya confirmed olur və tarixlər tutulur.
-- Ödəniş üçün 25 dəqiqəlik müvəqqəti tarix saxlanması var. Vaxt bitəndə növbəti rezervasiya zamanı köhnə hold expired edilir.
+- Müştəri sayt üzərindən rezervasiya sorğusu göndərir; rezervasiya admin paneldə pending_payment statusu ilə yaranır.
+- Müştəriyə 50% avans məbləği və Netlify mühit dəyişənlərində saxlanan bank/kart məlumatları göstərilir.
+- Müştəri qəbzi WhatsApp-a göndərir; menecer bank hesabında ödənişi yoxlayıb admin paneldə statusu confirmed edir.
+- Admin confirmed etdikdə sistem avansı paid_amount kimi qeyd edir; qalan 50% giriş zamanı alınır.
+- Ödəniş üçün 60 dəqiqəlik müvəqqəti tarix saxlanması var. Vaxt bitəndə köhnə hold expired edilir.
 
 VACİB: BU PAKET HƏLƏ TƏNZİMLƏNMƏLİDİR. TƏSDİQLƏNMİŞ CANLI ÖDƏNİŞ KİMİ İSTİFADƏ ETMƏYİN.
-Epoint merchant açarları və Supabase bazası istifadəçidə olmalıdır. Onlar olmadan real rezervasiya və ödəniş işləmir. Tariflər də başlanğıcda nümunədir; SQL-də is_demo_rate=true qoyulub ki, səhv qiymətlə ödəniş götürülməsin.
+Supabase bazası və Netlify mühit dəyişənləri qurulmalıdır. Bu versiyada müştəri bank kartına köçürür və qəbzi WhatsApp-a göndərir; avtomatik bank təsdiqi yoxdur, menecer qəbzi əl ilə yoxlayır. Tariflər də başlanğıcda nümunədir; SQL-də is_demo_rate=true qoyulub ki, səhv qiymətlə ödəniş götürülməsin.
 
 1) SUPABASE VERİLƏNLƏR BAZASINI YARAT
 -------------------------------------
@@ -49,7 +51,7 @@ VALUES ('scandi-small-1','2027-06-01','2027-09-01',220,'Yay mövsümü',true);
 End_date daxil edilmir; məsələn yuxarıdakı dövr 31 avqust gecəsinə qədərdir. Digər evlər üçün ayrıca qeyd əlavə edin.
 
 MÖVCUD CANLI BOOKING BAZASI ÜÇÜN:
-Supabase SQL Editor-də supabase/migrations/20261031_admin_dashboard_compat.sql faylını yalnız bir dəfə (və ya təkrar təhlükəsiz şəkildə) işlədin. Bu migration seasonal_rates üçün həftəiçi/həftəsonu sütunlarını və blocked_dates cədvəlini təmin edir; mövcud rezervasiya və maliyyə qeydlərini dəyişmir. Rezervasiya tarixçəsi saxlanıldığı üçün mövcud units ID-lərini əl ilə dəyişməyin.
+Supabase SQL Editor-də supabase/migrations/20261031_admin_dashboard_compat.sql faylını işlədin. Sonra yeni 50% avans/WhatsApp prosesi üçün supabase/migrations/20261031_manual_card_whatsapp_deposit.sql faylını da işlədin. Hər iki migration mövcud rezervasiya və maliyyə qeydlərini silmir. Rezervasiya tarixçəsi saxlanıldığı üçün mövcud units ID-lərini əl ilə dəyişməyin.
 
 3) EPOINT MERCHANT HESABI AÇ
 ----------------------------
@@ -69,8 +71,9 @@ Netlify > qubatinyhouse layihəsi > Project configuration > Environment variable
 SUPABASE_URL = Supabase Project URL
 SUPABASE_SERVICE_ROLE_KEY = Supabase server/service_role secret key (yalnız server tərəfində)
 ADMIN_API_TOKEN = Admin panelin rezervasiya və təqvim API-si üçün ayrıca güclü gizli giriş kodu
-EPOINT_PUBLIC_KEY = Epoint merchant public_key
-EPOINT_PRIVATE_KEY = Epoint merchant private_key (məxfi)
+PAYMENT_BANK_NAME = Ödəniş qəbul edilən bankın adı
+PAYMENT_CARD_HOLDER = Kart sahibinin adı və soyadı
+PAYMENT_CARD_NUMBER = Müştərilərə göstəriləcək kart nömrəsi
 SITE_URL = https://qubatinyhouse.com
 EPOINT_REQUEST_URL = https://epoint.az/api/1/request  (istəyə bağlı; bu, standart dəyərdir)
 
@@ -99,11 +102,11 @@ Tövsiyə olunan yol:
 3. Boş evlər listdə görünməlidir; rezervasiya yarandıqdan sonra ödəniş üçün Epoint-ə keçəcək.
 4. Ödəniş başa çatanda Epoint result callback statusu imza ilə yoxlayır, sonra rezervasiyanı confirmed edir.
 5. Supabase > Table Editor > reservations cədvəlində statusları yoxlayın.
-6. Ödənişli canlı istifadədən əvvəl Epoint ilə test/merchant hesabının yoxlamasını tamamlayın, hər 6 evin real qiymətlərini və bayram/mövsüm tarixlərini yoxlayın.
+6. Ödənişli canlı istifadədən əvvəl Kart sahibinin məlumatlarını Netlify-də PAYMENT_BANK_NAME, PAYMENT_CARD_HOLDER və PAYMENT_CARD_NUMBER dəyişənlərinə daxil edin; hər 6 evin real qiymətlərini və bayram/mövsüm tarixlərini yoxlayın.
 
 STATUSLAR
-- pending_payment: avans ödənilməsini gözləyir, 25 dəqiqəlik müvəqqəti hold.
-- confirmed: Epoint callback-i təsdiq edib; tarixlər bağlıdır.
+- pending_payment: avans köçürülməsini gözləyir, 60 dəqiqəlik müvəqqəti hold.
+- confirmed: menecer bank ödənişini yoxlayıb təsdiq edib; tarixlər bağlıdır.
 - expired: ödəniş hold-u vaxtı bitib.
 - payment_failed: checkout uğursuz olub.
 - payment_review: ödəniş alınıb, amma məbləğ/tarix münaqişəsi yoxlanmalıdır.
