@@ -600,7 +600,7 @@ const currentMonthHasTransactions = (transactions || []).some(item =>
 );
 const latestTransactionMonth = (transactions || [])
     .map(item => String(item.transaction_date || "").slice(0, 7))
-    .filter(month => /^\\d{4}-\\d{2}$/.test(month))
+    .filter(month => /^\d{4}-\d{2}$/.test(month))
     .sort()
     .pop();
 
