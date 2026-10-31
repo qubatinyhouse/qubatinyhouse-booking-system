@@ -305,8 +305,10 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
 <label>Çıxış tarixi<input id="adminCheckOut" type="date" required></label>
 <label>Qonaq sayı<input id="adminGuestCount" type="number" min="1" max="10" value="2" required></label>
 <label>Səhər yeməyi<select id="adminBreakfast"><option value="0">Xeyr</option><option value="1">Bəli — 15 AZN/nəfər/gecə</option></select></label>
+<label>Kampaniya / paket<select id="adminCampaignCode"><option value="">Adi tarif</option></select></label>
+<label id="adminMarriageWrap" style="display:none;grid-column:1/-1"><span style="display:flex;gap:8px;align-items:center"><input id="adminMarriageConfirmed" type="checkbox" style="width:auto"> Cütlüyün rəsmi nikahda olduğunu təsdiq edirəm (nikah şəhadətnaməsi tələb olunur).</span></label>
 <label>Qeyd<input id="adminBookingNote" type="text" maxlength="1500" placeholder="Əlavə qeyd"></label></div>
-<p class="notice">Tarif əsas saytla eyni qaydada hesablanır. Manual admin rezervasiyası yaradıldıqda təsdiqlənir. Avans 50%, qalıq 50% hesablanır.</p>
+<p class="notice" id="adminCampaignHelp">Kampaniya və paketlər əsas saytla eyni qaydada hesablanır. Avans 50%, qalıq 50% hesablanır.</p>
 <button class="btn" type="button" onclick="createAdminReservation()">Rezervasiyanı yarat</button><p id="adminCreateMessage" class="notice" aria-live="polite"></p></div>
 
     <div class="grid">
