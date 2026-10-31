@@ -739,7 +739,7 @@ async function loadSalaryEmployees() {
 
   const { data, error } = await client
     .from("employees")
-    .select("id, full_name")
+    .select("id, full_name, position, salary_type, base_salary, active")
     .eq("active", true)
     .order("full_name");
 
