@@ -1,4 +1,4 @@
-import { db, json } from '../lib/_lib.mjs';
+import { db, json, validDate, getNights, quoteForUnit } from '../lib/_lib.mjs';
 
 const allowedStatuses = new Set([
   'pending_payment',
@@ -19,6 +19,81 @@ export const handler = async (event) => {
 
   try {
     const client = db();
+
+
+    if (event.httpMethod === 'POST') {
+      let body;
+      try { body = JSON.parse(event.body || '{}'); }
+      catch { return json(400, { error: 'Yanlış JSON formatı.' }); }
+
+      const { unitId, checkIn, checkOut, guestName, phone, guestCount, breakfast = false, note = '' } = body;
+      const guests = Number(guestCount);
+      const allowedUnits = ['scandi-large-1','scandi-large-2','scandi-small-1','scandi-small-2','aframe-1','aframe-2'];
+      if (!allowedUnits.includes(unitId) || !validDate(checkIn) || !validDate(checkOut) ||
+          getNights(checkIn, checkOut) < 1 || getNights(checkIn, checkOut) > 30 ||
+          typeof guestName !== 'string' || guestName.trim().length < 2 || guestName.length > 120 ||
+          typeof phone !== 'string' || phone.replace(/\D/g, '').length < 7 || phone.length > 30 ||
+          !Number.isInteger(guests) || guests < 1 || guests > 10) {
+        return json(400, { error: 'Müştəri, ev, qonaq sayı və tarixləri düzgün daxil edin. Qalma müddəti 1–30 gecə olmalıdır.' });
+      }
+
+      const { data: unit, error: unitError } = await client.from('units')
+        .select('*').eq('id', unitId).eq('active', true).maybeSingle();
+      if (unitError) throw unitError;
+      if (!unit) return json(404, { error: 'Seçilmiş ev tapılmadı və ya aktiv deyil.' });
+      if (guests > Number(unit.capacity)) return json(400, { error: 'Bu ev maksimum ' + unit.capacity + ' nəfər üçündür.' });
+      if (unit.is_demo_rate) return json(409, { error: 'Bu evin real tarifi aktiv deyil.' });
+
+      const { data: blocks, error: blockError } = await client.from('blocked_dates')
+        .select('id').eq('unit_id', unitId).eq('active', true)
+        .lt('check_in', checkOut).gt('check_out', checkIn).limit(1);
+      if (blockError) throw blockError;
+      if (blocks && blocks.length) return json(409, { error: 'Seçilmiş tarixlər admin təqvimində bağlıdır. Əvvəl təqvimi yoxlayın.' });
+
+      const quote = await quoteForUnit(client, unit, checkIn, checkOut, guests, Boolean(breakfast));
+      const deposit = Math.round(quote.total * 0.30 * 100) / 100;
+      const remaining = Math.round((quote.total - deposit) * 100) / 100;
+
+      const rpc = await client.rpc('create_booking_atomic', {
+        p_unit_id: unit.id,
+        p_check_in: checkIn,
+        p_check_out: checkOut,
+        p_guest_name: guestName.trim(),
+        p_phone: phone.trim(),
+        p_guest_count: guests,
+        p_breakfast: Boolean(breakfast),
+        p_note: typeof note === 'string' ? note.slice(0, 1500) : '',
+        p_stay_amount: quote.stayTotal,
+        p_breakfast_amount: quote.breakfastTotal,
+        p_total_amount: quote.total,
+        p_deposit_percent: 30,
+        p_deposit_amount: deposit,
+        p_remaining_amount: remaining
+      });
+      if (rpc.error) {
+        const message = rpc.error.message || '';
+        if (/DATES_ALREADY_BOOKED|already booked|conflict|overlap/i.test(message))
+          return json(409, { error: 'Bu ev seçilmiş tarixlərdə artıq rezervasiya olunub.' });
+        if (/RATES_NOT_CONFIGURED/i.test(message))
+          return json(409, { error: 'Bu evin qiymətləri aktiv deyil.' });
+        throw rpc.error;
+      }
+      const created = Array.isArray(rpc.data) ? rpc.data[0] : rpc.data;
+      if (!created || !created.id) throw new Error('Rezervasiya yaradıldı, lakin ID qaytarılmadı.');
+
+      const { data: confirmed, error: confirmError } = await client.from('reservations')
+        .update({ status: 'confirmed', expires_at: null })
+        .eq('id', created.id)
+        .select('id,booking_code,status,total_amount,deposit_amount,remaining_amount')
+        .single();
+      if (confirmError) throw confirmError;
+
+      return json(201, {
+        success: true,
+        reservation: confirmed,
+        quote: { nights: quote.nights, total: quote.total, deposit, remaining, ruleText: quote.ruleText }
+      });
+    }
 
     if (event.httpMethod === 'GET') {
       const { data: reservations, error } = await client
