@@ -12,7 +12,9 @@ export const handler = async (event) => {
       guestCount = '2',
       unitType = 'small',
       unitId = '',
-      breakfast = '0'
+      breakfast = '0',
+      campaignCode = '',
+      marriageConfirmed = '0'
     } = event.queryStringParameters || {};
 
     if (
@@ -114,7 +116,9 @@ export const handler = async (event) => {
               checkIn,
               checkOut,
               guests,
-              breakfast === '1'
+              breakfast === '1',
+              campaignCode,
+              marriageConfirmed === '1'
             );
 
             return {
@@ -124,7 +128,8 @@ export const handler = async (event) => {
               capacity: unit.capacity,
               available: true,
               isDemoRate: unit.is_demo_rate,
-              quote
+              quote,
+              campaignCode: quote.campaignCode || null
             };
           } catch (error) {
             return {

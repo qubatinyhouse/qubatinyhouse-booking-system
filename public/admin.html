@@ -692,11 +692,14 @@ window.showReservationDetails = function (id) {
     "\nGiriş: " + (r.check_in || "") +
     "\nÇıxış: " + (r.check_out || "") +
     "\nQonaq sayı: " + (r.guest_count || 0) +
+    "\nKampaniya: " + (r.campaign_name || "Adi tarif") +
+    "\nRəsmi nikah təsdiqi: " + (r.marriage_confirmed ? "Bəli" : "Xeyr") +
     "\nÜmumi məbləğ: " + money(r.total_amount) +
     "\nBeh: " + money(r.deposit_amount) +
     "\nQalıq: " + money(r.remaining_amount) +
     "\nÖdənilib: " + money(r.paid_amount) +
     "\nÖdəniş statusu: " + (r.payment_status || "-") +
+    "\nBalayı kuponu: " + (r.coupon_code || "Hələ verilməyib") +
     "\nQeyd: " + (r.note || "-")
   );
 };

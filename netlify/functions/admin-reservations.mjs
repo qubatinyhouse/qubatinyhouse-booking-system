@@ -100,11 +100,17 @@ export const handler = async (event) => {
     if (event.httpMethod === 'GET') {
       const { data: reservations, error, count } = await client
         .from('reservations')
-        .select('id,booking_code,unit_id,check_in,check_out,guest_name,phone,guest_count,note,total_amount,deposit_amount,remaining_amount,paid_amount,status,payment_status,created_at', { count: 'exact' })
+        .select('id,booking_code,unit_id,check_in,check_out,guest_name,phone,guest_count,note,total_amount,deposit_amount,remaining_amount,paid_amount,status,payment_status,campaign_code,campaign_name,marriage_confirmed,created_at', { count: 'exact' })
         .order('created_at', { ascending: false })
         .limit(500);
 
       if (error) throw error;
+      const reservationIds = (reservations || []).map((item) => item.id);
+      const { data: coupons, error: couponsError } = reservationIds.length
+        ? await client.from('promo_coupons').select('reservation_id,coupon_code,status').in('reservation_id', reservationIds)
+        : { data: [], error: null };
+      if (couponsError) throw couponsError;
+      const couponByReservation = new Map((coupons || []).map((item) => [item.reservation_id, item]));
 
       const { data: units, error: unitsError } = await client
         .from('units')
@@ -118,6 +124,8 @@ export const handler = async (event) => {
         totalCount: count ?? (reservations || []).length,
         reservations: (reservations || []).map((item) => ({
           ...item,
+          coupon_code: couponByReservation.get(item.id)?.coupon_code || null,
+          coupon_status: couponByReservation.get(item.id)?.status || null,
           unit_name: unitNames.get(item.unit_id) || item.unit_id
         }))
       });
