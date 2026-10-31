@@ -29,7 +29,7 @@ export const handler = async (event) => {
       p_guest_name: guestName.trim(),
       p_phone: phone.trim(),
       p_guest_count: Number(guestCount),
-      p_breakfast: Boolean(campaignCode) || Boolean(breakfast),
+      p_breakfast: Boolean(quote.breakfastIncluded) || Boolean(breakfast),
       p_note: (campaignCode ? `[[QTH_CAMPAIGN=${campaignCode};MARRIED=${marriageConfirmed ? 1 : 0}]]\n` : '') + (typeof note === 'string' ? note.slice(0, 1300) : ''),
       p_stay_amount: quote.stayTotal,
       p_breakfast_amount: quote.breakfastTotal,
