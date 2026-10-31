@@ -478,6 +478,27 @@ document.getElementById("monthlyExpense").textContent =
 
 document.getElementById("monthlyProfit").textContent =
     money(monthlyIncome - monthlyExpense);
+
+// Göstəriciləri əsas admin panelinə yalnız təsdiqlənmiş maliyyə sessiyası olduqda ötür.
+if (window.parent !== window) {
+  window.parent.postMessage({
+    type: "QTH_FINANCE_SUMMARY",
+    income: monthlyIncome,
+    expense: monthlyExpense,
+    month: selectedMonth
+  }, window.location.origin);
+}
+
+// Maliyyə əməliyyat tarixçəsi
+const history = document.getElementById("financeHistory");
+if (history) {
+  const rows = [...(transactions || [])].sort((a,b) =>
+    String(b.transaction_date || "").localeCompare(String(a.transaction_date || ""))
+  ).slice(0,50);
+  history.innerHTML = rows.length ? '<div style="overflow-x:auto"><table><thead><tr><th>Tarix</th><th>Növ</th><th>Kateqoriya</th><th>Ödəniş</th><th>Məbləğ</th></tr></thead><tbody>' +
+    rows.map(item => '<tr><td>'+escapeHTML(item.transaction_date || '')+'</td><td class="'+(item.transaction_type==='income'?'green':'red')+'">'+(item.transaction_type==='income'?'Gəlir':'Xərc')+'</td><td>'+escapeHTML(item.category || '')+'</td><td>'+escapeHTML(item.payment_method || '')+'</td><td>'+money(item.amount)+'</td></tr>').join('') +
+    '</tbody></table></div>' : '<p class="muted">Hələ maliyyə əməliyyatı yoxdur.</p>';
+}
   }
   function escapeHTML(value){
 return String(value).replace(/[&<>"']/g,c=>({
