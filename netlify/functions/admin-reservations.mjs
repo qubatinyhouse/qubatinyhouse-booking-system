@@ -100,7 +100,7 @@ export const handler = async (event) => {
     if (event.httpMethod === 'GET') {
       const { data: reservations, error, count } = await client
         .from('reservations')
-        .select('id,booking_code,unit_id,check_in,check_out,guest_name,phone,guest_count,note,total_amount,deposit_amount,remaining_amount,paid_amount,status,payment_status,created_at', { count: 'exact' })
+        .select('id,booking_code,unit_id,check_in,check_out,guest_name,phone,guest_count,note,total_amount,deposit_amount,remaining_amount,paid_amount,status,payment_status,campaign_code,campaign_name,marriage_confirmed,created_at', { count: 'exact' })
         .order('created_at', { ascending: false })
         .limit(500);
 
