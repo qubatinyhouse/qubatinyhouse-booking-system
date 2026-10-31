@@ -232,6 +232,10 @@ Salam, administrator!
             <div class="muted">Xalis mənfəət / zərər</div>
             <div class="metric" id="monthlyProfit">0 AZN</div>
         </div>
+        <div class="card">
+            <div class="muted">Rezervasiyalardan daxilolma</div>
+            <div class="metric green" id="monthlyBookingIncome">0 AZN</div>
+        </div>
         </div>
   </div>       
   <div class="card" id="dailyYearlyReports">
@@ -589,26 +593,39 @@ const currentMonth =
     now.getFullYear() + "-" +
     String(now.getMonth() + 1).padStart(2, "0");
 
+// Cari ayda hələ əməliyyat yoxdursa, hesabat ilk açılışda
+// son faktiki maliyyə əməliyyatı olan ayı göstərir.
+const currentMonthHasTransactions = (transactions || []).some(item =>
+    String(item.transaction_date || "").slice(0, 7) === currentMonth
+);
+const latestTransactionMonth = (transactions || [])
+    .map(item => String(item.transaction_date || "").slice(0, 7))
+    .filter(month => /^\\d{4}-\\d{2}$/.test(month))
+    .sort()
+    .pop();
+
 if (!reportMonth.value) {
-    reportMonth.value = currentMonth;
+    reportMonth.value = (!currentMonthHasTransactions && latestTransactionMonth)
+        ? latestTransactionMonth
+        : currentMonth;
 }
 
 const selectedMonth = reportMonth.value;
 
 let monthlyIncome = 0;
 let monthlyExpense = 0;
+let monthlyBookingIncome = 0;
 
 (transactions || []).forEach(item => {
-    if (!item.transaction_date) return;
-
-    if (item.transaction_date.slice(0, 7) !== selectedMonth) {
-        return;
-    }
+    if (!item.transaction_date || item.transaction_date.slice(0, 7) !== selectedMonth) return;
 
     const amount = Number(item.amount || 0);
-
     if (item.transaction_type === "income") {
         monthlyIncome += amount;
+        // Yalnız faktiki qeydə alınmış rezervasiya ödənişləri sayılır.
+        if (["Ev rezervasiyası", "Rezervasiya behi", "Rezervasiya ödənişi"].includes(item.category)) {
+            monthlyBookingIncome += amount;
+        }
     } else if (item.transaction_type === "expense") {
         monthlyExpense += amount;
     }
@@ -622,8 +639,12 @@ document.getElementById("monthlyExpense").textContent =
 
 document.getElementById("monthlyProfit").textContent =
     money(monthlyIncome - monthlyExpense);
+document.getElementById("monthlyBookingIncome").textContent = money(monthlyBookingIncome);
 document.getElementById("reportPeriodLabel").textContent =
-    "Hesabat dövrü: " + selectedMonth;
+    "Hesabat dövrü: " + selectedMonth +
+    (selectedMonth === latestTransactionMonth && !currentMonthHasTransactions
+      ? " · Son maliyyə əməliyyatı olan ay (cari ayda hələ əməliyyat yoxdur)"
+      : "");
 const dayInput = document.getElementById("reportDay");
 const yearSelect = document.getElementById("reportYear");
 if (dayInput && !dayInput.value) dayInput.value = localDate;
