@@ -350,10 +350,19 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
 </section>
 
 <section class="section" id="cleaning">
-<div class="panel">
-<h3>Təmizlik işləri</h3>
-<div class="notice">Təmizlik tapşırıqları və ödənişləri maliyyə modulundan idarə ediləcək.</div>
-<a class="link" href="/finance.html#cleaningTaskModule">Təmizlik tapşırıqlarını aç →</a>
+<div class="cards">
+ <div class="card"><div class="card-label">Təmizlik idarəetməsi</div><div class="card-value">6 ev üzrə tapşırıqlar</div><div class="card-note">Skandinav və A-FRAME evləri</div></div>
+ <div class="card"><div class="card-label">Tariflər</div><div class="card-value">30 AZN / 50 AZN</div><div class="card-note">Ev növünə görə ilkin tariflər</div></div>
+ <div class="card"><div class="card-label">Tapşırıq statusu</div><div class="card-value">Gözləyir · Tamamlandı</div><div class="card-note">İşçi və tarix üzrə izləmə</div></div>
+ <div class="card"><div class="card-label">Ödəniş uçotu</div><div class="card-value">İşçi ödənişləri</div><div class="card-note">Təmizlik haqqı ayrıca maaş ödənişi kimi qeyd olunur</div></div>
+</div>
+<div class="panel" style="padding:12px">
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 8px 14px">
+  <div><h3 style="margin:0 0 6px">Təmizlik tapşırıqları</h3><div class="sub">Tapşırıq yarat, işçi təyin et, tamamlanma statusunu və ödəniş tarixçəsini izlə</div></div>
+  <button class="btn" type="button" onclick="document.getElementById('cleaningFrame').contentWindow.location.reload()">Yenilə</button>
+ </div>
+ <iframe id="cleaningFrame" title="Quba Tiny House təmizlik işləri" src="/finance.html?view=cleaning" loading="eager" style="display:block;width:100%;height:1100px;border:1px solid var(--border);border-radius:12px;background:#f3f5f8"></iframe>
+ <p class="notice" style="margin:12px 0 0">Tapşırıqlar mövcud cleaning_tasks cədvəlində saxlanılır. Tamamlanmış işin pul ödənişini İşçilər bölməsində “Təmizlik haqqı” kimi qeyd edin; bu, maliyyə xərcinə daxil edilir.</p>
 </div>
 </section>
 
