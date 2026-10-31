@@ -54,7 +54,7 @@ create table if not exists public.reservations (
   stay_amount numeric(10,2) not null,
   breakfast_amount numeric(10,2) not null default 0,
   total_amount numeric(10,2) not null,
-  deposit_percent integer not null check (deposit_percent in (30,40)),
+  deposit_percent integer not null check (deposit_percent in (30,40,50)),
   deposit_amount numeric(10,2) not null,
   remaining_amount numeric(10,2) not null,
   status text not null default 'pending_payment' check (status in ('pending_payment','confirmed','expired','cancelled','payment_failed','payment_review')),
@@ -63,7 +63,7 @@ create table if not exists public.reservations (
   payment_error text,
   paid_amount numeric(10,2),
   paid_at timestamptz,
-  expires_at timestamptz not null default (now() + interval '25 minutes'),
+  expires_at timestamptz not null default (now() + interval '60 minutes'),
   created_at timestamptz not null default now(),
   check (check_out > check_in)
 );
@@ -167,7 +167,7 @@ begin
     stay_amount,breakfast_amount,total_amount,deposit_percent,deposit_amount,remaining_amount,status,payment_status,expires_at
   ) values (
     p_unit_id,p_check_in,p_check_out,left(trim(p_guest_name),120),left(trim(p_phone),30),p_guest_count,coalesce(p_breakfast,false),left(coalesce(p_note,''),1500),
-    p_stay_amount,p_breakfast_amount,p_total_amount,p_deposit_percent,p_deposit_amount,p_remaining_amount,'pending_payment','created',now()+interval '25 minutes'
+    p_stay_amount,p_breakfast_amount,p_total_amount,p_deposit_percent,p_deposit_amount,p_remaining_amount,'pending_payment','created',now()+interval '60 minutes'
   ) returning reservations.id, reservations.booking_code, reservations.expires_at into new_id,new_code,new_expiry;
   return query select new_id,new_code,new_expiry;
 end;
