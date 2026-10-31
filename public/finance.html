@@ -377,7 +377,7 @@ async function addUtility() {
 }async function checkSession(){
 const {data}=await client.auth.getSession();
 if(data.session){
-document.getElementById("login").style.display="none";
+
 document.getElementById("dashboard").style.display="block";
 await loadData();
   await loadSalaryEmployees();
@@ -878,7 +878,16 @@ document.getElementById("reportMonth").addEventListener("change", loadData);
 document.getElementById("reportDay").addEventListener("change", loadData);
 document.getElementById("reportYear").addEventListener("change", loadData);
 if(new URLSearchParams(location.search).get("view")==="salary") document.body.classList.add("salary-only");
-checkSession();
+async function connectSharedSession(){
+ for(let i=0;i<100&&!window.parent.qthAdminAuthClient;i++)await new Promise(r=>setTimeout(r,50));
+ client=window.parent.qthAdminAuthClient||null;
+ if(!client){document.getElementById("dashboard").innerHTML="<div class=card>Bu modul yalnız əsas Admin paneldən açılmalıdır.</div>";return;}
+ const {data,error}=await client.auth.getSession();
+ if(error||!data.session){document.getElementById("dashboard").innerHTML="<div class=card>Admin sessiyası tapılmadı. Əsas Admin panelə yenidən daxil olun.</div>";return;}
+ await checkSession();
+ client.auth.onAuthStateChange((_event,session)=>{if(!session)document.getElementById("dashboard").innerHTML="<div class=card>Sessiya bağlandı. Əsas Admin panelə yenidən daxil olun.</div>";});
+}
+connectSharedSession();
 </script>
 </body>
 </html>
