@@ -11,6 +11,7 @@ export const handler = async (event) => {
       checkOut,
       guestCount = '2',
       unitType = 'small',
+      unitId = '',
       breakfast = '0'
     } = event.queryStringParameters || {};
 
@@ -33,7 +34,8 @@ export const handler = async (event) => {
       });
     }
 
-    if (!['scandi', 'small', 'large', 'aframe'].includes(unitType)) {
+    const allowedUnitIds = ['scandi-large-1','scandi-large-2','scandi-small-1','scandi-small-2','aframe-1','aframe-2'];
+    if (unitId && !allowedUnitIds.includes(unitId)) {
       return json(400, {
         error: 'Ev növü düzgün seçilməyib.'
       });
@@ -41,14 +43,17 @@ export const handler = async (event) => {
 
     const client = db();
 
+    let unitQuery = client
+      .from('units')
+      .select('id,name,unit_type,capacity,weekday_rate,weekend_rate,holiday_rate,breakfast_rate_per_person,is_demo_rate,active,sort_order')
+      .eq('active', true)
+      .gte('capacity', guests)
+      .order('sort_order', { ascending: true });
+    if (unitId) unitQuery = unitQuery.eq('id', unitId);
+    else unitQuery = unitQuery.in('unit_type', unitType === 'scandi' ? ['small', 'large'] : [unitType]);
+
     const [unitsRes, bookingsRes, blockedRes, allUnitsRes] = await Promise.all([
-      client
-        .from('units')
-        .select('id,name,unit_type,capacity,weekday_rate,weekend_rate,holiday_rate,breakfast_rate_per_person,is_demo_rate,active,sort_order')
-        .eq('active', true)
-        .in('unit_type', unitType === 'scandi' ? ['small', 'large'] : [unitType])
-        .gte('capacity', guests)
-        .order('sort_order', { ascending: true }),
+      unitQuery,
 
       client
         .from('reservations')
@@ -143,6 +148,7 @@ export const handler = async (event) => {
       checkOut,
       guestCount: guests,
       unitType,
+      unitId: unitId || null,
       units
     };
 
