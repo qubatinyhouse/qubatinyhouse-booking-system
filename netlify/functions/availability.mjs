@@ -24,7 +24,7 @@ export const handler = async (event) => {
     const blockedDates = (blockedRes.data || []).filter(
   b => b.active === true
 );
-    const units = await Promise.all((unitsRes.data || []).map(async unit => {
+    const units = (await Promise.all((unitsRes.data || []).map(async unit => {
       const busy =
   conflicts.some(
     b => b.unit_id === unit.id &&
@@ -41,7 +41,7 @@ export const handler = async (event) => {
       try { quote = await quoteForUnit(client, unit, checkIn, checkOut, guests, breakfast === '1'); }
       catch (e) { return { id: unit.id, name: unit.name, unitType: unit.unit_type, capacity: unit.capacity, available: !busy, isDemoRate: unit.is_demo_rate, quote: null, pricingError: e.message }; }
       return { id: unit.id, name: unit.name, unitType: unit.unit_type, capacity: unit.capacity, available: !busy, isDemoRate: unit.is_demo_rate, quote };
-    })).filter(Boolean);
+    }))).filter(Boolean);
     return json(200, { checkIn, checkOut, guestCount: guests, units });
   } catch (e) {
     console.error('availability error', e);
