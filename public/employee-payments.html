@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>İşçi ödənişləri | Quba Tiny House</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f3f5f8;color:#182337;font-family:Arial,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:18px}
+.card{background:#fff;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 3px 15px #0000000b}
+h2,h3{margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+label{display:block;font-size:14px;font-weight:600;margin:10px 0}
+input,select,button{width:100%;padding:12px;border:1px solid #dce2e8;border-radius:8px;font-size:15px;background:white}
+button{background:#173b50;color:white;border:0;font-weight:bold;cursor:pointer;margin-top:12px}
+.muted{color:#758397;font-size:13px}
+.message{margin-top:12px;font-size:14px}
+table{width:100%;border-collapse:collapse;min-width:620px}
+th,td{text-align:left;padding:11px;border-bottom:1px solid #edf0f3}
+.table-wrap{overflow-x:auto}
+#app{display:none}
+#login{max-width:480px;margin:40px auto}
+@media(max-width:600px){main{padding:10px}.card{padding:15px}}
+</style>
+</head>
+<body>
+<main>
+<section class="card" id="login">
+<h2>İşçi ödənişlərinə giriş</h2>
+<p class="muted">Maliyyə administratoru hesabı ilə daxil olun.</p>
+<label>E-poçt<input id="email" type="email" autocomplete="username"></label>
+<label>Şifrə<input id="password" type="password" autocomplete="current-password"></label>
+<button id="loginBtn" type="button">Daxil ol</button>
+<p class="message" id="loginMessage"></p>
+</section>
+<section id="app">
+<div class="card">
+<h2>İşçilərin maaş ödənişləri</h2>
+<p class="muted">Yalnız əməkhaqqı ödənişlərinin qeydiyyatı və tarixçəsi.</p>
+</div>
+<div class="card">
+<h3>Yeni maaş ödənişi</h3>
+<div class="grid">
+<label>İşçi<select id="salaryEmployee"><option value="">İşçi seçin</option></select></label>
+<label>Ödəniş məbləği (AZN)<input id="salaryAmount" type="number" min="0.01" step="0.01"></label>
+<label>Ödəniş tarixi<input id="salaryPaymentDate" type="date"></label>
+<label>Ödəniş üsulu<select id="salaryPaymentMethod"><option value="cash">Nağd</option><option value="bank">Bank</option><option value="card">Kart</option><option value="transfer">Köçürmə</option></select></label>
+<label>Maaş dövrünün başlanğıcı<input id="salaryPeriodStart" type="date"></label>
+<label>Maaş dövrünün sonu<input id="salaryPeriodEnd" type="date"></label>
+</div>
+<label>Qeyd<input id="salaryNotes" maxlength="500" placeholder="Əlavə məlumat"></label>
+<button id="saveSalary" type="button">Maaşı ödə və yadda saxla</button>
+<p class="message" id="salaryMessage" aria-live="polite"></p>
+</div>
+<div class="card">
+<h3>Son maaş ödənişləri</h3>
+<div id="salaryHistory" class="muted">Məlumat yüklənir...</div>
+</div>
+</section>
+</main>
+<script>
+const SUPABASE_URL="https://fynbzmyoleqcnqkhyfzd.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_WM8Bxho4Xrp2SJR_uCNb-Q_MaxQeE4N";
+const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let employeeNames={};
+const $=id=>document.getElementById(id);
+const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+const money=value=>Number(value||0).toLocaleString("az-AZ",{minimumFractionDigits:2,maximumFractionDigits:2})+" AZN";
+function todayLocal(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+$("salaryPaymentDate").value=todayLocal();
+async function loadEmployees(){
+ const {data,error}=await client.from("employees").select("id,full_name").eq("active",true).order("full_name");
+ if(error)throw error;
+ const select=$("salaryEmployee");select.innerHTML='<option value="">İşçi seçin</option>';
+ employeeNames={};
+ (data||[]).forEach(e=>{employeeNames[e.id]=e.full_name;const o=document.createElement("option");o.value=e.id;o.textContent=e.full_name;select.appendChild(o)});
+}
+async function loadHistory(){
+ const host=$("salaryHistory");
+ const {data,error}=await client.from("salary_payments").select("id,employee_id,amount,payment_date,payment_method,period_start,period_end,notes").order("payment_date",{ascending:false}).limit(100);
+ if(error){host.textContent="Tarixçə yüklənmədi: "+error.message;return}
+ host.innerHTML=(data||[]).length?'<div class="table-wrap"><table><thead><tr><th>İşçi</th><th>Məbləğ</th><th>Tarix</th><th>Üsul</th><th>Maaş dövrü</th><th>Qeyd</th></tr></thead><tbody>'+
+ data.map(p=>'<tr><td>'+esc(employeeNames[p.employee_id]||"İşçi")+'</td><td>'+money(p.amount)+'</td><td>'+esc(p.payment_date||"—")+'</td><td>'+esc(p.payment_method||"—")+'</td><td>'+esc((p.period_start||"—")+" – "+(p.period_end||"—"))+'</td><td>'+esc(p.notes||"—")+'</td></tr>').join("")+'</tbody></table></div>':'<p class="muted">Hələ maaş ödənişi qeydə alınmayıb.</p>';
+}
+async function showApp(){
+ $("login").style.display="none";$("app").style.display="block";
+ try{await loadEmployees();await loadHistory()}catch(e){$("salaryMessage").textContent="Məlumatlar yüklənmədi: "+e.message}
+}
+$("loginBtn").addEventListener("click",async()=>{
+ $("loginMessage").textContent="Giriş yoxlanılır...";
+ const {error}=await client.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+ if(error){$("loginMessage").textContent="Giriş alınmadı: "+error.message;return}
+ await showApp();
+});
+$("saveSalary").addEventListener("click",async()=>{
+ const employeeId=$("salaryEmployee").value,amount=Number($("salaryAmount").value),date=$("salaryPaymentDate").value;
+ const method=$("salaryPaymentMethod").value,start=$("salaryPeriodStart").value,end=$("salaryPeriodEnd").value,notes=$("salaryNotes").value.trim();
+ const msg=$("salaryMessage");
+ if(!employeeId||!Number.isFinite(amount)||amount<=0||!date||!start||!end){msg.textContent="İşçi, məbləğ və bütün tarix sahələrini doldurun.";return}
+ if(end<start){msg.textContent="Maaş dövrünün tarixləri düzgün deyil.";return}
+ msg.textContent="Ödəniş qeydə alınır...";
+ const {error}=await client.rpc("pay_employee_salary",{p_employee_id:employeeId,p_amount:amount,p_payment_date:date,p_payment_method:method,p_period_start:start,p_period_end:end,p_notes:notes||""});
+ if(error){msg.textContent="Ödəniş qeydə alınmadı: "+error.message;return}
+ msg.textContent="Maaş ödənişi uğurla qeydə alındı.";
+ $("salaryAmount").value="";$("salaryNotes").value="";
+ await loadHistory();
+});
+client.auth.getSession().then(async({data})=>{if(data.session)await showApp()});
+client.auth.onAuthStateChange(async(_event,session)=>{if(session&&$("app").style.display!=="block")await showApp();if(!session){$("app").style.display="none";$("login").style.display="block"}});
+</script>
+</body>
+</html>
