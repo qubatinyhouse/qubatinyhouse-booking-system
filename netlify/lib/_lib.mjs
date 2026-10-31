@@ -32,7 +32,34 @@ export function getNights(checkIn, checkOut) {
   return Math.round((Date.parse(`${checkOut}T00:00:00Z`) - Date.parse(`${checkIn}T00:00:00Z`)) / 86400000);
 }
 
-export async function quoteForUnit(client, unit, checkIn, checkOut, guestCount, breakfast) {
+export async function quoteForUnit(client, unit, checkIn, checkOut, guestCount, breakfast, campaignCode = '', marriageConfirmed = false) {
+  if (campaignCode) {
+    const nights = getNights(checkIn, checkOut);
+    const scandiIds = ['scandi-large-1','scandi-large-2','scandi-small-1','scandi-small-2'];
+    const aframeIds = ['aframe-1','aframe-2'];
+    let packagePrice, packageName, packageRule;
+    if (['autumn_149','autumn_179','autumn_249'].includes(campaignCode)) {
+      if (!scandiIds.includes(unit.id)) throw new Error('Payız kampaniyası yalnız Orange, Blue, White və Green evlərində keçərlidir.');
+      if (nights !== 3 || checkOut > '2026-11-05') throw new Error('Payız kampaniyası 5 noyabr 2026-dək bitən 3 gecəlik rezervasiyalar üçündür.');
+      if (campaignCode === 'autumn_149' && guestCount === 2) { packagePrice=149; packageName='Payız kampaniyası — 2 nəfər'; }
+      else if (campaignCode === 'autumn_179' && guestCount >= 3 && guestCount <= 4) { packagePrice=179; packageName='Payız kampaniyası — 3–4 nəfər'; }
+      else if (campaignCode === 'autumn_249' && guestCount >= 6 && guestCount <= 7) { packagePrice=249; packageName='Payız kampaniyası — 6–7 nəfər'; }
+      else throw new Error('Qonaq sayı seçilmiş payız paketinə uyğun deyil.');
+      packageRule='3 gecə / 4 gün, səhər yeməyi daxildir.';
+    } else if (campaignCode === 'romantic_179' || campaignCode === 'honeymoon_349') {
+      if (!aframeIds.includes(unit.id)) throw new Error('Romantik və balayı paketləri yalnız A-FRAME evlərində keçərlidir.');
+      if (!marriageConfirmed || guestCount !== 2) throw new Error('Bu paketlər yalnız rəsmi nikahda olan 2 nəfərlik cütlüklər üçündür.');
+      if (campaignCode === 'romantic_179') {
+        if (nights !== 1) throw new Error('Romantik paket 1 gecə / 2 gün üçündür.');
+        packagePrice=179; packageName='Romantik paket'; packageRule='1 gecə / 2 gün, 2 nəfərlik premium səhər yeməyi daxildir.';
+      } else {
+        if (nights !== 3) throw new Error('Balayı paketi 3 gecə / 4 gün üçündür.');
+        packagePrice=349; packageName='Balayı paketi'; packageRule='3 gecə / 4 gün, 2 nəfər üçün xüsusi paket.';
+      }
+    } else throw new Error('Kampaniya paketi tanınmadı və ya aktiv deyil.');
+    return { nights, stayTotal:packagePrice, breakfastTotal:0, total:packagePrice, campaignCode, campaignName:packageName, breakfastIncluded:true, ruleText:packageRule };
+  }
+
   const nights = getNights(checkIn, checkOut);
   if (nights < 1 || nights > 30) throw new Error('Rezervasiya 1–30 gecə arasında olmalıdır.');
   const [holidayRes, seasonalRes] = await Promise.all([
