@@ -381,6 +381,26 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
     <button onclick="loadReservations()">Yenilə</button>
     <p id="reservationMessage" class="muted"></p>
 
+    <div class="panel" id="stayMonthReport" style="margin-top:18px">
+      <h3>Qalma ayına görə rezervasiya hesabatı</h3>
+      <p class="muted">Bu hesabat müştərinin qalacağı aya görə hesablanır. Beh əvvəlki ayda alınıbsa, burada rezervasiya kimi görünəcək, lakin pul axını hesabatında ikinci dəfə gəlir sayılmayacaq.</p>
+      <label>Qalma ayı<input type="month" id="stayReportMonth"></label>
+      <div class="grid">
+        <div class="panel"><div class="muted">Aktiv rezervasiyalar</div><div class="card-value" id="stayBookingCount">0</div></div>
+        <div class="panel"><div class="muted">Rezervasiyaların ümumi dəyəri</div><div class="card-value" id="stayBookingTotal">0 AZN</div></div>
+        <div class="panel"><div class="muted">Alınmış beh / ödəniş</div><div class="card-value" id="stayBookingPaid">0 AZN</div></div>
+        <div class="panel"><div class="muted">Qalıq ödəniş</div><div class="card-value" id="stayBookingRemaining">0 AZN</div></div>
+      </div>
+      <p class="muted" id="stayReportNote" aria-live="polite">Rezervasiyalar yüklənəndə hesabat görünəcək.</p>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr><th>Müştəri</th><th>Ev</th><th>Qalma tarixləri</th><th>Status</th><th>Ümumi</th><th>Ödənilib</th><th>Qalıq</th></tr></thead>
+          <tbody id="stayReportTable"><tr><td colspan="7">Məlumat yüklənməyib.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse">
         <thead>
@@ -684,6 +704,41 @@ const money = value => Number(value || 0).toLocaleString("az-AZ", {
   minimumFractionDigits: 2, maximumFractionDigits: 2
 }) + " AZN";
 
+
+function renderStayMonthReport() {
+  const monthInput = document.getElementById("stayReportMonth");
+  if (!monthInput) return;
+  if (!monthInput.value) monthInput.value = new Date().toISOString().slice(0, 7);
+  const month = monthInput.value;
+  const monthItems = allReservations.filter(r => String(r.check_in || "").slice(0, 7) === month);
+  const activeItems = monthItems.filter(r => !["cancelled", "expired"].includes(String(r.status || "").toLowerCase()));
+  const sum = (items, field) => items.reduce((total, r) => total + Math.max(0, Number(r[field] || 0)), 0);
+  const total = sum(activeItems, "total_amount");
+  const paid = sum(activeItems, "paid_amount");
+  const remaining = activeItems.reduce((acc, r) => acc + Math.max(0, Number(r.total_amount || 0) - Number(r.paid_amount || 0)), 0);
+  document.getElementById("stayBookingCount").textContent = activeItems.length.toLocaleString("az-AZ");
+  document.getElementById("stayBookingTotal").textContent = money(total);
+  document.getElementById("stayBookingPaid").textContent = money(paid);
+  document.getElementById("stayBookingRemaining").textContent = money(remaining);
+  document.getElementById("stayReportNote").textContent =
+    month + " üzrə " + activeItems.length + " aktiv rezervasiya göstərilir. Ləğv edilmiş və vaxtı bitmiş rezervasiyalar cəmlərə daxil edilmir.";
+  const body = document.getElementById("stayReportTable");
+  if (!monthItems.length) {
+    body.innerHTML = '<tr><td colspan="7">Bu ay üçün rezervasiya yoxdur.</td></tr>';
+    return;
+  }
+  body.innerHTML = monthItems.map(r => {
+    const paidAmount = Number(r.paid_amount || 0);
+    const balance = Math.max(0, Number(r.total_amount || 0) - paidAmount);
+    const statusLabels = {confirmed:"Təsdiqlənib",pending_payment:"Beh gözlənilir",cancelled:"Ləğv edilib",expired:"Vaxtı bitib",payment_failed:"Ödəniş alınmadı",payment_review:"Yoxlanılır"};
+    return '<tr><td>' + escapeReservation(r.guest_name || "-") + '<br><small>' + escapeReservation(r.booking_code || "") + '</small></td>' +
+      '<td>' + escapeReservation(r.unit_name || r.unit_id || "-") + '</td>' +
+      '<td>' + escapeReservation(r.check_in || "") + ' – ' + escapeReservation(r.check_out || "") + '</td>' +
+      '<td>' + escapeReservation(statusLabels[r.status] || r.status || "-") + '</td>' +
+      '<td>' + money(r.total_amount) + '</td><td>' + money(paidAmount) + '</td><td>' + money(balance) + '</td></tr>';
+  }).join("");
+}
+
 window.loadReservations = async function () {
   const message = document.getElementById("reservationMessage");
   const table = document.getElementById("reservationTable");
@@ -692,6 +747,7 @@ window.loadReservations = async function () {
     const result = await adminRequest("GET");
     allReservations = result.reservations || [];
     renderReservations(allReservations);
+    renderStayMonthReport();
     document.getElementById("bookingCount").textContent =
       Number.isFinite(Number(result.totalCount)) ? Number(result.totalCount).toLocaleString("az-AZ") : allReservations.length.toLocaleString("az-AZ");
     document.getElementById("bookingCountNote").textContent =
@@ -893,6 +949,7 @@ window.releaseAllDateBlocks=async function(){
  catch(e){msg.textContent=e.message;}
 };
 
+document.getElementById("stayReportMonth")?.addEventListener("change", renderStayMonthReport);
 // Rezervasiyalar yalnız vahid administrator sessiyası açıldıqdan sonra yüklənir.
 </script>
 </body>
