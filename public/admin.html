@@ -182,7 +182,7 @@ a.link{color:#967542}
 <div class="card">
 <div class="card-label">Ümumi gəlir</div>
 <div class="card-value" id="income">— AZN</div>
-<div class="card-note">Maliyyə modulundan inteqrasiya ediləcək</div>
+<div class="card-note">Maliyyə modulunda administrator girişi tələb olunur</div>
 </div>
 <div class="card">
 <div class="card-label">Ümumi xərc</div>
@@ -216,7 +216,7 @@ a.link{color:#967542}
 <div class="panel">
 <h3>Sistem vəziyyəti</h3>
 <div class="notice">
-Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göstəricilərini göstərmək üçün Supabase cədvəlləri ilə inteqrasiya növbəti mərhələdə qurulmalıdır. Hazırda rəqəmlər uydurulmur.
+Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc yalnız maliyyə moduluna administrator kimi daxil olduqdan sonra yenilənir.
 </div>
 </div>
 </section>
@@ -399,31 +399,20 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-(async function () {
-  const financeClient = window.supabase.createClient(
-    "https://fynbzmyoleqcnqkhyfzd.supabase.co",
-    "sb_publishable_WM8Bxho4Xrp2SJR_uCNb-Q_MaxQeE4N"
-  );
-  const { data, error } = await financeClient
-    .from("finance_transactions")
-    .select("transaction_type, amount, transaction_date");
-  if (error) {
-    console.error("Maliyyə məlumatları yüklənmədi:", error.message);
-    return;
-  }
-  let income = 0, expense = 0;
-  (data || []).forEach(item => {
-    const amount = Number(item.amount || 0);
-    if (item.transaction_type === "income") income += amount;
-    if (item.transaction_type === "expense") expense += amount;
+// Maliyyə göstəriciləri yalnız maliyyə modulunda administrator sessiyası açıldıqdan sonra iframe-dən alınır.
+window.addEventListener("message", (event) => {
+  const frame = document.getElementById("financeFrame");
+  if (event.origin !== window.location.origin || !frame || event.source !== frame.contentWindow) return;
+  const data = event.data;
+  if (!data || data.type !== "QTH_FINANCE_SUMMARY") return;
+  const fmt = value => Number(value || 0).toLocaleString("az-AZ", {minimumFractionDigits:2,maximumFractionDigits:2}) + " AZN";
+  document.getElementById("income").textContent = fmt(data.income);
+  document.getElementById("expense").textContent = fmt(data.expense);
+  document.getElementById("profit").textContent = fmt(Number(data.income || 0) - Number(data.expense || 0));
+  document.querySelectorAll("#dashboard .card-note").forEach((el, i) => {
+    if (i < 3) el.textContent = "Maliyyə administrator sessiyasından yeniləndi";
   });
-  const money = value => Number(value || 0).toLocaleString("az-AZ", {
-    minimumFractionDigits: 2, maximumFractionDigits: 2
-  }) + " AZN";
-  document.getElementById("income").textContent = money(income);
-  document.getElementById("expense").textContent = money(expense);
-  document.getElementById("profit").textContent = money(income - expense);
-})();
+});
 </script>
 <script>
 const ADMIN_API_URL = "/.netlify/functions/admin-reservations";
