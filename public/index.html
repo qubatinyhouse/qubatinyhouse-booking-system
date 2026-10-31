@@ -59,6 +59,33 @@ let current=0;function openLightbox(i){current=i;document.getElementById('lbImg'
 function dt(id){return document.getElementById(id).value}
 function money(n){return Number(n||0).toLocaleString('az-AZ',{maximumFractionDigits:2})+' AZN'}
 let availabilityCache=[];
+ function campaignCode(){return document.getElementById('campaignPackage').value}
+ function updateCampaignOptions(){
+  const house=dt('house'),guests=Number(dt('guests')),ci=dt('checkin'),co=dt('checkout'),sel=document.getElementById('campaignPackage'),old=sel.value;
+  const scandi=['scandi-large-1','scandi-large-2','scandi-small-1','scandi-small-2'].includes(house);
+  const aframe=['aframe-1','aframe-2'].includes(house);
+  const nights=ci&&co?Math.round((Date.parse(co+'T00:00:00Z')-Date.parse(ci+'T00:00:00Z'))/86400000):0;
+  const options=[['','Adi tariflə rezervasiya']];
+  if(scandi&&nights===3&&co<='2026-11-05'){
+   if(guests===2)options.push(['autumn_149','Payız kampaniyası — 3 gecə / 4 gün — 149 AZN']);
+   if(guests>=3&&guests<=4)options.push(['autumn_179','Payız kampaniyası — 3 gecə / 4 gün — 179 AZN']);
+   if(guests>=6&&guests<=7)options.push(['autumn_249','Payız kampaniyası — 3 gecə / 4 gün — 249 AZN']);
+  }
+  if(aframe){
+   options.push(['romantic_179','Romantik paket — 1 gecə / 2 gün — 179 AZN']);
+   options.push(['honeymoon_349','Balayı paketi — 3 gecə / 4 gün — 349 AZN']);
+  }
+  sel.innerHTML='';
+  options.forEach(([value,label])=>{const o=document.createElement('option');o.value=value;o.textContent=label;sel.appendChild(o)});
+  sel.value=options.some(o=>o[0]===old)?old:'';
+  const married=!!sel.value&&aframe;
+  document.getElementById('marriageField').hidden=!married;
+  if(!married)document.getElementById('marriageConfirmed').checked=false;
+  const help=document.getElementById('campaignHelp');
+  help.textContent=aframe?'Romantik və balayı paketləri yalnız rəsmi nikahda olan 2 nəfərlik cütlüklər üçündür. Nikah şəhadətnaməsi girişdə yoxlanıla bilər.':
+   scandi?'Payız paketləri yalnız Orange, Blue, White və Green evlərində, 3 gecəlik və 5 noyabr 2026-dək bitən qalışlarda keçərlidir. Səhər yeməyi daxildir.':'Bu ev üçün hazırda xüsusi kampaniya yoxdur.';
+ }
+
 function updateQuote(unit){
  if(!unit){document.getElementById('total').textContent='Tarixləri yoxlayın';return}
  if(!unit.quote){document.getElementById('total').textContent='Tarif təyin edilməyib';document.getElementById('priceNote').textContent=unit.pricingError||'Qiymət konfiqurasiyası tamamlanmalıdır.';['nights','nightPrice','breakfastTotal','depositAmount','remainingAmount'].forEach(id=>document.getElementById(id).textContent=id==='nights'?'0':'—');return}
@@ -79,7 +106,7 @@ async function checkAvailability(){
  if(!ci||!co||co<=ci){unitSel.disabled=true;unitSel.innerHTML='<option value="">Əvvəl tarixləri yoxlayın</option>';availabilityCache=[];status.textContent='Düzgün giriş və çıxış tarixlərini seçin (çıxış girişdən sonra olmalıdır).';updateQuote(null);return}
  status.textContent='Mövcud tarixlər yoxlanılır…';unitSel.disabled=true;unitSel.innerHTML='<option value="">Yoxlanılır…</option>';
  try{
-  const r=await fetch(`/.netlify/functions/availability?checkIn=${encodeURIComponent(ci)}&checkOut=${encodeURIComponent(co)}&guestCount=${guests}&unitId=${encodeURIComponent(unitId)}&breakfast=${Number(document.getElementById('breakfast').value)>0?'1':'0'}`);
+  const r=await fetch(`/.netlify/functions/availability?checkIn=${encodeURIComponent(ci)}&checkOut=${encodeURIComponent(co)}&guestCount=${guests}&unitId=${encodeURIComponent(unitId)}&breakfast=${Number(document.getElementById('breakfast').value)>0?'1':'0'}&campaignCode=${encodeURIComponent(campaignCode())}&marriageConfirmed=${document.getElementById('marriageConfirmed').checked?'1':'0'}`);
   const data=await r.json();if(!r.ok)throw new Error(data.error||'Mövcudluğu yoxlamaq mümkün olmadı.');
   availabilityCache=data.units||[];unitSel.innerHTML='';
   const available=availabilityCache.filter(u=>u.available);
@@ -90,7 +117,9 @@ async function checkAvailability(){
  }catch(e){unitSel.disabled=true;unitSel.innerHTML='<option value="">Mövcudluq yoxlanmadı</option>';status.textContent=e.message+' Sistemin administrator quraşdırması hələ tamamlanmamış ola bilər.'}
 }
 document.getElementById('checkAvailability').addEventListener('click',checkAvailability);
-['checkin','checkout','guests','house'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{document.getElementById('unit').value='';checkAvailability()}));
+['checkin','checkout','guests','house'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{document.getElementById('unit').value='';updateCampaignOptions();checkAvailability()}));
+ document.getElementById('campaignPackage').addEventListener('change',()=>{updateCampaignOptions();document.getElementById('unit').value='';checkAvailability()});
+ document.getElementById('marriageConfirmed').addEventListener('change',()=>checkAvailability());
 document.getElementById('unit').addEventListener('change',()=>updateQuote(selectedUnit()));
 document.getElementById('breakfast').addEventListener('change',()=>{document.getElementById('availabilityStatus').textContent='Səhər yeməyi seçimi qiymətdə nəzərə alınacaq. Yenidən boşluğu yoxlayın.';checkAvailability()});
 document.getElementById('deposit').addEventListener('change',()=>updateQuote(selectedUnit()));
@@ -106,7 +135,7 @@ document.getElementById('quickGuests').addEventListener('change',e=>{document.ge
  // Open a blank tab during the direct click so the browser does not block WhatsApp after the async request.
  const waWindow=window.open('about:blank','_blank');
  try{
-  const r=await fetch('/.netlify/functions/create-booking',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unitId,checkIn,checkOut,guestName:name,phone,guestCount:Number(document.getElementById('guests').value),breakfast:Number(document.getElementById('breakfast').value)>0,note:document.getElementById('note').value,depositPercent:50})});
+  const r=await fetch('/.netlify/functions/create-booking',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unitId,checkIn,checkOut,guestName:name,phone,guestCount:Number(document.getElementById('guests').value),breakfast:Number(document.getElementById('breakfast').value)>0,note:document.getElementById('note').value,depositPercent:50,campaignCode:campaignCode(),marriageConfirmed:document.getElementById('marriageConfirmed').checked})});
   const data=await r.json();if(!r.ok)throw new Error(data.error||'Rezervasiyanı yaratmaq mümkün olmadı.');
   const chosen=selectedUnit();
   const houseName=chosen?chosen.name:unitId;
