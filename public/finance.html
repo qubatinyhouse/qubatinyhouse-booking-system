@@ -40,19 +40,10 @@ body.salary-only #salaryPaymentModule h3{margin-top:0}
 </header>
 
 <main>
-<section class="card" id="login">
-<h3>Administrator girişi</h3>
-<p class="muted">Yalnız səlahiyyətli istifadəçilər üçündür.</p>
-<input id="email" type="email" placeholder="Admin e-poçtu">
-<input id="password" type="password" placeholder="Şifrə">
-<button onclick="login()">Sistemə daxil ol</button>
-<p id="message"></p>
-</section>
-
 <section id="dashboard">
 <div class="card">
 Salam, administrator!
-<button onclick="logout()">Sistemdən çıxış</button>
+
 <button onclick="loadData()">Məlumatları yenilə</button>
 </div>
 
@@ -332,12 +323,7 @@ document.getElementById("financeDate").value = localDate;
 </main>
 
 <script>
-const SUPABASE_URL = "https://fynbzmyoleqcnqkhyfzd.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_WM8Bxho4Xrp2SJR_uCNb-Q_MaxQeE4N";
-const client = window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_ANON_KEY
-);
+let client = null;
 
 const money = n => Number(n || 0).toLocaleString(
 "az-AZ",{minimumFractionDigits:2,maximumFractionDigits:2}
@@ -388,26 +374,7 @@ async function addUtility() {
   document.getElementById("newUtilityNotes").value = "";
 
   await loadData();
-}async function login(){
-const email=document.getElementById("email").value.trim();
-const password=document.getElementById("password").value;
-const msg=document.getElementById("message");
-msg.textContent="";
-
-if(!email || !password){
-msg.textContent="E-poçt və şifrə daxil edin.";
-return;
-}
-
-const {error}=await client.auth.signInWithPassword({email,password});
-if(error){
-msg.textContent=error.message;
-return;
-}
-checkSession();
-}
-
-async function checkSession(){
+}async function checkSession(){
 const {data}=await client.auth.getSession();
 if(data.session){
 document.getElementById("login").style.display="none";
@@ -419,7 +386,6 @@ await loadData();
   await loadUtilityRecords();
   setCleaningRate();
 }else{
-document.getElementById("login").style.display="block";
 document.getElementById("dashboard").style.display="none";
 }
 }
@@ -907,15 +873,6 @@ async function loadSalaryEmployees() {
     select.appendChild(option);
   });
 } 
-  async function logout(){
-await client.auth.signOut();
-await checkSession();
-}
-
-client.auth.onAuthStateChange((_event,session)=>{
-document.getElementById("login").style.display=session?"none":"block";
-document.getElementById("dashboard").style.display=session?"block":"none";
-});
 
 document.getElementById("reportMonth").addEventListener("change", loadData);
 document.getElementById("reportDay").addEventListener("change", loadData);
