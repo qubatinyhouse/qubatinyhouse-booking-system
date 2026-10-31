@@ -1003,6 +1003,26 @@ async function connectSharedSession(){
  if(error||!data.session){document.getElementById("dashboard").innerHTML="<div class=card>Admin sessiyası tapılmadı. Əsas Admin panelə yenidən daxil olun.</div>";return;}
  await checkSession();
  client.auth.onAuthStateChange((_event,session)=>{if(!session)document.getElementById("dashboard").innerHTML="<div class=card>Sessiya bağlandı. Əsas Admin panelə yenidən daxil olun.</div>";});
+ window.addEventListener("message", async (event) => {
+   if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== "QTH_RECORD_BOOKING_DEPOSIT") return;
+   const p = event.data.payload || {};
+   if (!p.reservationId || !Number.isFinite(Number(p.amount)) || Number(p.amount) <= 0) return;
+   const { data, error } = await client.rpc("record_booking_deposit_income", {
+     p_reservation_id: p.reservationId,
+     p_amount: Number(p.amount),
+     p_payment_method: p.paymentMethod || "bank",
+     p_description: p.description || "Rezervasiya behi",
+     p_transaction_date: p.transactionDate || localDate
+   });
+   if (error) {
+     window.parent.postMessage({type:"QTH_BOOKING_DEPOSIT_RECORDED",reservationId:p.reservationId,error:error.message},window.location.origin);
+     return;
+   }
+   await loadData();
+   const result = Array.isArray(data) ? data[0] : data;
+   window.parent.postMessage({type:"QTH_BOOKING_DEPOSIT_RECORDED",reservationId:p.reservationId,amount:Number(p.amount).toFixed(2),status:result?.result_status},window.location.origin);
+ });
+ window.parent.postMessage({type:"QTH_FINANCE_READY"},window.location.origin);
 }
 connectSharedSession();
 </script>

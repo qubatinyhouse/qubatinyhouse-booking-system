@@ -148,8 +148,13 @@ export const handler = async (event) => {
           p_reservation_id: id
         });
         if (error) throw error;
-        const reservation = Array.isArray(data) ? data[0] : data;
-        return json(200, { reservation });
+        const { data: paidReservation, error: reservationError } = await client
+          .from('reservations')
+          .select('id,booking_code,guest_name,phone,unit_id,check_in,check_out,status,payment_status,paid_amount,paid_at')
+          .eq('id', id)
+          .single();
+        if (reservationError) throw reservationError;
+        return json(200, { reservation: paidReservation });
       }
 
       const { data, error } = await client
