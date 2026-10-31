@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kommunal borclar | Quba Tiny House</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>Kommunal borclar | Quba Tiny House</title>
 <style>
 :root{--ink:#202b26;--muted:#7b827d;--line:#e8e5dc;--gold:#c6a66a;--green:#173b30}
 *{box-sizing:border-box}body{margin:0;background:#f4f3ef;color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -13,14 +13,11 @@ input,select{display:block;width:100%;margin-top:7px;padding:12px;border:1px sol
 button{border:0;border-radius:9px;padding:12px 17px;background:linear-gradient(135deg,#b89557,#d0b77f);color:#17251f;font-weight:700;cursor:pointer;margin:8px 7px 0 0}
 button.secondary{background:#edf1ed;color:#294536;border:1px solid var(--line)}.message{font-size:13px;margin-top:10px;min-height:18px}
 .table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:700px}th,td{text-align:left;padding:12px 10px;border-bottom:1px solid #efede7;font-size:13px}th{background:#f8f7f3;color:#777d75;font-size:10px;text-transform:uppercase;letter-spacing:.6px}
-#app{display:none}#login{max-width:460px;margin:8vh auto}.pill{display:inline-block;padding:5px 9px;border-radius:20px;background:#eef4ef;color:#286044;font-size:11px}
+#app{display:block}.pill{display:inline-block;padding:5px 9px;border-radius:20px;background:#eef4ef;color:#286044;font-size:11px}
 @media(max-width:650px){main{padding:13px}.card{padding:16px}.top{align-items:flex-start;flex-direction:column}h1{font-size:22px}.metrics{grid-template-columns:1fr}input,select{font-size:16px}}
 </style></head><body><main>
-<section class="card" id="login"><h2>Kommunal borclar moduluna giriş</h2><p class="muted">Maliyyə administratoru hesabı ilə daxil olun.</p>
-<label>E-poçt<input id="email" type="email" autocomplete="username"></label><label>Şifrə<input id="password" type="password" autocomplete="current-password"></label>
-<button id="loginBtn">Daxil ol</button><p class="message" id="loginMessage"></p></section>
 <section id="app">
-<div class="top"><div><h1>Kommunal borclar</h1><div class="sub">Quba Tiny House — elektrik, qaz, su, internet və digər ödənişlər</div></div><button class="secondary" id="logoutBtn">Sistemdən çıxış</button></div>
+<div class="top"><div><h1>Kommunal borclar</h1><div class="sub">Quba Tiny House — elektrik, qaz, su, internet və digər ödənişlər</div></div></div>
 <div class="metrics">
 <div class="metric"><span class="muted">Ümumi borc</span><strong id="totalDebt">0.00 AZN</strong></div>
 <div class="metric"><span class="muted">Ödənilmiş</span><strong id="totalPaid">0.00 AZN</strong></div>
@@ -46,7 +43,7 @@ button.secondary{background:#edf1ed;color:#294536;border:1px solid var(--line)}.
 <section class="card"><h2>Son kommunal ödənişləri</h2><div id="paymentHistory" class="muted">Tarixçə yüklənir...</div></section>
 </section></main>
 <script>
-const URL="https://fynbzmyoleqcnqkhyfzd.supabase.co",KEY="sb_publishable_WM8Bxho4Xrp2SJR_uCNb-Q_MaxQeE4N",db=window.supabase.createClient(URL,KEY);
+let db=null;
 const $=id=>document.getElementById(id),money=n=>Number(n||0).toLocaleString("az-AZ",{minimumFractionDigits:2,maximumFractionDigits:2})+" AZN";
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let debts=[];
@@ -93,10 +90,16 @@ async function payDebt(){
  $("paymentMessage").textContent="Kommunal ödənişi qeydə alındı və maliyyə moduluna ötürüldü.";
  $("paymentAmount").value="";$("paymentNotes").value="";await refresh();
 }
-async function showApp(){$("login").style.display="none";$("app").style.display="block";await refresh()}
-$("loginBtn").addEventListener("click",async()=>{ $("loginMessage").textContent="Giriş yoxlanılır...";const {error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error){$("loginMessage").textContent="Giriş alınmadı: "+error.message;return}await showApp()});
-$("logoutBtn").addEventListener("click",async()=>db.auth.signOut());
+async function showApp(){$("app").style.display="block";await refresh()}
+async function connectSharedSession(){
+ for(let i=0;i<100&&!window.parent.qthAdminAuthClient;i++)await new Promise(r=>setTimeout(r,50));
+ db=window.parent.qthAdminAuthClient||null;
+ if(!db){$("app").innerHTML='<section class="card"><h2>Admin paneldən açın</h2><p class="muted">Kommunal modulu yalnız əsas Admin panelin daxilindən istifadə olunur.</p></section>';return}
+ const {data,error}=await db.auth.getSession();
+ if(error||!data.session){$("app").innerHTML='<section class="card"><h2>Admin sessiyası tapılmadı</h2><p class="muted">Əsas Admin panelə daxil olub Kommunal bölməsini yenidən açın.</p></section>';return}
+ await showApp();
+ db.auth.onAuthStateChange((_event,session)=>{if(!session){$("app").innerHTML='<section class="card"><h2>Sessiya bağlandı</h2><p class="muted">Davam etmək üçün əsas Admin panelə yenidən daxil olun.</p></section>'}});
+}
 $("addDebt").addEventListener("click",addDebt);$("savePayment").addEventListener("click",payDebt);
-db.auth.getSession().then(async({data})=>{if(data.session)await showApp()});
-db.auth.onAuthStateChange(async(_event,session)=>{if(session&&$("app").style.display!=="block")await showApp();if(!session){$("app").style.display="none";$("login").style.display="block"}});
+connectSharedSession();
 </script></body></html>
