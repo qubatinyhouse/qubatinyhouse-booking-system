@@ -52,7 +52,7 @@ export const handler = async (event) => {
       if (blockError) throw blockError;
       if (blocks && blocks.length) return json(409, { error: 'Seçilmiş tarixlər admin təqvimində bağlıdır. Əvvəl təqvimi yoxlayın.' });
 
-      const quote = await quoteForUnit(client, unit, checkIn, checkOut, guests, Boolean(breakfast), campaignCode, marriageConfirmed === true);
+      const quote = await quoteForUnit(client, unit, checkIn, checkOut, guests, false, campaignCode, marriageConfirmed === true);
       if (quote.total < 50) return json(400, { error: 'Rezervasiyanın ümumi məbləği minimum 50 AZN olmalıdır.' });
       const deposit = Math.max(50, Math.round(quote.total * 0.50 * 100) / 100);
       const remaining = Math.round((quote.total - deposit) * 100) / 100;
