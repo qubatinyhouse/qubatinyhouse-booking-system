@@ -26,7 +26,7 @@
 <div class="formfield"><label data-i18n="phone">Telefon *</label><input id="phone" name="phone" type="tel" placeholder="050 369 90 00" autocomplete="tel" required></div>
 <div class="formfield"><label data-i18n="checkinLabel">Giriş tarixi *</label><input id="checkin" name="check-in" type="date" required></div>
 <div class="formfield"><label data-i18n="checkoutLabel">Çıxış tarixi *</label><input id="checkout" name="check-out" type="date" required></div>
-<div class="formfield"><label data-i18n="house">Ev növü</label><select id="house" name="house-type"><option value="scandi">Skandinav evləri (3–7 nəfər)</option><option value="aframe">A-Frame, isti hovuzlu (6–10 nəfər)</option></select></div>
+<div class="formfield"><label data-i18n="house">Ev növü</label><select id="house" name="house-type" required><option value="">Ev seçin</option><option value="scandi-large-1">Orange House (5–7 nəfər)</option><option value="scandi-large-2">White House (5–7 nəfər)</option><option value="scandi-small-1">Blue House (3–4 nəfər)</option><option value="scandi-small-2">Green House (3–4 nəfər)</option><option value="aframe-1">A-FRAME-1 (6–10 nəfər, isti hovuz)</option><option value="aframe-2">A-FRAME-2 (6–10 nəfər, isti hovuz)</option></select></div>
 <div class="formfield"><label>Boş ev seçimi *</label><select id="unit" required disabled><option value="">Əvvəl tarixləri yoxlayın</option></select></div>
 <div class="formfield full"><button class="btn outline" type="button" id="checkAvailability">🔎 Boş tarixləri və evləri yoxla</button><div class="small" id="availabilityStatus" aria-live="polite">Giriş və çıxış tarixini seçin, sonra boşluğu yoxlayın.</div></div>
 <div class="formfield"><label data-i18n="guestCount">Qonaq sayı</label><select id="guests" name="guest-count"><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
@@ -65,19 +65,20 @@ function updateQuote(unit){
 }
 function selectedUnit(){return availabilityCache.find(u=>u.id===document.getElementById('unit').value)}
 async function checkAvailability(){
- const ci=dt('checkin'),co=dt('checkout'),guests=Number(document.getElementById('guests').value),type=document.getElementById('house').value;
+ const ci=dt('checkin'),co=dt('checkout'),guests=Number(document.getElementById('guests').value),unitId=document.getElementById('house').value;
  const status=document.getElementById('availabilityStatus'),unitSel=document.getElementById('unit');
+ if(!unitId){unitSel.disabled=true;unitSel.innerHTML='<option value="">Əvvəl ev seçin</option>';availabilityCache=[];status.textContent='Əvvəl rezervasiya etmək istədiyiniz evi seçin.';updateQuote(null);return}
  if(!ci||!co||co<=ci){unitSel.disabled=true;unitSel.innerHTML='<option value="">Əvvəl tarixləri yoxlayın</option>';availabilityCache=[];status.textContent='Düzgün giriş və çıxış tarixlərini seçin (çıxış girişdən sonra olmalıdır).';updateQuote(null);return}
  status.textContent='Mövcud tarixlər yoxlanılır…';unitSel.disabled=true;unitSel.innerHTML='<option value="">Yoxlanılır…</option>';
  try{
-  const r=await fetch(`/.netlify/functions/availability?checkIn=${encodeURIComponent(ci)}&checkOut=${encodeURIComponent(co)}&guestCount=${guests}&unitType=${encodeURIComponent(type)}&breakfast=${Number(document.getElementById('breakfast').value)>0?'1':'0'}`);
+  const r=await fetch(`/.netlify/functions/availability?checkIn=${encodeURIComponent(ci)}&checkOut=${encodeURIComponent(co)}&guestCount=${guests}&unitId=${encodeURIComponent(unitId)}&breakfast=${Number(document.getElementById('breakfast').value)>0?'1':'0'}`);
   const data=await r.json();if(!r.ok)throw new Error(data.error||'Mövcudluğu yoxlamaq mümkün olmadı.');
   availabilityCache=data.units||[];unitSel.innerHTML='';
   const available=availabilityCache.filter(u=>u.available);
   if(!available.length){unitSel.innerHTML='<option value="">Bu tarixlərdə boş ev yoxdur</option>';status.textContent='Bu tarixlərdə seçilmiş ev növü üçün boş yer tapılmadı. Başqa tarix seçin.';updateQuote(null);return}
   available.forEach(u=>{const o=document.createElement('option');o.value=u.id;o.textContent=`${u.name} — ${u.capacity} nəfərə qədər — ${u.quote?(u.isDemoRate?'nümunə tarif: ':'')+money(u.quote.total):'tarif qurulmalıdır'}`;unitSel.appendChild(o)});
   unitSel.disabled=false;updateQuote(selectedUnit());
-  const demo=available.some(u=>u.isDemoRate);status.textContent=`${available.length} boş ev tapıldı. ${demo?'Qeyd: rezervasiyanı aktivləşdirmək üçün Supabase-də real tariflər təsdiqlənməlidir.':'Seçilmiş tarixlər üçün mövcudluq yeniləndi.'}`;
+  const demo=available.some(u=>u.isDemoRate);status.textContent=`${available.length} uyğun ev tapıldı. ${demo?'Qeyd: rezervasiyanı aktivləşdirmək üçün Supabase-də real tariflər təsdiqlənməlidir.':'Seçilmiş tarixlər üçün mövcudluq yeniləndi.'}`;
  }catch(e){unitSel.disabled=true;unitSel.innerHTML='<option value="">Mövcudluq yoxlanmadı</option>';status.textContent=e.message+' Sistemin administrator quraşdırması hələ tamamlanmamış ola bilər.'}
 }
 document.getElementById('checkAvailability').addEventListener('click',checkAvailability);
