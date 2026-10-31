@@ -79,13 +79,10 @@ export const handler = async (event) => {
 
     const now = Date.now();
 
+    // Unpaid requests are not reservations and must not block dates.
+    // Dates become unavailable only after an admin confirms a verified deposit.
     const conflicts = (bookingsRes.data || []).filter((booking) =>
-      booking.status === 'confirmed' ||
-      (
-        booking.status === 'pending_payment' &&
-        booking.expires_at &&
-        Date.parse(booking.expires_at) > now
-      )
+      booking.status === 'confirmed'
     );
 
     const blockedDates = (blockedRes.data || []).filter(
