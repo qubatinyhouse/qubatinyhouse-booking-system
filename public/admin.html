@@ -262,6 +262,9 @@ if(section)section.classList.add("active");
 const button=document.querySelector('[data-page="'+page+'"]');
 if(button)button.classList.add("active");
 document.getElementById("pageTitle").textContent=titles[page]||"Dashboard";
+if(page==="reservations" && typeof window.loadReservations==="function"){
+  window.loadReservations();
+}
 }
 
 document.querySelectorAll(".nav").forEach(button=>{
@@ -271,7 +274,6 @@ button.addEventListener("click",()=>openPage(button.dataset.page));
 document.getElementById("today").textContent=
 new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).format(new Date());
 </script>
-<script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (async function () {
