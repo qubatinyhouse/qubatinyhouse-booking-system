@@ -84,7 +84,7 @@ begin
   update public.reservations
      set status = 'confirmed',
          payment_status = 'manual_paid',
-         paid_amount = deposit_amount,
+         paid_amount = b.deposit_amount,
          paid_at = now()
    where reservations.id = p_reservation_id;
 
