@@ -9,7 +9,7 @@ export const handler = async (event) => {
   if (typeof guestName !== 'string' || guestName.trim().length < 2 || guestName.length > 120) return json(400, { error: 'Ad və soyadı düzgün daxil edin.' });
   if (typeof phone !== 'string' || phone.replace(/\D/g, '').length < 7 || phone.length > 30) return json(400, { error: 'Telefon nömrəsini düzgün daxil edin.' });
   if (!Number.isInteger(Number(guestCount)) || Number(guestCount) < 1 || Number(guestCount) > 10) return json(400, { error: 'Qonaq sayı düzgün deyil.' });
-  if (![30, 40].includes(Number(depositPercent))) return json(400, { error: 'Avans faizi 30% və ya 40% olmalıdır.' });
+  if (Number(depositPercent) !== 50) return json(400, { error: 'Sayt rezervasiyalarında avans 50% olmalıdır.' });
   try {
     const client = db();
     const { data: unit, error: unitError } = await client.from('units').select('*').eq('id', unitId).eq('active', true).maybeSingle();
@@ -18,7 +18,7 @@ export const handler = async (event) => {
     if (Number(guestCount) > unit.capacity) return json(400, { error: `Bu ev maksimum ${unit.capacity} nəfər üçündür.` });
     if (unit.is_demo_rate) return json(409, { error: 'Saytın tarifləri hələ nümunə qiymətlərdədir. Real tarifləri təsdiqlədikdən sonra admin onları aktivləşdirməlidir.' });
     const quote = await quoteForUnit(client, unit, checkIn, checkOut, Number(guestCount), Boolean(breakfast));
-    const deposit = Math.round(quote.total * Number(depositPercent)) / 100;
+    const deposit = Math.round(quote.total * 0.50 * 100) / 100;
     const remaining = Math.round((quote.total - deposit) * 100) / 100;
     const rpc = await client.rpc('create_booking_atomic', {
       p_unit_id: unit.id,
@@ -32,7 +32,7 @@ export const handler = async (event) => {
       p_stay_amount: quote.stayTotal,
       p_breakfast_amount: quote.breakfastTotal,
       p_total_amount: quote.total,
-      p_deposit_percent: Number(depositPercent),
+      p_deposit_percent: 50,
       p_deposit_amount: deposit,
       p_remaining_amount: remaining
     });
@@ -47,7 +47,12 @@ export const handler = async (event) => {
     return json(201, {
       success: true,
       bookingCode: row.booking_code,
-      message: 'Rezervasiyanız qəbul edildi. Əməkdaşımız sizinlə əlaqə saxlayacaq.',
+      message: 'Rezervasiya sorğunuz qeydə alındı. 50% avans köçürüb qəbzi WhatsApp-a göndərin.',
+      paymentInfo: {
+        bankName: process.env.PAYMENT_BANK_NAME || '',
+        cardHolder: process.env.PAYMENT_CARD_HOLDER || '',
+        cardNumber: process.env.PAYMENT_CARD_NUMBER || ''
+      },
       totalAmount: quote.total,
       depositAmount: deposit,
       remainingAmount: remaining,
