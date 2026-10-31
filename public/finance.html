@@ -67,12 +67,48 @@ body.settings-only #systemSettingsModule input,body.settings-only #systemSetting
 body.settings-only #systemSettingsModule .settings-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 body.settings-only #systemSettingsModule .settings-status{min-height:20px;font-size:13px}
 @media(max-width:650px){body.settings-only main{padding:8px}body.settings-only #systemSettingsModule{padding:12px}}
+
+/* QTH PREMIUM FINANCE THEME */
+:root{--qth-ink:#101416;--qth-panel:#191f20;--qth-panel2:#202827;--qth-gold:#c7a45a;--qth-gold2:#f0d99a;--qth-muted:#aeb6b0;--qth-line:rgba(214,190,126,.22)}
+body{margin:0;background:radial-gradient(ellipse at 80% 0%,rgba(173,133,58,.16),transparent 34%),linear-gradient(135deg,#0b1012,#151b1c 58%,#202827);color:#f4f0e5;font-family:Inter,Arial,sans-serif;min-height:100vh}
+header{position:relative;isolation:isolate;overflow:hidden;padding:28px 32px 26px;border-bottom:1px solid var(--qth-line);background:linear-gradient(105deg,rgba(7,11,12,.97),rgba(20,27,26,.94)),radial-gradient(circle at 90% 20%,rgba(199,164,90,.24),transparent 35%);box-shadow:0 12px 36px #0006}
+header:before{content:"";position:absolute;z-index:-1;right:-5%;top:-95px;width:54%;height:280px;opacity:.18;background:linear-gradient(145deg,transparent 48%,#d9bd7d 49%,transparent 50%),linear-gradient(35deg,transparent 48%,#d9bd7d 49%,transparent 50%);transform:skewX(-18deg)}
+header:after{content:"";position:absolute;z-index:-1;right:5%;bottom:-75px;width:270px;height:150px;border:1px solid rgba(215,185,111,.35);border-radius:50%;box-shadow:0 0 0 18px rgba(215,185,111,.035),0 0 0 38px rgba(215,185,111,.025)}
+header .brandline{display:flex;align-items:center;gap:16px;max-width:1200px;margin:auto}
+header .brandmark{width:58px;height:58px;flex:0 0 58px;border:1px solid var(--qth-gold);border-radius:17px;display:grid;place-items:center;color:var(--qth-gold2);font-family:Georgia,serif;font-size:22px;font-weight:bold;letter-spacing:1px;box-shadow:inset 0 0 18px #c7a45a22,0 0 22px #c7a45a18}
+header h2{margin:0;color:#f7f1df;font-family:Georgia,serif;font-size:23px;letter-spacing:2px}
+header p{color:#c5b98f;margin:6px 0 0;font-size:12px;letter-spacing:2px;text-transform:uppercase}
+main{max-width:1200px;margin:24px auto;padding:0 20px 34px}
+.card{background:linear-gradient(145deg,rgba(34,42,40,.97),rgba(22,29,29,.98));color:#f1eee5;border:1px solid var(--qth-line);border-radius:18px;padding:21px;margin-bottom:18px;box-shadow:0 12px 34px #0003,inset 0 1px #ffffff08}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:15px}
+.metric{font-size:28px;font-weight:700;margin-top:12px;color:var(--qth-gold2);letter-spacing:.2px}
+.muted{color:#b2b9b1;font-size:13px}
+input,select,textarea,button{padding:12px 14px;border:1px solid rgba(214,190,126,.28);border-radius:10px;font-size:14px;width:100%;margin:6px 0;background:#111819;color:#f4f0e5}
+input:focus,select:focus,textarea:focus{outline:2px solid #c7a45a66;border-color:var(--qth-gold)}
+input::placeholder{color:#818b83}
+button{background:linear-gradient(135deg,#d7bb78,#a9823c);color:#151816;border:0;cursor:pointer;font-weight:800;letter-spacing:.2px;box-shadow:0 5px 15px #0003;transition:transform .15s,filter .15s}
+button:hover{filter:brightness(1.08);transform:translateY(-1px)}
+table{width:100%;border-collapse:collapse;color:#eee9dc}
+td,th{text-align:left;padding:12px;border-bottom:1px solid rgba(214,190,126,.15)}
+th{color:var(--qth-gold2);font-size:12px;text-transform:uppercase;letter-spacing:.7px}
+tr:hover td{background:#ffffff06}
+.green{color:#91c9a5}.red{color:#e69a8f}
+hr{border:0;border-top:1px solid var(--qth-line);margin:18px 0}
+#dashboard{display:none}
+#message{color:#f0a49a}
+.card h2,.card h3,.card h4{color:#f4e7c4}
+#dashboard>.card:first-child{background:linear-gradient(115deg,#17201f,#27312d);border-color:#c7a45a66}
+#dashboard>.grid>.card{position:relative;overflow:hidden}
+#dashboard>.grid>.card:after{content:"";position:absolute;right:-24px;top:-24px;width:88px;height:88px;border:1px solid #c7a45a38;border-radius:50%;box-shadow:0 0 0 12px #c7a45a0a}
+#monthlyFinanceReport,#dailyYearlyReports,#incomeSourceReport{scroll-margin-top:20px}
+body.reports-only,body.cleaning-only,body.settings-only,body.salary-only{background:#111819}
+@media(max-width:650px){header{padding:20px 16px}header .brandmark{width:48px;height:48px;flex-basis:48px}header h2{font-size:18px}header p{font-size:10px;letter-spacing:1px}main{padding:0 10px 24px;margin:14px auto}.card{padding:15px;border-radius:14px}.metric{font-size:24px}}
+
 </style>
 </head>
 <body>
 <header>
-<h2>QTH FINANCE</h2>
-<p>Quba Tiny House | Maliyyə idarəetmə sistemi</p>
+<div class="brandline"><div class="brandmark" aria-label="QTH">QTH</div><div><h2>QUBA TINY HOUSE</h2><p>Premium maliyyə idarəetmə sistemi</p></div></div>
 </header>
 
 <main>
