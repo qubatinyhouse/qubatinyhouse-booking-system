@@ -51,8 +51,13 @@ export async function quoteForUnit(client, unit, checkIn, checkOut, guestCount, 
     if (holidays.has(ds)) { rate = Number(unit.holiday_rate); sawHoliday = true; }
     else {
       const matchingSeason = seasonal.find(s => s.start_date <= ds && ds < s.end_date);
-      if (matchingSeason) { rate = Number(matchingSeason.nightly_rate); sawSeason = true; }
-      else if ([5, 6].includes(d.getUTCDay())) { rate = Number(unit.weekend_rate); sawWeekend = true; }
+      const weekend = [5, 6].includes(d.getUTCDay());
+      if (matchingSeason) {
+        const seasonalRate = weekend ? matchingSeason.weekend_rate : matchingSeason.weekday_rate;
+        rate = Number(seasonalRate ?? matchingSeason.nightly_rate);
+        sawSeason = true;
+        if (weekend) sawWeekend = true;
+      } else if (weekend) { rate = Number(unit.weekend_rate); sawWeekend = true; }
       else rate = Number(unit.weekday_rate);
     }
     if (!Number.isFinite(rate) || rate <= 0) throw new Error('Bu ev üçün qiymət hələ düzgün qurulmayıb.');
