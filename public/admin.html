@@ -707,7 +707,7 @@ window.createAdminReservation = async function () {
  if(payload.checkOut<=payload.checkIn){message.textContent="Çıxış tarixi giriş tarixindən sonra olmalıdır.";return;}
  if(!confirm("Bu məlumatlarla rezervasiya yaratmaq və onu təsdiqləmək istəyirsiniz?"))return;
  message.textContent="Qiymət və mövcudluq yoxlanılır...";
- try{const result=await adminRequest("POST",payload);const r=result.reservation;message.textContent="Rezervasiya yaradıldı: "+(r.booking_code||r.id)+" | Cəmi: "+money(result.quote.total)+" | 50% beh: "+money(result.quote.deposit)+" | Qalıq: "+money(result.quote.remaining)+". "+result.quote.ruleText;document.getElementById("adminGuestName").value="";document.getElementById("adminGuestPhone").value="";document.getElementById("adminBookingNote").value="";await loadReservations();}
+ try{const result=await adminRequest("POST",payload);const r=result.reservation;message.textContent="Rezervasiya yaradıldı: "+(r.booking_code||r.id)+" | Cəmi: "+money(result.quote.total)+" | Kampaniya: "+(result.quote.campaignName||"Adi tarif")+" | 50% beh: "+money(result.quote.deposit)+" | Qalıq: "+money(result.quote.remaining)+". "+result.quote.ruleText;document.getElementById("adminGuestName").value="";document.getElementById("adminGuestPhone").value="";document.getElementById("adminBookingNote").value="";await loadReservations();}
  catch(error){message.textContent="Rezervasiya yaradılmadı: "+error.message;}
 };
 window.cancelAdminReservation=async function(id){
