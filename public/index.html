@@ -39,8 +39,8 @@
 <div class="notice" id="bookingSuccess" hidden aria-live="polite">
 <strong>Rezervasiya sorğunuz qeydə alındı.</strong>
 <div id="bookingSuccessDetails"></div>
-<div style="margin-top:12px"><strong>Avans ödənişi üçün kart</strong><div id="paymentCardDetails">Kart məlumatları hazırlanır...</div></div>
-<button class="btn gold" type="button" id="sendReceiptWhatsApp" style="margin-top:14px">📲 WhatsApp-a keç və qəbzi göndər</button>
+<div style="margin-top:12px"><strong>Avans ödənişi</strong><div id="paymentCardDetails">Kart məlumatlarını almaq üçün WhatsApp vasitəsilə menecerlə əlaqə yaradın. Kart məlumatları saytda göstərilmir.</div></div>
+<button class="btn gold" type="button" id="sendReceiptWhatsApp" style="margin-top:14px">📲 WhatsApp-da kart məlumatlarını istə</button>
 </div></div></div></form></div></section>
 <section><div class="container"><div class="sectionHead reveal"><div class="eyebrow">Rates</div><h2>Tarif qaydaları</h2><p>Qiymətlər evə və tarixə görə avtomatik hesablanır. Yay mövsümündə, həftəsonlarında və bayram günlərində uyğun tarif tətbiq olunur.</p></div><div class="features reveal"><div class="feature"><div class="icon">🌱</div><h3>Standart gün</h3><p>Adi həftəiçi günlər üçün tarif.</p></div><div class="feature"><div class="icon">☀️</div><h3>Həftəsonu</h3><p>Cümə və şənbə gecələri üçün yüksək tarif.</p></div><div class="feature"><div class="icon">🎉</div><h3>Bayram günləri</h3><p>Bayram təqvimindəki tarixlər üçün xüsusi tarif.</p></div></div></div></section>
 <section id="contact" class="contact"><div class="container"><div class="eyebrow">Contact</div><h2>Quba Tiny House</h2><p>📍 Quba, Qəçrəş meşəsi · ☎️ 050 369 90 00 · 📸 @quba_tiny_house</p><div class="social"><a href="tel:+994503699000">☎️ Zəng et</a><a href="https://wa.me/994503699000" target="_blank" rel="noopener">💬 WhatsApp</a><a href="https://instagram.com/quba_tiny_house" target="_blank" rel="noopener">📸 Instagram</a><a href="https://www.facebook.com/" target="_blank" rel="noopener">f Facebook</a><a href="https://www.messenger.com/" target="_blank" rel="noopener">💬 Messenger</a><a href="https://www.tiktok.com/" target="_blank" rel="noopener">♪ TikTok</a><a href="https://www.google.com/maps/search/?api=1&query=Q%C9%99%C3%A7r%C9%99%C5%9F%20Quba" target="_blank" rel="noopener">📍 Google Maps</a></div></div></section>
@@ -107,19 +107,16 @@ document.getElementById('quickGuests').addEventListener('change',e=>{document.ge
     const chosen=selectedUnit();
   const details=document.getElementById('bookingSuccessDetails');
   details.textContent='Bron kodu: '+data.bookingCode+' | '+(chosen?chosen.name:unitId)+' | '+checkIn+' – '+checkOut+' | Ümumi: '+money(data.totalAmount)+' | 50% avans: '+money(data.depositAmount)+' | Qalıq: '+money(data.remainingAmount);
-  const card=data.paymentInfo||{};
-  const cardDetails=document.getElementById('paymentCardDetails');
-  const cardLines=[card.bankName,card.cardHolder,card.cardNumber].filter(Boolean);
-  cardDetails.textContent=cardLines.length?cardLines.join(' · '):'Kart məlumatları hazırda göstərilmir. WhatsApp-da menecerdən ödəniş kartını istəyin.';
+  document.getElementById('paymentCardDetails').textContent='Kart məlumatları yalnız WhatsApp vasitəsilə menecer tərəfindən göndəriləcək.';
   document.getElementById('bookingSuccess').hidden=false;
   document.getElementById('setupNotice').hidden=true;
-  const waText='Salam, Quba Tiny House saytında rezervasiya sorğusu yaratdım.\\nBron kodu: '+data.bookingCode+'\\nAd: '+name+'\\nTelefon: '+phone+'\\nEv: '+(chosen?chosen.name:unitId)+'\\nTarix: '+checkIn+' – '+checkOut+'\\nÜmumi məbləğ: '+money(data.totalAmount)+'\\nKöçürüləcək 50% avans: '+money(data.depositAmount)+'\\nQalıq: '+money(data.remainingAmount)+'\\nAvans ödənişinin qəbzini bu mesaja əlavə edirəm. Zəhmət olmasa ödənişi təsdiqləyin.';
+  const waText='Salam, Quba Tiny House saytında rezervasiya sorğusu yaratdım.\\nBron kodu: '+data.bookingCode+'\\nAd: '+name+'\\nTelefon: '+phone+'\\nEv: '+(chosen?chosen.name:unitId)+'\\nTarix: '+checkIn+' – '+checkOut+'\\nÜmumi məbləğ: '+money(data.totalAmount)+'\\nKöçürüləcək 50% avans: '+money(data.depositAmount)+'\\nQalıq: '+money(data.remainingAmount)+'\\nZəhmət olmasa 50% avans ödənişi üçün kart məlumatlarını mənə göndərin. Kart məlumatlarını aldıqdan sonra ödəniş edib qəbzi bu WhatsApp söhbətinə göndərəcəyəm.';
   document.getElementById('sendReceiptWhatsApp').onclick=()=>window.open('https://wa.me/994503699000?text='+encodeURIComponent(waText),'_blank','noopener');
   document.getElementById('bookingSuccess').scrollIntoView({behavior:'smooth',block:'center'});
   document.getElementById('reservationForm').reset();
   document.getElementById('unit').innerHTML='<option value="">Əvvəl tarixləri yoxlayın</option>';
   document.getElementById('unit').disabled=true;
-  document.getElementById('availabilityStatus').textContent='Rezervasiya sorğusu qeydə alındı. Avans qəbzini WhatsApp-a göndərin.';
+  document.getElementById('availabilityStatus').textContent='Rezervasiya sorğusu qeydə alındı. WhatsApp-da kart məlumatlarını istəyin.';
   button.disabled=false;button.textContent='✅ Rezervasiyanı göndər';
  }catch(e){alert(e.message);button.disabled=false;button.textContent='✅ Rezervasiyanı göndər';}
 }
