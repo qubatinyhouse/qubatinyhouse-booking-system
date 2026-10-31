@@ -67,7 +67,8 @@ function selectedUnit(){return availabilityCache.find(u=>u.id===document.getElem
 async function checkAvailability(){
  const ci=dt('checkin'),co=dt('checkout'),guests=Number(document.getElementById('guests').value),unitId=document.getElementById('house').value;
  const status=document.getElementById('availabilityStatus'),unitSel=document.getElementById('unit');
- if(!unitId){unitSel.disabled=true;unitSel.innerHTML='<option value="">Əvvəl ev seçin</option>';availabilityCache=[];status.textContent='Əvvəl rezervasiya etmək istədiyiniz evi seçin.';updateQuote(null);return}\n if(!ci||!co||co<=ci){unitSel.disabled=true;unitSel.innerHTML='<option value="">Əvvəl tarixləri yoxlayın</option>';availabilityCache=[];status.textContent='Düzgün giriş və çıxış tarixlərini seçin (çıxış girişdən sonra olmalıdır).';updateQuote(null);return}
+ if(!unitId){unitSel.disabled=true;unitSel.innerHTML='<option value="">Əvvəl ev seçin</option>';availabilityCache=[];status.textContent='Əvvəl rezervasiya etmək istədiyiniz evi seçin.';updateQuote(null);return}
+ if(!ci||!co||co<=ci){unitSel.disabled=true;unitSel.innerHTML='<option value="">Əvvəl tarixləri yoxlayın</option>';availabilityCache=[];status.textContent='Düzgün giriş və çıxış tarixlərini seçin (çıxış girişdən sonra olmalıdır).';updateQuote(null);return}
  status.textContent='Mövcud tarixlər yoxlanılır…';unitSel.disabled=true;unitSel.innerHTML='<option value="">Yoxlanılır…</option>';
  try{
   const r=await fetch(`/.netlify/functions/availability?checkIn=${encodeURIComponent(ci)}&checkOut=${encodeURIComponent(co)}&guestCount=${guests}&unitId=${encodeURIComponent(unitId)}&breakfast=${Number(document.getElementById('breakfast').value)>0?'1':'0'}`);
