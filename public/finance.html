@@ -31,6 +31,17 @@ body.salary-only #dashboard>*:not(:has(#salaryPaymentModule)){display:none!impor
 body.salary-only #dashboard *:not(#salaryPaymentModule):not(:has(#salaryPaymentModule)){display:none!important}
 body.salary-only #salaryPaymentModule{display:block!important;margin:0;box-shadow:none;border:0;padding:16px}
 body.salary-only #salaryPaymentModule h3{margin-top:0}
+
+body.reports-only header{display:none}
+body.reports-only main{max-width:1200px;margin:0 auto;padding:12px}
+body.reports-only #dashboard{display:block!important}
+body.reports-only #dashboard>*:not(:has(#bankCashModule)){display:none!important}
+body.reports-only #bankCashModule>.grid{display:none!important}
+body.reports-only #bankCashModule>*:not(#monthlyFinanceReport):not(#dailyYearlyReports):not(:has(#incomeSourceReport)){display:none!important}
+body.reports-only #monthlyFinanceReport,body.reports-only #dailyYearlyReports{display:block!important}
+body.reports-only #bankCashModule>div:has(>#incomeSourceReport){display:block!important}
+body.reports-only #employeeSalarySection,body.reports-only #salaryPaymentModule,body.reports-only #cleaningTaskModule,body.reports-only #utilityPaymentModule{display:none!important}
+@media(max-width:650px){body.reports-only main{padding:8px}body.reports-only .card{padding:14px}}
 </style>
 </head>
 <body>
@@ -878,6 +889,7 @@ document.getElementById("reportMonth").addEventListener("change", loadData);
 document.getElementById("reportDay").addEventListener("change", loadData);
 document.getElementById("reportYear").addEventListener("change", loadData);
 if(new URLSearchParams(location.search).get("view")==="salary") document.body.classList.add("salary-only");
+if(new URLSearchParams(location.search).get("view")==="reports") document.body.classList.add("reports-only");
 async function connectSharedSession(){
  for(let i=0;i<100&&!window.parent.qthAdminAuthClient;i++)await new Promise(r=>setTimeout(r,50));
  client=window.parent.qthAdminAuthClient||null;
