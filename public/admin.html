@@ -151,9 +151,9 @@ Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göst�
         <select id="reservationStatusFilter"
           onchange="filterReservations()">
           <option value="">Bütün rezervasiyalar</option>
-          <option value="pending">Gözləyir</option>
+          <option value="pending_payment">Beh gözlənilir</option>
           <option value="confirmed">Təsdiqlənib</option>
-          <option value="cancelled">Ləğv edilib</option>
+          <option value="cancelled">Ləğv edilib</option><option value="expired">Vaxtı bitib</option><option value="payment_failed">Ödəniş alınmadı</option><option value="payment_review">Yoxlama tələb olunur</option>
         </select>
       </div>
     </div>
@@ -271,192 +271,169 @@ button.addEventListener("click",()=>openPage(button.dataset.page));
 document.getElementById("today").textContent=
 new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).format(new Date());
 </script>
+<script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (async function () {
-
-const SUPABASE_URL = "https://fynbzmyoleqcnqkhyfzd.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_WM8Bxho4Xrp2SJR_uCNb-Q_MaxQeE4N";
-
-const client = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
-
-  const money = value =>
-    Number(value || 0).toLocaleString("az-AZ", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }) + " AZN";
-
-  const { data, error } = await client
+  const financeClient = window.supabase.createClient(
+    "https://fynbzmyoleqcnqkhyfzd.supabase.co",
+    "sb_publishable_WM8Bxho4Xrp2SJR_uCNb-Q_MaxQeE4N"
+  );
+  const { data, error } = await financeClient
     .from("finance_transactions")
     .select("transaction_type, amount, transaction_date");
-
   if (error) {
     console.error("Maliyyə məlumatları yüklənmədi:", error.message);
     return;
   }
-
-  let income = 0;
-  let expense = 0;
-
+  let income = 0, expense = 0;
   (data || []).forEach(item => {
     const amount = Number(item.amount || 0);
-
     if (item.transaction_type === "income") income += amount;
     if (item.transaction_type === "expense") expense += amount;
   });
-
+  const money = value => Number(value || 0).toLocaleString("az-AZ", {
+    minimumFractionDigits: 2, maximumFractionDigits: 2
+  }) + " AZN";
   document.getElementById("income").textContent = money(income);
   document.getElementById("expense").textContent = money(expense);
   document.getElementById("profit").textContent = money(income - expense);
 })();
+</script>
+const ADMIN_API_URL = "/.netlify/functions/admin-reservations";
+let adminToken = sessionStorage.getItem("qth_admin_api_token") || "";
 let allReservations = [];
+
+function getAdminToken() {
+  if (!adminToken) {
+    adminToken = window.prompt("Admin API giriş kodunu daxil edin:");
+    if (adminToken) sessionStorage.setItem("qth_admin_api_token", adminToken);
+  }
+  return adminToken || "";
+}
+
+async function adminRequest(method = "GET", body = null) {
+  const token = getAdminToken();
+  if (!token) throw new Error("Admin giriş kodu daxil edilməyib.");
+  const response = await fetch(ADMIN_API_URL, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-token": token
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const result = await response.json().catch(() => ({}));
+  if (response.status === 401) {
+    sessionStorage.removeItem("qth_admin_api_token");
+    adminToken = "";
+    throw new Error("Giriş kodu yanlışdır və ya Netlify-də ADMIN_API_TOKEN qurulmayıb.");
+  }
+  if (!response.ok) throw new Error(result.error || "Sorğu uğursuz oldu.");
+  return result;
+}
+
+const money = value => Number(value || 0).toLocaleString("az-AZ", {
+  minimumFractionDigits: 2, maximumFractionDigits: 2
+}) + " AZN";
 
 window.loadReservations = async function () {
   const message = document.getElementById("reservationMessage");
   const table = document.getElementById("reservationTable");
-
   message.textContent = "Rezervasiyalar yüklənir...";
-
-  const { data, error } = await client
-    .from("reservations")
-    .select(`
-      id,
-      guest_name,
-      phone,
-      check_in,
-      check_out,
-      adults,
-      children,
-      total_amount,
-      deposit_amount,
-      status,
-      house_id,
-      houses(*)
-    `)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    message.textContent = "Xəta: " + error.message;
-    return;
+  try {
+    const result = await adminRequest("GET");
+    allReservations = result.reservations || [];
+    renderReservations(allReservations);
+    document.getElementById("bookingCount").textContent = allReservations.length;
+    message.textContent = "Cəmi " + allReservations.length + " rezervasiya tapıldı.";
+  } catch (error) {
+    message.textContent = error.message;
+    table.innerHTML = '<tr><td colspan="10">Məlumat yüklənmədi.</td></tr>';
   }
-
-  allReservations = data || [];
-  renderReservations(allReservations);
-  message.textContent =
-    "Cəmi " + allReservations.length + " rezervasiya tapıldı.";
 };
 
 function renderReservations(items) {
   const table = document.getElementById("reservationTable");
-
   if (!items.length) {
-    table.innerHTML =
-      '<tr><td colspan="10">Rezervasiya tapılmadı.</td></tr>';
+    table.innerHTML = '<tr><td colspan="10">Rezervasiya tapılmadı.</td></tr>';
     return;
   }
-
   table.innerHTML = items.map(r => {
-    const house = Array.isArray(r.houses)
-      ? r.houses[0]
-      : r.houses;
-
-    const houseName = house
-      ? house.name || house.house_name || house.title || "Ev"
-      : "Ev ID: " + (r.house_id || "");
-
-    const status = r.status || "pending";
-
-    return `
-      <tr>
-        <td>${escapeReservation(r.guest_name)}</td>
-        <td>${escapeReservation(r.phone || "-")}</td>
-        <td>${escapeReservation(houseName)}</td>
-        <td>${r.check_in || "-"}</td>
-        <td>${r.check_out || "-"}</td>
-        <td>${Number(r.adults || 0) + Number(r.children || 0)}</td>
-        <td>${Number(r.total_amount || 0).toFixed(2)} AZN</td>
-        <td>${Number(r.deposit_amount || 0).toFixed(2)} AZN</td>
-        <td>
-          <select onchange="changeReservationStatus('${r.id}', this.value)">
-            <option value="pending" ${status === "pending" ? "selected" : ""}>Gözləyir</option>
-            <option value="confirmed" ${status === "confirmed" ? "selected" : ""}>Təsdiqlənib</option>
-            <option value="cancelled" ${status === "cancelled" ? "selected" : ""}>Ləğv edilib</option>
-          </select>
-        </td>
-        <td>
-          <button onclick="showReservationDetails('${r.id}')">
-            Ətraflı
-          </button>
-        </td>
-      </tr>
-    `;
+    const statuses = [
+      ["pending_payment", "Beh gözlənilir"],
+      ["confirmed", "Təsdiqlənib"],
+      ["expired", "Vaxtı bitib"],
+      ["cancelled", "Ləğv edilib"],
+      ["payment_failed", "Ödəniş alınmadı"],
+      ["payment_review", "Yoxlama tələb olunur"]
+    ];
+    return `<tr>
+      <td>${escapeReservation(r.guest_name)}</td>
+      <td>${escapeReservation(r.phone || "-")}</td>
+      <td>${escapeReservation(r.unit_name || r.unit_id)}</td>
+      <td>${escapeReservation(r.check_in || "-")}</td>
+      <td>${escapeReservation(r.check_out || "-")}</td>
+      <td>${Number(r.guest_count || 0)}</td>
+      <td>${money(r.total_amount)}</td>
+      <td>${money(r.deposit_amount)}</td>
+      <td><select onchange="changeReservationStatus('${r.id}',this.value)">
+        ${statuses.map(([value,label]) => `<option value="${value}" ${r.status===value?"selected":""}>${label}</option>`).join("")}
+      </select><small>${escapeReservation(r.payment_status || "")}</small></td>
+      <td><button type="button" onclick="showReservationDetails('${r.id}')">Ətraflı</button></td>
+    </tr>`;
   }).join("");
 }
 
 window.filterReservations = function () {
-  const search = document.getElementById("reservationSearch")
-    .value.toLowerCase().trim();
-
+  const search = document.getElementById("reservationSearch").value.toLowerCase().trim();
   const status = document.getElementById("reservationStatusFilter").value;
-
-  const filtered = allReservations.filter(r => {
-    const matchesSearch =
-      (r.guest_name || "").toLowerCase().includes(search) ||
-      (r.phone || "").toLowerCase().includes(search);
-
-    const matchesStatus = !status || r.status === status;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  renderReservations(filtered);
+  renderReservations(allReservations.filter(r => {
+    const matchesSearch = (r.guest_name || "").toLowerCase().includes(search) ||
+      (r.phone || "").toLowerCase().includes(search) ||
+      (r.booking_code || "").toLowerCase().includes(search);
+    return matchesSearch && (!status || r.status === status);
+  }));
 };
 
 window.changeReservationStatus = async function (id, status) {
-  const { error } = await client
-    .from("reservations")
-    .update({
-      status: status,
-      updated_at: new Date().toISOString()
-    })
-    .eq("id", id);
-
-  if (error) {
-    alert("Status dəyişdirilmədi: " + error.message);
-    loadReservations();
-    return;
+  if (!window.confirm("Rezervasiyanın statusunu dəyişmək istəyirsiniz?")) {
+    renderReservations(allReservations); return;
   }
-
-  alert("Rezervasiya statusu yeniləndi.");
-  loadReservations();
+  try {
+    await adminRequest("PATCH", { id, status });
+    await loadReservations();
+  } catch (error) {
+    window.alert("Status dəyişdirilmədi: " + error.message);
+    renderReservations(allReservations);
+  }
 };
 
 window.showReservationDetails = function (id) {
   const r = allReservations.find(item => item.id === id);
   if (!r) return;
-
-  alert(
-    "Müştəri: " + (r.guest_name || "") +
+  window.alert(
+    "Bron kodu: " + (r.booking_code || "-") +
+    "\nMüştəri: " + (r.guest_name || "") +
     "\nTelefon: " + (r.phone || "") +
+    "\nEv: " + (r.unit_name || r.unit_id || "-") +
     "\nGiriş: " + (r.check_in || "") +
     "\nÇıxış: " + (r.check_out || "") +
-    "\nÜmumi məbləğ: " + (r.total_amount || 0) + " AZN" +
-    "\nBeh: " + (r.deposit_amount || 0) + " AZN" +
-    "\nQeyd: " + (r.notes || "-")
+    "\nQonaq sayı: " + (r.guest_count || 0) +
+    "\nÜmumi məbləğ: " + money(r.total_amount) +
+    "\nBeh: " + money(r.deposit_amount) +
+    "\nQalıq: " + money(r.remaining_amount) +
+    "\nÖdənilib: " + money(r.paid_amount) +
+    "\nÖdəniş statusu: " + (r.payment_status || "-") +
+    "\nQeyd: " + (r.note || "-")
   );
 };
 
 function escapeReservation(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[char]);
-}</script>
+}
+</script>
 </body>
 </html>
