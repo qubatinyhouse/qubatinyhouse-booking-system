@@ -42,6 +42,16 @@ body.reports-only #monthlyFinanceReport,body.reports-only #dailyYearlyReports{di
 body.reports-only #bankCashModule>div:has(>#incomeSourceReport){display:block!important}
 body.reports-only #employeeSalarySection,body.reports-only #salaryPaymentModule,body.reports-only #cleaningTaskModule,body.reports-only #utilityPaymentModule{display:none!important}
 @media(max-width:650px){body.reports-only main{padding:8px}body.reports-only .card{padding:14px}}
+
+body.cleaning-only header{display:none}
+body.cleaning-only main{max-width:1100px;margin:0 auto;padding:12px}
+body.cleaning-only #dashboard{display:block!important}
+body.cleaning-only #dashboard>*:not(:has(#cleaningTaskModule)){display:none!important}
+body.cleaning-only #bankCashModule>*:not(#cleaningTaskModule){display:none!important}
+body.cleaning-only #cleaningTaskModule{display:block!important;margin:0;box-shadow:none;border:0;padding:16px}
+body.cleaning-only #cleaningTaskModule h3{margin-top:0}
+body.cleaning-only #cleaningTaskModule .grid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+@media(max-width:650px){body.cleaning-only main{padding:8px}body.cleaning-only #cleaningTaskModule{padding:12px}}
 </style>
 </head>
 <body>
@@ -890,6 +900,7 @@ document.getElementById("reportDay").addEventListener("change", loadData);
 document.getElementById("reportYear").addEventListener("change", loadData);
 if(new URLSearchParams(location.search).get("view")==="salary") document.body.classList.add("salary-only");
 if(new URLSearchParams(location.search).get("view")==="reports") document.body.classList.add("reports-only");
+if(new URLSearchParams(location.search).get("view")==="cleaning") document.body.classList.add("cleaning-only");
 async function connectSharedSession(){
  for(let i=0;i<100&&!window.parent.qthAdminAuthClient;i++)await new Promise(r=>setTimeout(r,50));
  client=window.parent.qthAdminAuthClient||null;
