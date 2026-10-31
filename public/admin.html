@@ -395,9 +395,19 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
 </section>
 
 <section class="section" id="settings">
-<div class="panel">
-<h3>Sistem parametrləri</h3>
-<div class="notice">Admin girişinin qorunması və istifadəçi səlahiyyətləri ayrıca təhlükəsizlik mərhələsində qurulacaq. Bu səhifə hələ giriş sistemi deyil.</div>
+<div class="cards">
+ <div class="card"><div class="card-label">Sistem</div><div class="card-value">Quba Tiny House</div><div class="card-note">İdarəetmə parametrləri</div></div>
+ <div class="card"><div class="card-label">Ev inventarı</div><div class="card-value">6 aktiv ev</div><div class="card-note">Ev parametrləri ayrıca idarə olunur</div></div>
+ <div class="card"><div class="card-label">Beh qaydası</div><div class="card-value">Ev üzrə faiz</div><div class="card-note">Rezervasiya üçün beh faizi</div></div>
+ <div class="card"><div class="card-label">Giriş</div><div class="card-value">Vahid Admin sessiyası</div><div class="card-note">Əlavə giriş və açar tələb olunmur</div></div>
+</div>
+<div class="panel" style="padding:12px">
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 8px 14px">
+  <div><h3 style="margin:0 0 6px">Ev və rezervasiya parametrləri</h3><div class="sub">Qiymət, tutum, beh faizi, minimum gecə və aktivlik vəziyyətini idarə et</div></div>
+  <button class="btn" type="button" onclick="document.getElementById('settingsFrame').contentWindow.location.reload()">Yenilə</button>
+ </div>
+ <iframe id="settingsFrame" title="Quba Tiny House sistem parametrləri" src="/finance.html?view=settings" loading="eager" style="display:block;width:100%;height:1300px;border:1px solid var(--border);border-radius:12px;background:#f3f5f8"></iframe>
+ <p class="notice" style="margin:12px 0 0">Dəyişikliklər mövcud houses cədvəlində saxlanılır. Mövcud rezervasiyalar və maliyyə əməliyyatları dəyişdirilmir.</p>
 </div>
 </section>
 
