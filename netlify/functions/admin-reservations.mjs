@@ -145,17 +145,24 @@ export const handler = async (event) => {
       }
 
       if (status === 'confirmed') {
+        const amount = Number(body.amount);
+        const paymentMethod = String(body.paymentMethod || '');
+        if (!Number.isFinite(amount) || amount <= 0 || !['cash','bank','card','transfer'].includes(paymentMethod)) {
+          return json(400, { error: 'Faktiki ödəniş məbləği və ödəniş üsulu düzgün daxil edilməlidir.' });
+        }
         const { data, error } = await client.rpc('confirm_manual_paid_booking', {
-          p_reservation_id: id
+          p_reservation_id: id,
+          p_paid_amount: amount,
+          p_payment_method: paymentMethod
         });
         if (error) throw error;
         const { data: paidReservation, error: reservationError } = await client
           .from('reservations')
-          .select('id,booking_code,guest_name,phone,unit_id,check_in,check_out,status,payment_status,paid_amount,paid_at')
+          .select('id,booking_code,guest_name,phone,unit_id,check_in,check_out,total_amount,deposit_amount,remaining_amount,status,payment_status,paid_amount,paid_at')
           .eq('id', id)
           .single();
         if (reservationError) throw reservationError;
-        return json(200, { reservation: paidReservation });
+        return json(200, { reservation: { ...paidReservation, payment_method: paymentMethod } });
       }
 
       const { data, error } = await client
