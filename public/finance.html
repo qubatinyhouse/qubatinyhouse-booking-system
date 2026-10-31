@@ -115,6 +115,7 @@ Salam, administrator!
     <label>Hesabat ayı</label>
     <input type="month" id="reportMonth">
 
+    <div class="muted" id="reportPeriodLabel">Seçilmiş ay üzrə nəticələr</div>
     <div class="grid">
         <div class="card">
             <div class="muted">Aylıq gəlir</div>
@@ -132,6 +133,10 @@ Salam, administrator!
         </div>
         </div>
   </div>       
+  <div class="card">
+    <h3>Gəlir mənbələri üzrə hesabat</h3>
+    <div id="incomeSourceReport" class="muted">Məlumat yüklənir...</div>
+  </div>
   <div class="card" id="employeeSalarySection">
 
   <h3>İşçi maaşlarının idarə edilməsi</h3>
@@ -431,12 +436,23 @@ document.getElementById("paid").textContent=money(paid);
 document.getElementById("outstanding").textContent=money(outstanding);
 document.getElementById("commission").textContent=money(commission);
 // BANK VƏ KASSA QALIQ HESABLANMASI
-const { data: transactions, error: financeError } = await client
-  .from("finance_transactions")
-  .select("transaction_type, amount, payment_method, transaction_date");
-
+let transactions = [];
+let financeError = null;
+for (let offset = 0; ; offset += 1000) {
+  const page = await client
+    .from("finance_transactions")
+    .select("id, transaction_type, category, amount, payment_method, description, transaction_date")
+    .order("transaction_date", { ascending: false })
+    .range(offset, offset + 999);
+  if (page.error) { financeError = page.error; break; }
+  transactions = transactions.concat(page.data || []);
+  if (!page.data || page.data.length < 1000) break;
+}
 if (financeError) {
   console.error("Maliyyə xətası:", financeError.message);
+  document.getElementById("monthlyIncome").textContent = "Yüklənmədi";
+  document.getElementById("monthlyExpense").textContent = "Yüklənmədi";
+  document.getElementById("monthlyProfit").textContent = "Yüklənmədi";
   return;
 }
 
@@ -501,14 +517,38 @@ document.getElementById("monthlyExpense").textContent =
 
 document.getElementById("monthlyProfit").textContent =
     money(monthlyIncome - monthlyExpense);
+document.getElementById("reportPeriodLabel").textContent =
+    "Hesabat dövrü: " + selectedMonth;
 
-// Göstəriciləri əsas admin panelinə yalnız təsdiqlənmiş maliyyə sessiyası olduqda ötür.
+// Gəlir mənbələri: seçilmiş ayda kateqoriyalar üzrə faktiki daxilolmalar.
+const sourceTotals = {};
+(transactions || []).forEach(item => {
+  if (item.transaction_type !== "income" || !item.transaction_date || item.transaction_date.slice(0,7) !== selectedMonth) return;
+  const key = item.category || "Kateqoriyasız gəlir";
+  sourceTotals[key] = (sourceTotals[key] || 0) + Number(item.amount || 0);
+});
+const sourceHost = document.getElementById("incomeSourceReport");
+const sourceRows = Object.entries(sourceTotals).sort((a,b)=>b[1]-a[1]);
+sourceHost.innerHTML = sourceRows.length
+  ? '<div style="overflow-x:auto"><table><thead><tr><th>Gəlir mənbəyi</th><th>Məbləğ</th></tr></thead><tbody>' +
+    sourceRows.map(([name,total])=>'<tr><td>'+escapeHTML(name)+'</td><td class="green">'+money(total)+'</td></tr>').join("") +
+    '</tbody></table></div>'
+  : '<p class="muted">Seçilmiş ay üzrə gəlir qeydə alınmayıb.</p>';
+
+// Dashboard kartları həmişə cari ayı göstərir; tarix seçimi yalnız hesabat bölməsinə təsir edir.
+let currentIncome = 0, currentExpense = 0;
+(transactions || []).forEach(item => {
+  if (!item.transaction_date || item.transaction_date.slice(0,7) !== currentMonth) return;
+  const amount = Number(item.amount || 0);
+  if (item.transaction_type === "income") currentIncome += amount;
+  else if (item.transaction_type === "expense") currentExpense += amount;
+});
 if (window.parent !== window) {
   window.parent.postMessage({
     type: "QTH_FINANCE_SUMMARY",
-    income: monthlyIncome,
-    expense: monthlyExpense,
-    month: selectedMonth
+    income: currentIncome,
+    expense: currentExpense,
+    month: currentMonth
   }, window.location.origin);
 }
 
