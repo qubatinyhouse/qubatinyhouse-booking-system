@@ -1,45 +1,78 @@
--- Quba Tiny House real tariff activation and four named Scandinavian units.
--- Run only in the BOOKING Supabase project. Existing unit IDs are retained
+-- Quba Tiny House real tariff activation.
+-- Run only in the BOOKING Supabase project. Preserve existing unit IDs
 -- so reservation history and foreign keys remain intact.
 alter table public.seasonal_rates
   add column if not exists weekday_rate numeric(10,2),
   add column if not exists weekend_rate numeric(10,2);
 
--- Rename existing Scandinavian records without changing their IDs.
+-- Rename the four existing Scandinavian units without changing IDs.
 update public.units set name='Orange House', unit_type='large', capacity=7, sort_order=1
-where id in ('scandi-large-1','scandi-orange');
+where id='scandi-large-1';
 update public.units set name='White House', unit_type='large', capacity=7, sort_order=2
-where id in ('scandi-large-2','scandi-white');
+where id='scandi-large-2';
 update public.units set name='Blue House', unit_type='small', capacity=4, sort_order=3
-where id in ('scandi-small-1','scandi-blue');
+where id='scandi-small-1';
 update public.units set name='Green House', unit_type='small', capacity=4, sort_order=4
-where id in ('scandi-small-2','scandi-green');
+where id='scandi-small-2';
 
--- Real base tariffs (September-May). Breakfast is included only for Scandinavian houses.
+-- Base tariffs: September-May. Only the six known houses are affected.
 update public.units
 set
-  weekday_rate = case when unit_type = 'small' then 100 when unit_type = 'large' then 120 else 150 end,
-  weekend_rate = case when unit_type = 'small' then 150 when unit_type = 'large' then 170 else 170 end,
-  holiday_rate = case when unit_type = 'small' then 150 when unit_type = 'large' then 170 else 170 end,
-  breakfast_rate_per_person = case when unit_type in ('small','large') then 15 else 0 end,
+  weekday_rate = case
+    when id in ('scandi-small-1','scandi-small-2') then 100
+    when id in ('scandi-large-1','scandi-large-2') then 120
+    else 150
+  end,
+  weekend_rate = case
+    when id in ('scandi-small-1','scandi-small-2') then 150
+    else 170
+  end,
+  holiday_rate = case
+    when id in ('scandi-small-1','scandi-small-2') then 150
+    else 170
+  end,
   is_demo_rate = false
-where active = true;
+where id in (
+  'scandi-large-1','scandi-large-2',
+  'scandi-small-1','scandi-small-2',
+  'aframe-1','aframe-2'
+);
 
--- Summer tariffs: weekday/weekend. End date is exclusive (1 September).
+-- Summer tariffs, June 1 inclusive through September 1 exclusive, 2027-2035.
 insert into public.seasonal_rates
   (unit_id, start_date, end_date, nightly_rate, weekday_rate, weekend_rate, label, active)
 select
-  u.id, make_date(y, 6, 1), make_date(y, 9, 1),
-  case when u.unit_type = 'small' then 130 when u.unit_type = 'large' then 140 else 200 end,
-  case when u.unit_type = 'small' then 130 when u.unit_type = 'large' then 140 else 200 end,
-  case when u.unit_type = 'small' then 150 when u.unit_type = 'large' then 170 else 250 end,
-  'Yay mövsümü', true
+  u.id,
+  make_date(y, 6, 1),
+  make_date(y, 9, 1),
+  case
+    when u.id in ('scandi-small-1','scandi-small-2') then 130
+    when u.id in ('scandi-large-1','scandi-large-2') then 140
+    else 200
+  end,
+  case
+    when u.id in ('scandi-small-1','scandi-small-2') then 130
+    when u.id in ('scandi-large-1','scandi-large-2') then 140
+    else 200
+  end,
+  case
+    when u.id in ('scandi-small-1','scandi-small-2') then 150
+    when u.id in ('scandi-large-1','scandi-large-2') then 170
+    else 250
+  end,
+  'Yay mövsümü',
+  true
 from public.units u
 cross join generate_series(2027, 2035) as years(y)
-where u.active = true
-  and not exists (
-    select 1 from public.seasonal_rates s
-    where s.unit_id = u.id
-      and s.start_date = make_date(y, 6, 1)
-      and s.end_date = make_date(y, 9, 1)
-  );
+where u.id in (
+  'scandi-large-1','scandi-large-2',
+  'scandi-small-1','scandi-small-2',
+  'aframe-1','aframe-2'
+)
+and not exists (
+  select 1
+  from public.seasonal_rates s
+  where s.unit_id = u.id
+    and s.start_date = make_date(y, 6, 1)
+    and s.end_date = make_date(y, 9, 1)
+);
