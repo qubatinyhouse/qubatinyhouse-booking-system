@@ -9,7 +9,7 @@ export const handler = async (event) => {
   if (typeof guestName !== 'string' || guestName.trim().length < 2 || guestName.length > 120) return json(400, { error: 'Ad və soyadı düzgün daxil edin.' });
   if (typeof phone !== 'string' || phone.replace(/\D/g, '').length < 7 || phone.length > 30) return json(400, { error: 'Telefon nömrəsini düzgün daxil edin.' });
   if (!Number.isInteger(Number(guestCount)) || Number(guestCount) < 1 || Number(guestCount) > 10) return json(400, { error: 'Qonaq sayı düzgün deyil.' });
-  if (Number(depositPercent) !== 50) return json(400, { error: 'Sayt rezervasiyalarında avans 50% olmalıdır.' });
+  if (Number(depositPercent) !== 50) return json(400, { error: 'Standart beh faizi 50% olmalıdır.' });
   try {
     const client = db();
     const { data: unit, error: unitError } = await client.from('units').select('*').eq('id', unitId).eq('active', true).maybeSingle();
@@ -20,7 +20,8 @@ export const handler = async (event) => {
     if (typeof campaignCode !== 'string' || campaignCode.length > 40) return json(400, { error: 'Kampaniya seçimi düzgün deyil.' });
     if (['romantic_179','honeymoon_349'].includes(campaignCode) && marriageConfirmed !== true) return json(400, { error: 'Bu paketlər yalnız rəsmi nikahda olan cütlüklər üçündür.' });
     const quote = await quoteForUnit(client, unit, checkIn, checkOut, Number(guestCount), Boolean(breakfast), campaignCode, marriageConfirmed === true);
-    const deposit = Math.round(quote.total * 0.50 * 100) / 100;
+    if (quote.total < 50) return json(400, { error: 'Rezervasiyanın ümumi məbləği minimum 50 AZN olmalıdır.' });
+    const deposit = Math.max(50, Math.round(quote.total * 0.50 * 100) / 100);
     const remaining = Math.round((quote.total - deposit) * 100) / 100;
     const rpc = await client.rpc('create_booking_atomic', {
       p_unit_id: unit.id,
@@ -49,7 +50,7 @@ export const handler = async (event) => {
     return json(201, {
       success: true,
       bookingCode: row.booking_code,
-      message: 'Rezervasiya sorğunuz qeydə alındı. WhatsApp-da menecerdən 50% avans üçün kart məlumatlarını istəyin.',
+      message: 'Rezervasiya sorğunuz qeydə alındı. WhatsApp-da menecerdən minimum 50 AZN beh üçün kart məlumatlarını istəyin.',
       totalAmount: quote.total,
       depositAmount: deposit,
       remainingAmount: remaining,
