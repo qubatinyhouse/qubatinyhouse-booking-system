@@ -51,7 +51,7 @@ export const handler = async (event) => {
       if (blocks && blocks.length) return json(409, { error: 'Seçilmiş tarixlər admin təqvimində bağlıdır. Əvvəl təqvimi yoxlayın.' });
 
       const quote = await quoteForUnit(client, unit, checkIn, checkOut, guests, Boolean(breakfast));
-      const deposit = Math.round(quote.total * 0.30 * 100) / 100;
+      const deposit = Math.round(quote.total * 0.50 * 100) / 100;
       const remaining = Math.round((quote.total - deposit) * 100) / 100;
 
       const rpc = await client.rpc('create_booking_atomic', {
@@ -66,7 +66,7 @@ export const handler = async (event) => {
         p_stay_amount: quote.stayTotal,
         p_breakfast_amount: quote.breakfastTotal,
         p_total_amount: quote.total,
-        p_deposit_percent: 30,
+        p_deposit_percent: 50,
         p_deposit_amount: deposit,
         p_remaining_amount: remaining
       });
@@ -135,12 +135,28 @@ export const handler = async (event) => {
 
       const { data, error } = await client
         .from('reservations')
-        .update({ status })
+         .update(status === 'confirmed'
+          ? { status, payment_status: 'manual_paid', paid_at: new Date().toISOString() }
+          : { status })
         .eq('id', id)
-        .select('id,status')
+        .select('id,status,payment_status,paid_amount,paid_at')
         .single();
 
       if (error) throw error;
+      if (status === 'confirmed') {
+        const { data: current, error: currentError } = await client.from('reservations')
+          .select('deposit_amount')
+          .eq('id', id)
+          .single();
+        if (currentError) throw currentError;
+        const { data: paid, error: paidError } = await client.from('reservations')
+          .update({ paid_amount: current.deposit_amount })
+          .eq('id', id)
+          .select('id,status,payment_status,paid_amount,paid_at')
+          .single();
+        if (paidError) throw paidError;
+        return json(200, { reservation: paid });
+      }
       return json(200, { reservation: data });
     }
 
