@@ -66,3 +66,34 @@ $$;
 
 revoke all on function public.create_booking_atomic(text,date,date,text,text,integer,boolean,text,numeric,numeric,numeric,integer,numeric,numeric) from public, anon, authenticated;
 grant execute on function public.create_booking_atomic(text,date,date,text,text,integer,boolean,text,numeric,numeric,numeric,integer,numeric,numeric) to service_role;
+
+-- Confirm a manual bank transfer only after the manager has checked the bank account.
+create or replace function public.confirm_manual_paid_booking(p_reservation_id uuid)
+returns table(id uuid, status text, payment_status text, paid_amount numeric, paid_at timestamptz)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  b public.reservations%rowtype;
+begin
+  select * into b from public.reservations where reservations.id = p_reservation_id for update;
+  if not found then raise exception 'BOOKING_NOT_FOUND'; end if;
+  if b.status in ('cancelled','expired') then raise exception 'BOOKING_NOT_ACTIVE'; end if;
+
+  update public.reservations
+     set status = 'confirmed',
+         payment_status = 'manual_paid',
+         paid_amount = deposit_amount,
+         paid_at = now()
+   where reservations.id = p_reservation_id;
+
+  return query
+    select r.id, r.status, r.payment_status, r.paid_amount, r.paid_at
+      from public.reservations r
+     where r.id = p_reservation_id;
+end;
+$$;
+revoke all on function public.confirm_manual_paid_booking(uuid) from public, anon, authenticated;
+grant execute on function public.confirm_manual_paid_booking(uuid) to service_role;
+
