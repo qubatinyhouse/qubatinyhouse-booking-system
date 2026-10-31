@@ -201,7 +201,7 @@ Salam, administrator!
 <div class="card" id="cleaningTaskModule">
   <h3>Təmizlik tapşırıqları</h3>
   <div class="grid">
-    <label>Ev növü<select id="cleaningHouseType"><option value="scandinav">Skandinav</option><option value="aframe">A-FRAME</option></select></label>
+    <label>Ev növü<select id="cleaningHouseType" onchange="setCleaningRate()"><option value="scandinav">Skandinav</option><option value="aframe">A-FRAME</option></select></label>
     <label>Ev adı<input id="cleaningHouseName" placeholder="Orange House / A-FRAME-1"></label>
     <label>Tarix<input id="cleaningDate" type="date"></label>
     <label>İşçi<select id="cleaningEmployee"><option value="">İşçi seçin</option></select></label>
@@ -383,6 +383,7 @@ await loadData();
   await loadSalaryEmployees();
   await loadCleaningTasks();
   await loadUtilityRecords();
+  setCleaningRate();
 }else{
 document.getElementById("login").style.display="block";
 document.getElementById("dashboard").style.display="none";
@@ -680,6 +681,11 @@ async function loadCleaningTasks(){
   const names={}; (window.qthEmployees||[]).forEach(e=>names[e.id]=e.full_name);
   host.innerHTML=(data||[]).length?'<div style="overflow-x:auto"><table><thead><tr><th>Tarix</th><th>Ev</th><th>İşçi</th><th>Məbləğ</th><th>Status</th><th>Əməliyyat</th></tr></thead><tbody>'+
     data.map(t=>'<tr><td>'+escapeHTML(t.task_date)+'</td><td>'+escapeHTML(t.house_name||t.house_type)+'</td><td>'+escapeHTML(names[t.employee_id]||"—")+'</td><td>'+money(t.amount)+'</td><td>'+(t.status==="completed"?"Tamamlandı":"Gözləyir")+'</td><td>'+(t.status==="pending"?'<button type="button" onclick="completeCleaningTask(\''+t.id+'\')">Tamamla</button>':'—')+'</td></tr>').join("")+'</tbody></table></div>':'<p class="muted">Təmizlik tapşırığı yoxdur.</p>';
+}
+function setCleaningRate(){
+  const type=document.getElementById("cleaningHouseType").value;
+  const rate=type==="aframe"?document.getElementById("aframeCleaningRate").value:document.getElementById("scandiCleaningRate").value;
+  document.getElementById("cleaningAmount").value=Number(rate||0);
 }
 async function addCleaningWork(){
   const message=document.getElementById("cleaningTaskMessage");
