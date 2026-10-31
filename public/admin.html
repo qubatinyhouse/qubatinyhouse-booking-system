@@ -250,7 +250,7 @@ Dashboard-un görünüşü hazırdır. Real gəlir, xərc və rezervasiya göst�
         <select id="reservationStatusFilter"
           onchange="filterReservations()">
           <option value="">Bütün rezervasiyalar</option>
-          <option value="pending_payment">Beh gözlənilir</option>
+          <option value="pending_payment">Avans gözlənilir</option>
           <option value="confirmed">Təsdiqlənib</option>
           <option value="cancelled">Ləğv edilib</option><option value="expired">Vaxtı bitib</option><option value="payment_failed">Ödəniş alınmadı</option><option value="payment_review">Yoxlama tələb olunur</option>
         </select>
@@ -492,7 +492,7 @@ function renderReservations(items) {
   }
   table.innerHTML = items.map(r => {
     const statuses = [
-      ["pending_payment", "Beh gözlənilir"],
+      ["pending_payment", "Avans gözlənilir"],
       ["confirmed", "Avans yoxlanılıb — təsdiqlə"],
       ["expired", "Vaxtı bitib"],
       ["cancelled", "Ləğv edilib"],
