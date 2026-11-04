@@ -890,7 +890,14 @@ const adminPaymentDate = document.getElementById("adminPaymentDate");
 if (adminPaymentDate && !adminPaymentDate.value) {
   adminPaymentDate.value = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Baku" });
 }
-window.updateAdminManualBalance = function () {\n  const total = Number(document.getElementById("adminTotalAmount")?.value || 0);\n  const paid = Number(document.getElementById("adminPaidAmount")?.value || 0);\n  const remaining = Math.max(0, total - paid);\n  const output = document.getElementById("adminRemainingAmount");\n  if (output) output.value = remaining.toFixed(2) + " AZN";\n};\nwindow.createAdminReservation = async function () {
+window.updateAdminManualBalance = function () {
+  const total = Number(document.getElementById("adminTotalAmount")?.value || 0);
+  const paid = Number(document.getElementById("adminPaidAmount")?.value || 0);
+  const remaining = Math.max(0, total - paid);
+  const output = document.getElementById("adminRemainingAmount");
+  if (output) output.value = remaining.toFixed(2) + " AZN";
+};
+window.createAdminReservation = async function () {
   const message = document.getElementById("adminCreateMessage");
   const button = document.querySelector("#adminCreateReservationPanel button.btn");
   const payload = {
@@ -911,8 +918,8 @@ window.updateAdminManualBalance = function () {\n  const total = Number(document
     message.textContent = "Ad, telefon və tarixləri doldurun.";
     return;
   }
-  if (!Number.isFinite(payload.totalAmount) || payload.totalAmount < 50) {
-    message.textContent = "Ümumi məbləğ ən azı 50 AZN olmalıdır.";
+  if (!Number.isFinite(payload.totalAmount) || payload.totalAmount <= 0) {
+    message.textContent = "Ümumi məbləğ 0-dan böyük olmalıdır.";
     return;
   }
   if (!Number.isFinite(payload.paidAmount) || payload.paidAmount < 0 || payload.paidAmount > payload.totalAmount) {
