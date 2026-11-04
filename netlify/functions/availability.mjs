@@ -12,8 +12,6 @@ export const handler = async (event) => {
       guestCount = '2',
       unitType = 'small',
       unitId = '',
-      campaignCode = '',
-      marriageConfirmed = '0'
     } = event.queryStringParameters || {};
 
     if (
@@ -116,8 +114,8 @@ export const handler = async (event) => {
               checkOut,
               guests,
               false,
-              campaignCode,
-              marriageConfirmed === '1'
+              '',
+              false
             );
 
             return {
