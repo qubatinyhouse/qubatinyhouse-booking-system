@@ -1,4 +1,4 @@
-import { db, json, validDate } from '../lib/_lib.mjs';
+import { db, json, validDate, requireQthAdmin } from '../lib/_lib.mjs';
 
 const allowedUnits = new Set([
   'scandi-large-1','scandi-large-2','scandi-small-1',
@@ -7,11 +7,8 @@ const allowedUnits = new Set([
 const allowedReasons = new Set(['owner','maintenance','other']);
 
 export const handler = async (event) => {
-  const expectedToken = process.env.ADMIN_API_TOKEN;
-  const suppliedToken = event.headers?.['x-admin-token'] || event.headers?.['X-Admin-Token'];
-  if (!expectedToken || !suppliedToken || suppliedToken !== expectedToken) {
-    return json(401, { error: 'Admin icazəsi tələb olunur.' });
-  }
+  const admin = await requireQthAdmin(event);
+  if (!admin) return json(401, { error: 'Admin sessiyası etibarlı deyil. Yenidən daxil olun.' });
 
   try {
     const client = db();
@@ -74,14 +71,14 @@ export const handler = async (event) => {
     }
 
     if (event.httpMethod === 'DELETE') {
-      // blocked_dates.id is BIGINT (identity), not UUID.
-      const validBlockId = (value) => /^[1-9]\d*$/.test(String(value ?? ''));
+      // Production blocked_dates.id is UUID; only accept canonical UUID values.
+      const validBlockId = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value ?? ''));
       const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
       const isBulkAll = body.all === true;
       const isBulkSelected = ids.length > 0 && ids.every(validBlockId);
       const id = String(body.id ?? '');
       if (!isBulkAll && !isBulkSelected && !validBlockId(id)) {
-        return json(400, { error: 'Bağlama ID-si müsbət tam ədəd olmalıdır.' });
+        return json(400, { error: 'Bağlama ID-si düzgün UUID formatında olmalıdır.' });
       }
       let query = client.from('blocked_dates').update({ active: false }).eq('active', true);
       if (isBulkSelected) query = query.in('id', ids);
