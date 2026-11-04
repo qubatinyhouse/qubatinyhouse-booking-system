@@ -24,6 +24,31 @@ export function db() {
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
+const QTH_ADMIN_AUTH_URL = "https://fynbzmyoleqcnqkhyfzd.supabase.co";
+const QTH_ADMIN_AUTH_KEY = "sb_publishable_WM8Bxho4Xrp2SJR_uCNb-Q_MaxQeE4N";
+
+// Verify the same Supabase Auth session used by the admin UI.
+// app_metadata is server-managed and cannot be changed by the user from the browser.
+export async function requireQthAdmin(event) {
+  const headers = event?.headers || {};
+  const authorization = headers.authorization || headers.Authorization || "";
+  const match = String(authorization).match(/^Bearer\\s+(.+)$/i);
+  if (!match) return null;
+
+  try {
+    const authClient = createClient(QTH_ADMIN_AUTH_URL, QTH_ADMIN_AUTH_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
+    const { data, error } = await authClient.auth.getUser(match[1]);
+    const user = data?.user;
+    if (error || !user || user.app_metadata?.role !== "admin") return null;
+    return { id: user.id, email: user.email || null };
+  } catch (error) {
+    console.error("QTH admin token verification failed", error?.message || error);
+    return null;
+  }
+}
+
 export function validDate(s) {
   return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`)) && new Date(`${s}T00:00:00Z`).toISOString().slice(0,10) === s;
 }
