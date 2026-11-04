@@ -307,6 +307,12 @@ tbody tr:hover{background:#f8f8f2}
  .qth-detail-grid{grid-template-columns:1fr 1fr!important}
 }
 
+
+/* Secure sign-out control */
+#qthAdminLogout{flex:0 0 auto;border:1px solid #d9c99f;background:linear-gradient(135deg,#fffefa,#f2eee2);color:#765f35;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:750;box-shadow:0 3px 10px rgba(50,55,40,.06)}
+#qthAdminLogout:hover{background:#efe7d4;border-color:#b99a5c}
+#qthAdminLogout:focus-visible{outline:3px solid rgba(185,154,92,.35);outline-offset:2px}
+@media(max-width:700px){#qthAdminLogout{padding:9px 12px;font-size:12px}.header{align-items:center!important}}
 </style>
 </head>
 <body>
@@ -351,6 +357,7 @@ tbody tr:hover{background:#f8f8f2}
 <div class="sub">Quba Tiny House — idarəetmə mərkəzi</div>
 </div>
 <div class="date" id="today"></div>
+<button id="qthAdminLogout" type="button" aria-label="Admin paneldən çıxış" title="Təhlükəsiz çıxış">↪ Çıxış</button>
 </header>
 
 <section class="section active" id="dashboard">
@@ -710,6 +717,17 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
    if(session){document.body.classList.add("qth-authenticated");gate.style.display="none";app.style.display="flex";}
    else{document.body.classList.remove("qth-authenticated");app.style.display="none";gate.style.display="flex";}
  }
+ document.getElementById("qthAdminLogout").addEventListener("click",async()=>{
+   const btn=document.getElementById("qthAdminLogout");
+   if(!confirm("Admin paneldən təhlükəsiz çıxış etmək istəyirsiniz?"))return;
+   btn.disabled=true;btn.textContent="Çıxılır...";
+   const {error}=await authClient.auth.signOut({scope:"local"});
+   btn.disabled=false;btn.textContent="↪ Çıxış";
+   if(error){message.textContent="Çıxış alınmadı: "+error.message;return;}
+   message.textContent="Sessiya bağlandı. Təhlükəsizlik üçün yenidən giriş tələb olunur.";
+   document.getElementById("qthAdminPassword").value="";
+   document.getElementById("qthAdminEmail").focus();
+ });
  document.getElementById("qthAdminLogin").addEventListener("click",async()=>{
    const email=document.getElementById("qthAdminEmail").value.trim();
    const password=document.getElementById("qthAdminPassword").value;
