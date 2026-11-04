@@ -1,113 +1,104 @@
-QUBA TINY HOUSE — REZERVASIYA + 50% KART AVANSI + WHATSAPP TƏSDİQİ
-====================================================
+QUBA TINY HOUSE — SAYT + REZERVASIYA + ADMIN + MALİYYƏ
+==========================================================
 
-BU NƏDİR?
-- Müştəri sayt üzərindən ev növünü, giriş/çıxış tarixlərini və qonaq sayını seçir.
-- Server Supabase rezervasiya bazasında boş/dolu tarixləri yoxlayır.
-- Altı fiziki ev ayrıca idarə olunur: 2 kiçik Skandinav, 2 böyük Skandinav, 2 A-Frame isti hovuzlu.
-- Bazada eyni ev üçün üst-üstə düşən rezervasiyaların yaranmasına verilənlər bazası səviyyəsində maneə qoyulur.
-- Müştəri sayt üzərindən rezervasiya sorğusu göndərir; rezervasiya admin paneldə pending_payment statusu ilə yaranır.
-- Müştəriyə 50% avans məbləği və Netlify mühit dəyişənlərində saxlanan bank/kart məlumatları göstərilir.
-- Müştəri qəbzi WhatsApp-a göndərir; menecer bank hesabında ödənişi yoxlayıb admin paneldə statusu confirmed edir.
-- Admin confirmed etdikdə sistem avansı paid_amount kimi qeyd edir; qalan 50% giriş zamanı alınır.
-- Ödəniş üçün 60 dəqiqəlik müvəqqəti tarix saxlanması var. Vaxt bitəndə köhnə hold expired edilir.
+ARXİTEKTURA
+-----------
+- Müştəri saytı: public/index.html
+- Admin panel: public/admin.html
+- Maliyyə modulu: public/finance.html (ayrıca Supabase layihəsi)
+- Rezervasiya bazası: Supabase layihəsi dwxwgxdzlspqwebewxej
+- Maliyyə/Admin bazası: Supabase layihəsi fynbzmyoleqcnqkhyfzd
+- Server: Netlify Functions; rezervasiya bazasının service_role açarı yalnız server mühitində saxlanılır.
+- Altı evin ID-ləri sabit saxlanılmalıdır: scandi-large-1, scandi-large-2, scandi-small-1, scandi-small-2, aframe-1, aframe-2.
 
-VACİB: BU PAKET HƏLƏ TƏNZİMLƏNMƏLİDİR. TƏSDİQLƏNMİŞ CANLI ÖDƏNİŞ KİMİ İSTİFADƏ ETMƏYİN.
-Supabase bazası və Netlify mühit dəyişənləri qurulmalıdır. Bu versiyada müştəri bank kartına köçürür və qəbzi WhatsApp-a göndərir; avtomatik bank təsdiqi yoxdur, menecer qəbzi əl ilə yoxlayır. Tariflər də başlanğıcda nümunədir; SQL-də is_demo_rate=true qoyulub ki, səhv qiymətlə ödəniş götürülməsin.
+VACİB İŞ AXINI
+--------------
+1. Müştəri ev, tarix və qonaq sayını seçir.
+2. Server boşluğu və tarifi yoxlayır.
+3. Rezervasiya sorğusu yaradılır. Avans minimum 50 AZN, standart olaraq ümumi məbləğin 50%-dir.
+4. Müştəri WhatsApp vasitəsilə menecerdən köçürmə məlumatını alır və ödəniş qəbzini göndərir.
+5. Menecer bank hesabında real daxilolmanı yoxlayır və Admin paneldə ödənişi qeyd edir.
+6. Avans tələbi ödənəndə rezervasiya təsdiqlənir. Ödəniş ayrıca reservation_payments jurnalına yazılır.
+7. Hər ödəniş ayrıca Maliyyə layihəsinin finance_transactions jurnalına ötürülür; eyni payment ID ikinci dəfə gəlir yaratmır.
+8. Qalan məbləğ check-in zamanı Admin paneldən ayrıca “Qalıq ödəniş” kimi yazılır.
 
-1) SUPABASE VERİLƏNLƏR BAZASINI YARAT
--------------------------------------
-1. https://supabase.com aç, hesab yarat və New project ilə layihə yarat.
-2. Supabase layihəsində SQL Editor aç.
-3. Bu paketdəki supabase/schema.sql faylının hamısını kopyalayıb SQL Editor-a yapışdır və Run bas.
-4. Table Editor-da units cədvəlində 6 ev yaradıldığını yoxla.
+MÜŞTƏRİ SAYTI
+-------------
+- Ev və tarix seçimi, mövcudluq yoxlaması, qiymət hesablaması.
+- AZ / RU / EN interfeysi.
+- WhatsApp əlaqəsi.
+- Standart tariflə birbaşa rezervasiya; yeni booking formda kampaniya/paket seçimi yoxdur.
+- Ödəniş bank köçürməsi + menecerin əl ilə təsdiqidir. Avtomatik bank təsdiqi və ya hazırkı müştəri axınında onlayn checkout olduğunu iddia etməyin.
+- Kart PIN, CVV/CVC və SMS/OTP heç vaxt müştəridən istənilmir.
 
-2) REAL QİYMƏTLƏRİ DAXİL ET
----------------------------
-SQL-də units cədvəlində hər ev üçün bunları həqiqi tariflərlə dəyiş:
-- weekday_rate: adi həftəiçi gecə qiyməti (AZN)
-- weekend_rate: həftəsonu gecə qiyməti (AZN)
-- holiday_rate: bayram gecəsi qiyməti (AZN)
-- breakfast_rate_per_person: səhər yeməyinin bir nəfər / gecə qiyməti (AZN)
-- is_demo_rate: real tarifləri daxil edəndən sonra false et.
+ADMIN GİRİŞİ
+------------
+- Admin panel e-poçt/şifrə ilə Supabase Auth istifadə edir.
+- Rezervasiya və təqvim API-ləri eyni Auth access tokenini yoxlayır.
+- Server yalnız app_metadata.role = 'admin' olan hesabı qəbul edir.
+- Ayrı ADMIN_API_TOKEN və ikinci API parolu tələb olunmur.
+- Supabase service_role açarı HTML-ə və ya GitHub-a yazılmamalıdır.
 
-NÜMUNƏDİR — canlı qiymət kimi götürməyin:
-UPDATE public.units
-SET weekday_rate = 150, weekend_rate = 180, holiday_rate = 250,
-    breakfast_rate_per_person = 15, is_demo_rate = false
-WHERE id IN ('scandi-small-1','scandi-small-2');
+NETLIFY ENVIRONMENT VARIABLES
+-----------------------------
+Tələb olunur:
+SUPABASE_URL = rezervasiya Supabase layihəsinin Project URL-i
+SUPABASE_SERVICE_ROLE_KEY = həmin layihənin server/service_role secret açarı
 
-Yuxarıdakı rəqəmləri yalnız öz real tariflərinizlə əvəz etdikdən sonra işlədin. Bütün 6 evi ayrı-ayrılıqda düzgün sazlayın.
-
-Xüsusi bayram tarixləri:
-INSERT INTO public.special_dates(date,label,active)
-VALUES ('2026-12-31','Yeni il',true), ('2027-01-01','Yeni il',true)
-ON CONFLICT(date) DO UPDATE SET label=excluded.label, active=true;
-Tarixləri öz bayram qiyməti siyasətinizə uyğun yeniləyin. Xüsusi tarixdə unit-in holiday_rate-i tətbiq olunur.
-
-Mövsümi qiymət dövrü misalı:
-INSERT INTO public.seasonal_rates(unit_id,start_date,end_date,nightly_rate,label,active)
-VALUES ('scandi-small-1','2027-06-01','2027-09-01',220,'Yay mövsümü',true);
-End_date daxil edilmir; məsələn yuxarıdakı dövr 31 avqust gecəsinə qədərdir. Digər evlər üçün ayrıca qeyd əlavə edin.
-
-MÖVCUD CANLI BOOKING BAZASI ÜÇÜN:
-Supabase SQL Editor-də supabase/migrations/20261031_admin_dashboard_compat.sql faylını işlədin. Sonra yeni 50% avans/WhatsApp prosesi üçün supabase/migrations/20261031_manual_card_whatsapp_deposit.sql faylını da işlədin. Hər iki migration mövcud rezervasiya və maliyyə qeydlərini silmir. Rezervasiya tarixçəsi saxlanıldığı üçün mövcud units ID-lərini əl ilə dəyişməyin.
-
-3) BANK KARTI MƏLUMATLARINI QUR
---------------------------------
-Netlify > qubatinyhouse layihəsi > Project configuration > Environment variables bölməsində bu üç dəyişəni yaradın:
-PAYMENT_BANK_NAME = Ödəniş qəbul edilən bankın adı
-PAYMENT_CARD_HOLDER = Kart sahibinin adı və soyadı
-PAYMENT_CARD_NUMBER = Müştəriyə göstəriləcək 16 rəqəmli kart nömrəsi
-
-Bu məlumatlar yalnız müştəriyə ödəniş təlimatı kimi göstərilir. Heç bir kart PIN-i, CVV/CVC kodu və SMS/OTP şifrəsi tələb edilmir və daxil edilməməlidir. Köçürmə daxil olduqdan sonra menecer bank hesabından yoxlayır.
-
-4) NETLIFY MÜHİT DƏYİŞƏNLƏRİ
-----------------------------
-Netlify > qubatinyhouse layihəsi > Project configuration > Environment variables (və ya Build & deploy/Environment) hissəsində bu adları yaradın. Dəyərləri yalnız Netlify-a daxil edin; heç kimə, o cümlədən bu çata göndərməyin.
-
-SUPABASE_URL = Supabase Project URL
-SUPABASE_SERVICE_ROLE_KEY = Supabase server/service_role secret key (yalnız server tərəfində)
-ADMIN_API_TOKEN = Admin panelin rezervasiya və təqvim API-si üçün ayrıca güclü gizli giriş kodu
-PAYMENT_BANK_NAME = Ödəniş qəbul edilən bankın adı
-PAYMENT_CARD_HOLDER = Kart sahibinin adı və soyadı
-PAYMENT_CARD_NUMBER = Müştərilərə göstəriləcək kart nömrəsi
+İstəyə bağlı:
 SITE_URL = https://qubatinyhouse.com
+EPOINT_PRIVATE_KEY = yalnız Epoint checkout/callback real istifadəyə verilərsə
 
-Dəyişənlər Functions runtime üçün əlçatan olmalıdır. ADMIN_API_TOKEN üçün uzun, təsadüfi və başqa yerdə istifadə olunmayan kod seçin. Bu kod admin.html-də rezervasiya və təqvim API-si ilk dəfə çağırılanda soruşulur; brauzer sessiyası bitənədək sessionStorage-da saxlanılır. Kod Netlify-dəki ADMIN_API_TOKEN ilə eyni olmalıdır. Mövcud admin panel parolundan fərqli ola bilər.
-Dəyişəndən sonra redeploy edin.
-Heç vaxt SUPABASE_SERVICE_ROLE_KEY və ADMIN_API_TOKEN-i HTML-ə, GitHub-a və ya public fayla yazmayın.
+PAYMENT_BANK_NAME, PAYMENT_CARD_HOLDER, PAYMENT_CARD_NUMBER və ADMIN_API_TOKEN cari müştəri/admin axını üçün tələb olunmur.
+Dəyərləri yalnız Netlify Environment Variables bölməsində saxlayın. Heç bir secret-i GitHub-a və ya ictimai HTML-ə əlavə etməyin. Dəyişiklikdən sonra Netlify-də yeni deploy yaradılmalıdır.
 
-5) NETLIFY FUNCTIONS NECƏ YAYIMLANIR
-------------------------------------
-Bu layihədə server functions var. Təkcə HTML/ZIP-i Netlify Drop-a sürükləmək backend funksiyalarını etibarlı şəkildə build/deploy etmir. Functions build prosesi zamanı netlify/functions qovluğundan hazırlanır.
+NETLIFY BUILD
+-------------
+Build command: npm install && npm run build
+Publish directory: public
+Functions directory: netlify/functions
+Node bundler: esbuild
 
-Tövsiyə olunan yol:
-1. ZIP-i öz kompüterinizdə açın.
-2. Netlify layihəsində Project configuration > Developer settings > Continuous deployment > Repository bölməsinə girin.
-3. Əgər görünürsə “Push to new repository” seçib GitHub-a qoşun; yoxdursa GitHub-da boş repository yaradıb bu qovluğun fayllarını ora yükləyin.
-4. Netlify-ni həmin GitHub repository-yə bağlayın.
-5. Build command: npm install && npm run build
-   Publish directory: public
-   Functions directory: netlify/functions
-6. Deploy tamamlandıqdan sonra Netlify > Functions bölməsində availability, create-booking, admin-reservations və admin-blocked-dates funksiyalarının göründüyünü yoxlayın.
+Deploy-dan sonra Netlify > Functions bölməsində bunların görünməsini yoxlayın:
+- availability
+- create-booking
+- booking-status
+- admin-reservations
+- admin-blocked-dates
+- admin-tariffs
+- epoint-callback (yalnız Epoint istifadə edilirsə)
 
-6) ÖDƏNİŞDƏN ƏVVƏL TEST
------------------------
-1. Saytda əvvəl giriş/çıxış, qonaq sayı və ev növü seçin.
-2. “Boş tarixləri və evləri yoxla” düyməsini basın.
-3. Boş ev seçib rezervasiya sorğusunu göndərin; admin paneldə pending_payment statusu ilə yaranmalıdır.
-4. Saytda 50% avans və Netlify-də saxlanan bank/kart məlumatları görünməlidir.
-5. Müştəri WhatsApp düyməsinə basıb ödəniş qəbzini menecerə göndərir.
-6. Menecer bank hesabında daxilolmanı yoxlayır və admin paneldə statusu confirmed edir; sistem avansı paid_amount kimi yazır.
-7. Supabase > Table Editor > reservations cədvəlində status, paid_amount və paid_at sahələrini yoxlayın.
+REZERVASİYA BAZASI — MÖVCUD CANLI LAYİHƏ
+--------------------------------------
+Mövcud canlı bazada supabase/schema.sql faylını yenidən işlətməyin. Bu, yalnız boş/yeni layihə üçün başlanğıc sxemidir.
+Mövcud canlı məlumatlar üçün migration-ları layihədəki versiya sırası ilə tətbiq edin. Payment ledger migration mövcud reservation məlumatlarını silmir; köhnə paid_amount qeydlərini “tarixçədən bərpa edildi” qeydi ilə ayrıca ödəniş kimi backfill edir.
+blocked_dates.id UUID-dir. Yeni kod və cədvəl sxemi UUID istifadə etməlidir.
+pending_payment rezervasiyası 25 dəqiqəlik müvəqqəti hold-dur; müddət bitdikdə vaxtı keçmiş sorğu boşluğu saxlamamalıdır.
 
-STATUSLAR
-- pending_payment: avans köçürülməsini gözləyir, 60 dəqiqəlik müvəqqəti hold.
-- confirmed: menecer bank ödənişini yoxlayıb təsdiq edib; tarixlər bağlıdır.
-- expired: ödəniş hold-u vaxtı bitib.
-- payment_failed: checkout uğursuz olub.
-- payment_review: ödəniş alınıb, amma məbləğ/tarix münaqişəsi yoxlanmalıdır.
-- cancelled: admin tərəfindən ləğv üçün status.
+TARİFLƏR
+--------
+Canlı rezervasiya bazasında 6 evin real əsas tarifləri aktivdir:
+- Orange House / White House: həftəiçi 120 AZN, həftəsonu/bayram 170 AZN.
+- Blue House / Green House: həftəiçi 100 AZN, həftəsonu/bayram 150 AZN.
+- A-FRAME-1 / A-FRAME-2: həftəiçi 150 AZN, həftəsonu/bayram 170 AZN.
+Yay üçün mövsümi qiymət qeydləri 2026–2035 aralığında saxlanılır. Bayram tarifinin hesablanması üçün special_dates cədvəlinə faktiki bayram tarixləri daxil edilməlidir; bu cədvəl ilkin olaraq boş ola bilər.
+Tarifləri müştəri saytına tətbiq edən əsas mənbə units, seasonal_rates, special_dates cədvəlləridir. Maliyyə layihəsindəki köhnə houses cədvəli müştəri saytının tarif mənbəyi deyil.
 
-Admin təsdiqi üçün admin paneldə rezervasiyanın statusunu “Avans yoxlanılıb — təsdiqlə” seçin. Bu əməliyyat yalnız menecer bank hesabında real daxilolmanı yoxladıqdan sonra edilməlidir. Qalan 50% giriş zamanı alınır.
+ÖDƏNİŞ TESTİ — CANLI MÜŞTƏRİ KİMİ DEYİL, ƏVVƏL TEST MÜHİTİNDƏ
+----------------------------------------------------------------
+1. Tarix, ev və qonaq sayını seçib boşluğu yoxlayın.
+2. Test rezervasiyası yaradın və bron kodunu saxlayın.
+3. Menecer/Admin ödənişi qeyd etməyənə qədər status “Avans gözlənilir” qalmalıdır.
+4. Avans ödənişi əlavə edin: tarix, faktiki məbləğ, üsul və qeyd.
+5. Avans minimum hesablanan behə çatanda status “Təsdiqlənib” olmalıdır.
+6. Ödəniş tarixçəsində ayrıca payment row görünməlidir.
+7. Maliyyə modulunda eyni məbləğ “Rezervasiya behi” kimi bir dəfə görünməlidir.
+8. Qalıq ödənişi “Qalıq ödəniş” növü ilə daxil edin; Maliyyədə ayrıca sətir yaranmalıdır.
+9. Eyni request-i təkrar göndərəndə eyni payment row və eyni finance transaction saxlanılmalıdır.
+10. Təqvimdə tarix bağlayıb yenidən açın; UUID ID ilə işləməlidir.
+
+MƏLUMATIN QORUNMASI
+-------------------
+- Rezervasiya ləğv ediləndə məlumatı fiziki silməyin; status və audit tarixçəsi saxlanılır.
+- Köhnə kampaniya məlumatları yalnız tarixçə kimi saxlanılır. Yeni rezervasiya üçün kampaniya/paket seçimi yoxdur.
+- Service role key, admin JWT, parol və bank təhlükəsizlik kodları heç vaxt repoya commit edilməməlidir.
