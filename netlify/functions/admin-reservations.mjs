@@ -1,4 +1,4 @@
-import { db, json, validDate, getNights, quoteForUnit, requireQthAdmin } from '../lib/_lib.mjs';
+import { db, json, validDate, getNights, requireQthAdmin } from '../lib/_lib.mjs';
 
 const allowedStatuses = new Set([
   'pending_payment','confirmed','expired','cancelled','payment_failed','payment_review'
@@ -20,10 +20,11 @@ export const handler = async (event) => {
 
       const {
         unitId, checkIn, checkOut, guestName, phone, guestCount, note = '',
-        paidAmount = 0, paymentMethod = 'bank', paymentDate = null,
+        totalAmount, paidAmount = 0, paymentMethod = 'bank', paymentDate = null,
         paymentRequestId = null
       } = body;
       const guests = Number(guestCount);
+      const total = Number(totalAmount);
       const paid = Number(paidAmount || 0);
       const allowedUnits = ['scandi-large-1','scandi-large-2','scandi-small-1','scandi-small-2','aframe-1','aframe-2'];
       if (!allowedUnits.includes(unitId) || !validDate(checkIn) || !validDate(checkOut) ||
@@ -31,7 +32,7 @@ export const handler = async (event) => {
           typeof guestName !== 'string' || guestName.trim().length < 2 || guestName.length > 120 ||
           typeof phone !== 'string' || phone.replace(/\D/g, '').length < 7 || phone.length > 30 ||
           !Number.isInteger(guests) || guests < 1 || guests > 10 ||
-          !Number.isFinite(paid) || paid < 0) {
+          !Number.isFinite(total) || total <= 0 || !Number.isFinite(paid) || paid < 0 || paid > total) {
         return json(400, { error: 'Müştəri, ev, qonaq sayı, ödəniş və tarixləri düzgün daxil edin. Qalma müddəti 1–30 gecə olmalıdır.' });
       }
 
@@ -40,7 +41,7 @@ export const handler = async (event) => {
       if (unitError) throw unitError;
       if (!unit) return json(404, { error: 'Seçilmiş ev tapılmadı və ya aktiv deyil.' });
       if (guests > Number(unit.capacity)) return json(400, { error: 'Bu ev maksimum ' + unit.capacity + ' nəfər üçündür.' });
-      if (unit.is_demo_rate) return json(409, { error: 'Bu evin real tarifi aktiv deyil.' });
+      // Admin-created reservations use the manager-entered amount, not the public tariff table.
 
       const { data: blocks, error: blockError } = await client.from('blocked_dates')
         .select('id').eq('unit_id', unitId).eq('active', true)
@@ -48,37 +49,24 @@ export const handler = async (event) => {
       if (blockError) throw blockError;
       if (blocks?.length) return json(409, { error: 'Seçilmiş tarixlər admin təqvimində bağlıdır. Əvvəl təqvimi yoxlayın.' });
 
-      const quote = await quoteForUnit(client, unit, checkIn, checkOut, guests, false, '', false);
-      if (quote.total < 50) return json(400, { error: 'Rezervasiyanın ümumi məbləği minimum 50 AZN olmalıdır.' });
-      const deposit = Math.max(50, Math.round(quote.total * 0.50 * 100) / 100);
-      const remaining = Math.round((quote.total - deposit) * 100) / 100;
-      if (paid > quote.total) return json(400, { error: 'Daxil edilən ödəniş ümumi məbləğdən çox ola bilməz.' });
-      if (paid > 0 && !allowedPaymentMethods.has(String(paymentMethod))) {
-        return json(400, { error: 'Ödəniş üsulunu düzgün seçin.' });
-      }
+      const deposit = paid;
+      const remaining = Math.round((total - paid) * 100) / 100;
 
-      const rpc = await client.rpc('create_booking_atomic', {
+      const rpc = await client.rpc('create_admin_booking_atomic', {
         p_unit_id: unit.id,
         p_check_in: checkIn,
         p_check_out: checkOut,
         p_guest_name: guestName.trim(),
         p_phone: phone.trim(),
         p_guest_count: guests,
-        p_breakfast: false,
         p_note: typeof note === 'string' ? note.slice(0, 1300) : '',
-        p_stay_amount: quote.stayTotal,
-        p_breakfast_amount: 0,
-        p_total_amount: quote.total,
-        p_deposit_percent: 50,
-        p_deposit_amount: deposit,
-        p_remaining_amount: remaining
+        p_total_amount: total,
+        p_paid_amount: paid
       });
       if (rpc.error) {
         const message = rpc.error.message || '';
         if (/DATES_ALREADY_BOOKED|already booked|conflict|overlap/i.test(message))
           return json(409, { error: 'Bu ev seçilmiş tarixlərdə artıq rezervasiya olunub.' });
-        if (/RATES_NOT_CONFIGURED/i.test(message))
-          return json(409, { error: 'Bu evin qiymətləri aktiv deyil.' });
         throw rpc.error;
       }
       const created = Array.isArray(rpc.data) ? rpc.data[0] : rpc.data;
@@ -118,7 +106,7 @@ export const handler = async (event) => {
         reservation,
         payment,
         paymentResult,
-        quote: { nights: quote.nights, total: quote.total, deposit, remaining, ruleText: quote.ruleText }
+        quote: { nights: getNights(checkIn, checkOut), total, deposit, remaining, ruleText: 'Admin tərəfindən daxil edilmiş məbləğ' }
       });
     }
 

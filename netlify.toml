@@ -3,6 +3,11 @@
   publish = "public"
   functions = "netlify/functions"
 
+[build.environment]
+  # This server-only credential is read at runtime inside Netlify Functions.
+  # It is not embedded in public HTML/JS; allow the function bundle to retain it as an env lookup.
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_SERVICE_ROLE_KEY"
+
 [functions]
   node_bundler = "esbuild"
 

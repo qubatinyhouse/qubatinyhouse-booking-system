@@ -373,11 +373,13 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
 <label>Çıxış tarixi<input id="adminCheckOut" type="date" required></label>
 <label>Qonaq sayı<input id="adminGuestCount" type="number" min="1" max="10" value="2" required></label>
 
-<label>Faktiki alınmış ödəniş (AZN)<input id="adminPaidAmount" type="number" min="0" step="0.01" value="0"></label>
+<label>Ümumi ödəniləcək məbləğ (AZN)<input id="adminTotalAmount" type="number" min="0.01" step="0.01" placeholder="Qiyməti özünüz daxil edin" oninput="updateAdminManualBalance()" required></label>
+<label>Alınacaq avans (AZN)<input id="adminPaidAmount" type="number" min="0" step="0.01" value="0" oninput="updateAdminManualBalance()" required></label>
+<label>Qalıq məbləğ (AZN)<input id="adminRemainingAmount" type="text" value="0.00 AZN" readonly></label>
 <label>Ödəniş üsulu<select id="adminPaymentMethod"><option value="bank">Bank</option><option value="cash">Nağd</option><option value="card">Kart</option><option value="transfer">Köçürmə</option></select></label>
 <label>Ödəniş tarixi<input id="adminPaymentDate" type="date"></label>
 <label>Qeyd<input id="adminBookingNote" type="text" maxlength="1500" placeholder="Əlavə qeyd"></label></div>
-<p class="notice">Yeni rezervasiyalar yalnız adi tariflə yaradılır. Avans daxil edilərsə, ödəniş tarixçəyə və maliyyə jurnalına yazılır; avans çatmayınca rezervasiya təsdiqlənmir.</p>
+<p class="notice">Bu bölmədə qiyməti siz təyin edirsiniz: ümumi məbləği və faktiki aldığınız avansı daxil edin. Qalıq avtomatik hesablanır. Daxil edilən avans ödəniş tarixçəsinə və maliyyə jurnalına yazılır.</p>
 <button class="btn" type="button" onclick="createAdminReservation()">Rezervasiyanı yarat</button><p id="adminCreateMessage" class="notice" aria-live="polite"></p></div>
 
     <div class="grid">
@@ -888,6 +890,13 @@ const adminPaymentDate = document.getElementById("adminPaymentDate");
 if (adminPaymentDate && !adminPaymentDate.value) {
   adminPaymentDate.value = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Baku" });
 }
+window.updateAdminManualBalance = function () {
+  const total = Number(document.getElementById("adminTotalAmount")?.value || 0);
+  const paid = Number(document.getElementById("adminPaidAmount")?.value || 0);
+  const remaining = Math.max(0, total - paid);
+  const output = document.getElementById("adminRemainingAmount");
+  if (output) output.value = remaining.toFixed(2) + " AZN";
+};
 window.createAdminReservation = async function () {
   const message = document.getElementById("adminCreateMessage");
   const button = document.querySelector("#adminCreateReservationPanel button.btn");
@@ -899,6 +908,7 @@ window.createAdminReservation = async function () {
     checkOut: document.getElementById("adminCheckOut").value,
     guestCount: Number(document.getElementById("adminGuestCount").value),
     note: document.getElementById("adminBookingNote").value.trim(),
+    totalAmount: Number(document.getElementById("adminTotalAmount").value),
     paidAmount: Number(document.getElementById("adminPaidAmount").value || 0),
     paymentMethod: document.getElementById("adminPaymentMethod").value,
     paymentDate: document.getElementById("adminPaymentDate").value,
@@ -908,8 +918,12 @@ window.createAdminReservation = async function () {
     message.textContent = "Ad, telefon və tarixləri doldurun.";
     return;
   }
-  if (!Number.isFinite(payload.paidAmount) || payload.paidAmount < 0) {
-    message.textContent = "Ödəniş məbləği düzgün deyil.";
+  if (!Number.isFinite(payload.totalAmount) || payload.totalAmount <= 0) {
+    message.textContent = "Ümumi məbləğ 0-dan böyük olmalıdır.";
+    return;
+  }
+  if (!Number.isFinite(payload.paidAmount) || payload.paidAmount < 0 || payload.paidAmount > payload.totalAmount) {
+    message.textContent = "Avans 0-dan az və ya ümumi məbləğdən çox ola bilməz.";
     return;
   }
   if (payload.checkOut <= payload.checkIn) {
@@ -917,9 +931,10 @@ window.createAdminReservation = async function () {
     return;
   }
   const yes = confirm(
-    "Standart tariflə rezervasiya yaradılsın?\\n" +
-    "Faktiki alınmış ödəniş: " + money(payload.paidAmount) +
-    "\\nÖdəniş 50% avans həddinə çatarsa rezervasiya təsdiqlənəcək."
+    "Bu rezervasiya sizin daxil etdiyiniz məbləğlə yaradılsın?\\n" +
+    "Ümumi məbləğ: " + money(payload.totalAmount) +
+    "\\nAlınmış avans: " + money(payload.paidAmount) +
+    "\\nQalıq: " + money(payload.totalAmount - payload.paidAmount)
   );
   if (!yes) return;
 
@@ -943,6 +958,7 @@ window.createAdminReservation = async function () {
       " | Ödənilib: " + money(reservation.paid_amount) +
       " | Qalıq: " + money(reservation.remaining_amount) + ".";
     ["adminGuestName","adminGuestPhone","adminBookingNote"].forEach(id => document.getElementById(id).value = "");
+    document.getElementById("adminTotalAmount").value = "";
     document.getElementById("adminPaidAmount").value = "0";
     await loadReservations();
   } catch (error) {
