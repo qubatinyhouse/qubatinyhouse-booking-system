@@ -433,7 +433,7 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
             <th>Çıxış</th>
             <th>Qonaq</th>
             <th>Məbləğ</th>
-            <th>Beh</th>
+            <th>Ödənilib</th>
             <th>Status</th>
             <th>Əməliyyat</th>
           </tr>
@@ -806,12 +806,12 @@ function renderReservations(items) {
   table.innerHTML = items.map(r => {
     const statuses = [
       ["pending_payment", "Avans gözlənilir"],
-      ["confirmed", "Avans alındı — təsdiqlə"],
       ["expired", "Vaxtı bitib"],
       ["cancelled", "Ləğv edilib"],
       ["payment_failed", "Ödəniş alınmadı"],
       ["payment_review", "Yoxlama tələb olunur"]
     ];
+    if (r.status === "confirmed") statuses.unshift(["confirmed", "Təsdiqlənib"]);
     return `<tr>
       <td>${escapeReservation(r.guest_name)}</td>
       <td>${escapeReservation(r.phone || "-")}</td>
@@ -820,7 +820,7 @@ function renderReservations(items) {
       <td>${escapeReservation(r.check_out || "-")}</td>
       <td>${Number(r.guest_count || 0)}</td>
       <td>${money(r.total_amount)}</td>
-      <td>${money(r.deposit_amount)}</td>
+      <td>${money(r.paid_amount)}</td>
       <td><select onchange="changeReservationStatus('${r.id}',this.value)">
         ${statuses.map(([value,label]) => `<option value="${value}" ${r.status===value?"selected":""}>${label}</option>`).join("")}
       </select><small>${escapeReservation(r.payment_status || "")}</small></td>
@@ -841,46 +841,21 @@ window.filterReservations = function () {
 };
 
 window.changeReservationStatus = async function (id, status) {
-  const reservation = allReservations.find(item => item.id === id);
-  let payment = null;
   if (status === "confirmed") {
-    if (!reservation) { renderReservations(allReservations); return; }
-    const suggested = Number(reservation.paid_amount || reservation.deposit_amount || 0);
-    const rawAmount = window.prompt(
-      "Müştərinin FAKTİKİ ödədiyi məbləği AZN ilə daxil edin.\nHesablanan beh: " + money(reservation.deposit_amount) +
-      "\nÜmumi məbləğ: " + money(reservation.total_amount) +
-      "\n\nMüştəri az məbləğ ödəyibsə, yalnız aldığı məbləği yazın.",
-      suggested > 0 ? suggested.toFixed(2) : ""
-    );
-    if (rawAmount === null) { renderReservations(allReservations); return; }
-    const amount = Number(String(rawAmount).replace(",", "."));
-    if (!Number.isFinite(amount) || amount <= 0 || amount > Number(reservation.total_amount || 0)) {
-      window.alert("Məbləğ düzgün deyil. 0-dan böyük və ümumi məbləğdən çox olmayan AZN daxil edin.");
-      renderReservations(allReservations); return;
-    }
-    const methodChoice = window.prompt("Ödəniş üsulunu seçin:\n1 — Bank\n2 — Nağd\n3 — Kart\n4 — Köçürmə", "1");
-    if (methodChoice === null) { renderReservations(allReservations); return; }
-    const methods = {"1":"bank","2":"cash","3":"card","4":"transfer"};
-    if (!methods[String(methodChoice).trim()]) {
-      window.alert("Ödəniş üsulu düzgün seçilməyib.");
-      renderReservations(allReservations); return;
-    }
-    payment = { amount, paymentMethod: methods[String(methodChoice).trim()] };
-    if (!window.confirm(
-      "Faktiki alınan: " + money(amount) + "\nÖdəniş üsulu: " + methods[String(methodChoice).trim()] +
-      "\nMüştəridən qalan: " + money(Number(reservation.total_amount) - amount) +
-      "\n\nBu ödənişi təsdiqləyirsiniz?"
-    )) { renderReservations(allReservations); return; }
-  } else if (!window.confirm("Rezervasiyanın statusunu dəyişmək istəyirsiniz?")) {
-    renderReservations(allReservations); return;
+    alert("Rezervasiyanı təsdiqləmək üçün Ətraflı bölməsindən faktiki alınmış ödənişi qeyd edin.");
+    await loadReservations();
+    return;
+  }
+  if (!confirm("Rezervasiyanın statusunu dəyişmək istəyirsiniz?")) {
+    await loadReservations();
+    return;
   }
   try {
-    const result = await adminRequest("PATCH", { id, status, ...(payment || {}) });
-    if (status === "confirmed") await qthQueueBookingDeposit(result.reservation);
+    await adminRequest("PATCH", { id, status });
     await loadReservations();
   } catch (error) {
-    window.alert("Status dəyişdirilmədi: " + error.message);
-    renderReservations(allReservations);
+    alert("Status dəyişdirilmədi: " + error.message);
+    await loadReservations();
   }
 };
 
@@ -956,27 +931,132 @@ window.cancelAdminReservation=async function(id){
  if(!confirm((r.guest_name||"Müştəri")+" — "+(r.unit_name||r.unit_id)+" ("+r.check_in+" – "+r.check_out+")\n\nRezervasiyanı ləğv etmək istəyirsiniz? Tarixçə saxlanılacaq və günlər boşalacaq."))return;
  try{await adminRequest("PATCH",{id:id,status:"cancelled"});await loadReservations();document.getElementById("reservationMessage").textContent="Rezervasiya ləğv edildi. Tarixlər yenidən boşdur.";}catch(error){alert("Ləğv edilmədi: "+error.message);}
 };
+window.closeReservationDetails = function () {
+  const modal = document.getElementById("reservationDetailsModal");
+  if (modal) modal.hidden = true;
+};
 window.showReservationDetails = function (id) {
   const r = allReservations.find(item => item.id === id);
   if (!r) return;
-  window.alert(
-    "Bron kodu: " + (r.booking_code || "-") +
-    "\nMüştəri: " + (r.guest_name || "") +
-    "\nTelefon: " + (r.phone || "") +
-    "\nEv: " + (r.unit_name || r.unit_id || "-") +
-    "\nGiriş: " + (r.check_in || "") +
-    "\nÇıxış: " + (r.check_out || "") +
-    "\nQonaq sayı: " + (r.guest_count || 0) +
-    "\nKampaniya: " + (r.campaign_name || "Adi tarif") +
-    "\nRəsmi nikah təsdiqi: " + (r.marriage_confirmed ? "Bəli" : "Xeyr") +
-    "\nÜmumi məbləğ: " + money(r.total_amount) +
-    "\nBeh: " + money(r.deposit_amount) +
-    "\nQalıq: " + money(r.remaining_amount) +
-    "\nÖdənilib: " + money(r.paid_amount) +
-    "\nÖdəniş statusu: " + (r.payment_status || "-") +
-    "\nBalayı kuponu: " + (r.coupon_code || "Hələ verilməyib") +
-    "\nQeyd: " + (r.note || "-")
-  );
+  const modal = document.getElementById("reservationDetailsModal");
+  const content = document.getElementById("reservationDetailsContent");
+  const statusLabels = {
+    confirmed:"Təsdiqlənib", pending_payment:"Avans gözlənilir", cancelled:"Ləğv edilib",
+    expired:"Vaxtı bitib", payment_failed:"Ödəniş alınmadı", payment_review:"Yoxlama tələb olunur"
+  };
+  const paymentTypeLabels = {deposit:"Avans",remaining:"Qalıq ödəniş",other:"Digər ödəniş"};
+  const payments = r.payments || [];
+  const paymentRows = payments.map(p => `
+    <tr>
+      <td>${escapeReservation(p.payment_date || "-")}</td>
+      <td>${escapeReservation(paymentTypeLabels[p.payment_type] || p.payment_type || "-")}</td>
+      <td>${money(p.amount)}</td>
+      <td>${escapeReservation(p.payment_method || "Qeyd edilməyib")}</td>
+      <td>${escapeReservation(p.notes || "-")}</td>
+    </tr>`).join("");
+  const paid = Number(r.paid_amount || 0);
+  const remaining = Math.max(0, Number(r.total_amount || 0) - paid);
+  const depositDue = Math.max(0, Number(r.deposit_amount || 0) - paid);
+  const defaultType = depositDue > 0 ? "deposit" : "remaining";
+  const today = new Date().toLocaleDateString("en-CA", {timeZone:"Asia/Baku"});
+  const disabledPayment = ["cancelled","expired","payment_failed","payment_review"].includes(r.status) || remaining <= 0;
+  document.getElementById("reservationDetailsTitle").textContent =
+    "Rezervasiya — " + (r.booking_code || r.id);
+  content.innerHTML = `
+    <div class="qth-detail-grid">
+      <div class="qth-detail-item"><small>Müştəri</small><strong>${escapeReservation(r.guest_name || "-")}</strong></div>
+      <div class="qth-detail-item"><small>Telefon</small><strong>${escapeReservation(r.phone || "-")}</strong></div>
+      <div class="qth-detail-item"><small>Ev</small><strong>${escapeReservation(r.unit_name || r.unit_id || "-")}</strong></div>
+      <div class="qth-detail-item"><small>Qalma tarixləri</small><strong>${escapeReservation(r.check_in || "-")} – ${escapeReservation(r.check_out || "-")}</strong></div>
+      <div class="qth-detail-item"><small>Qonaq sayı</small><strong>${Number(r.guest_count || 0)}</strong></div>
+      <div class="qth-detail-item"><small>Status</small><strong>${escapeReservation(statusLabels[r.status] || r.status || "-")}</strong></div>
+      <div class="qth-detail-item"><small>Ümumi məbləğ</small><strong>${money(r.total_amount)}</strong></div>
+      <div class="qth-detail-item"><small>Tələb olunan avans</small><strong>${money(r.deposit_amount)}</strong></div>
+      <div class="qth-detail-item"><small>Faktiki ödənilib</small><strong>${money(paid)}</strong></div>
+      <div class="qth-detail-item"><small>Qalıq</small><strong>${money(remaining)}</strong></div>
+      <div class="qth-detail-item"><small>Ödəniş statusu</small><strong>${escapeReservation(r.payment_status || "-")}</strong></div>
+      <div class="qth-detail-item"><small>Bron tarixi</small><strong>${escapeReservation(String(r.created_at || "").slice(0,10) || "-")}</strong></div>
+    </div>
+    ${r.campaign_name ? '<p class="notice">Tarixçədə saxlanılan köhnə kampaniya: '+escapeReservation(r.campaign_name)+'</p>' : ""}
+    ${r.note ? '<p class="notice">Müştəri qeydi: '+escapeReservation(r.note)+'</p>' : ""}
+    <h4 style="margin:18px 0 6px;color:#294b37">Ödəniş tarixçəsi</h4>
+    <div style="overflow-x:auto">
+      <table class="qth-payment-history">
+        <thead><tr><th>Tarix</th><th>Növ</th><th>Məbləğ</th><th>Üsul</th><th>Qeyd</th></tr></thead>
+        <tbody>${paymentRows || '<tr><td colspan="5">Hələ ayrıca ödəniş qeydə alınmayıb.</td></tr>'}</tbody>
+      </table>
+    </div>
+    <h4 style="margin:18px 0 6px;color:#294b37">Yeni ödəniş əlavə et</h4>
+    <form class="qth-payment-form" onsubmit="submitReservationPayment(event,'${r.id}')">
+      <label>Ödəniş növü
+        <select name="paymentType">
+          <option value="deposit" ${defaultType==="deposit"?"selected":""}>Avans</option>
+          <option value="remaining" ${defaultType==="remaining"?"selected":""} ${depositDue>0?"disabled":""}>Qalıq ödəniş</option>
+          <option value="other">Digər ödəniş</option>
+        </select>
+      </label>
+      <label>Məbləğ (AZN)
+        <input name="amount" type="number" min="0.01" max="${remaining.toFixed(2)}" step="0.01" required>
+      </label>
+      <label>Ödəniş üsulu
+        <select name="paymentMethod">
+          <option value="bank">Bank</option><option value="cash">Nağd</option>
+          <option value="card">Kart</option><option value="transfer">Köçürmə</option>
+        </select>
+      </label>
+      <label>Ödəniş tarixi<input name="paymentDate" type="date" value="${today}" required></label>
+      <label class="wide">Qeyd<input name="notes" maxlength="500" placeholder="Qəbz, köçürmə və ya əlavə qeyd"></label>
+      <div class="wide">
+        <button class="btn" type="submit" ${disabledPayment?"disabled":""}>Ödənişi yadda saxla və Maliyyəyə ötür</button>
+        <p id="paymentFormMessage" class="muted" aria-live="polite">${disabledPayment ? "Bu rezervasiya üçün yeni ödəniş əlavə etmək mümkün deyil." : "Avans tamamlandıqda rezervasiya avtomatik təsdiqlənir."}</p>
+      </div>
+    </form>
+  `;
+  modal.hidden = false;
+};
+window.submitReservationPayment = async function (event,id) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const message = form.querySelector("#paymentFormMessage");
+  const amount = Number(form.elements.amount.value);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    message.textContent = "Ödəniş məbləğini düzgün daxil edin.";
+    return;
+  }
+  const requestKey = form.dataset.requestKey || crypto.randomUUID();
+  form.dataset.requestKey = requestKey;
+  const submit = form.querySelector('button[type="submit"]');
+  submit.disabled = true;
+  message.textContent = "Ödəniş qeydə alınır...";
+  try {
+    const result = await adminRequest("PATCH", {
+      id,
+      action: "payment",
+      amount,
+      paymentType: form.elements.paymentType.value,
+      paymentMethod: form.elements.paymentMethod.value,
+      paymentDate: form.elements.paymentDate.value,
+      notes: form.elements.notes.value.trim(),
+      requestKey
+    });
+    let financeMessage = "";
+    if (result.payment) {
+      try {
+        await qthQueueBookingPayment(result.payment,result.reservation);
+        financeMessage = " Maliyyəyə də ötürüldü.";
+      } catch (financeError) {
+        financeMessage = " Ödəniş tarixçəyə yazıldı, lakin maliyyə sinxronu alınmadı: " + financeError.message;
+      }
+    }
+    delete form.dataset.requestKey;
+    await loadReservations();
+    showReservationDetails(id);
+    const freshMessage = document.querySelector("#reservationDetailsContent #paymentFormMessage");
+    if (freshMessage) freshMessage.textContent = (result.paymentResult?.result_status === "already_recorded" ? "Bu sorğu əvvəl qeydə alınıb." : "Ödəniş uğurla qeydə alındı.") + financeMessage;
+  } catch (error) {
+    message.textContent = "Ödəniş qeydə alınmadı: " + error.message;
+    submit.disabled = false;
+  }
 };
 
 function escapeReservation(value) {
