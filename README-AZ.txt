@@ -68,12 +68,16 @@ Deploy-dan sonra Netlify > Functions bölməsində bunların görünməsini yoxl
 - admin-tariffs
 - epoint-callback (yalnız Epoint istifadə edilirsə)
 
-REZERVASİYA BAZASI — MÖVCUD CANLI LAYİHƏ
---------------------------------------
-Mövcud canlı bazada supabase/schema.sql faylını yenidən işlətməyin. Bu, yalnız boş/yeni layihə üçün başlanğıc sxemidir.
-Mövcud canlı məlumatlar üçün migration-ları layihədəki versiya sırası ilə tətbiq edin. Payment ledger migration mövcud reservation məlumatlarını silmir; köhnə paid_amount qeydlərini “tarixçədən bərpa edildi” qeydi ilə ayrıca ödəniş kimi backfill edir.
+REZERVASİYA VƏ MALİYYƏ BAZALARI
+--------------------------------
+Bu layihədə iki ayrı Supabase bazası var. Migration-ları qarışdırmayın:
+- BOOKING bazası: supabase/schema.sql yalnız boş/yeni rezervasiya bazası üçün başlanğıc sxemidir. Mövcud canlı bazada yenidən işlətməyin. Booking dəyişikliklərinin SQL faylları supabase/booking-migrations/ qovluğundadır.
+- ADMIN / FINANCE bazası: maliyyə və işçi cədvəlləri ayrıca Supabase layihəsindədir. Bu layihənin SQL faylları supabase/admin-migrations/ qovluğundadır.
+- 2026-11-04 tarixində hər iki canlı bazada payment ledger və sinxronizasiya migration-ları tətbiq edilib.
+Payment ledger migration köhnə paid_amount qeydlərini “tarixçədən bərpa edildi” qeydi ilə ayrıca ödəniş kimi backfill edir; mövcud reservation və finance rows silinmir.
 blocked_dates.id UUID-dir. Yeni kod və cədvəl sxemi UUID istifadə etməlidir.
 pending_payment rezervasiyası 25 dəqiqəlik müvəqqəti hold-dur; müddət bitdikdə vaxtı keçmiş sorğu boşluğu saxlamamalıdır.
+
 
 TARİFLƏR
 --------
