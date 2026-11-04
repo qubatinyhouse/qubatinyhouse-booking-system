@@ -27,7 +27,7 @@
 <div class="formfield"><label data-i18n="checkinLabel">Giriş tarixi *</label><input id="checkin" name="check-in" type="date" required></div>
 <div class="formfield"><label data-i18n="checkoutLabel">Çıxış tarixi *</label><input id="checkout" name="check-out" type="date" required></div>
 <div class="formfield"><label data-i18n="house">Ev növü</label><select id="house" name="house-type" required><option value="">Ev seçin</option><option value="scandi-large-1">Orange House (5–7 nəfər)</option><option value="scandi-large-2">White House (5–7 nəfər)</option><option value="scandi-small-1">Blue House (3–4 nəfər)</option><option value="scandi-small-2">Green House (3–4 nəfər)</option><option value="aframe-1">A-FRAME-1 (2–10 nəfər, isti hovuz)</option><option value="aframe-2">A-FRAME-2 (2–10 nəfər, isti hovuz)</option></select></div>
-<div class="formfield"><label>Boş ev seçimi *</label><select id="unit" required disabled><option value="">Əvvəl tarixləri yoxlayın</option></select></div>
+
 <div class="formfield full"><button class="btn outline" type="button" id="checkAvailability">🔎 Boş tarixləri və evləri yoxla</button><div class="small" id="availabilityStatus" aria-live="polite">Giriş və çıxış tarixini seçin, sonra boşluğu yoxlayın.</div></div>
 <div class="formfield"><label data-i18n="guestCount">Qonaq sayı</label><select id="guests" name="guest-count"><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
 
@@ -69,35 +69,36 @@ function updateQuote(unit){
  document.getElementById('remainingAmount').textContent=money(unit.quote.total-dep);
  document.getElementById('priceNote').textContent=unit.isDemoRate?'Bu tarif nümunədir; admin real qiymətləri təsdiqləməlidir.':unit.quote.ruleText;
 }
-function selectedUnit(){return availabilityCache.find(u=>u.id===document.getElementById('unit').value)}
+function selectedUnit(){return availabilityCache.find(u=>u.id===document.getElementById('house').value&&u.available)}
 async function checkAvailability(){
  const ci=dt('checkin'),co=dt('checkout'),guests=Number(document.getElementById('guests').value),unitId=document.getElementById('house').value;
- const status=document.getElementById('availabilityStatus'),unitSel=document.getElementById('unit');
- if(!unitId){unitSel.disabled=true;unitSel.innerHTML='<option value="">Əvvəl ev seçin</option>';availabilityCache=[];status.textContent='Əvvəl rezervasiya etmək istədiyiniz evi seçin.';updateQuote(null);return}
- if(!ci||!co||co<=ci){unitSel.disabled=true;unitSel.innerHTML='<option value="">Əvvəl tarixləri yoxlayın</option>';availabilityCache=[];status.textContent='Düzgün giriş və çıxış tarixlərini seçin (çıxış girişdən sonra olmalıdır).';updateQuote(null);return}
- status.textContent='Mövcud tarixlər yoxlanılır…';unitSel.disabled=true;unitSel.innerHTML='<option value="">Yoxlanılır…</option>';
+ const status=document.getElementById('availabilityStatus');
+ availabilityCache=[];
+ updateQuote(null);
+ if(!unitId){status.textContent='Əvvəl qalmaq istədiyiniz evi seçin.';return}
+ if(!ci||!co||co<=ci){status.textContent='Düzgün giriş və çıxış tarixlərini seçin (çıxış girişdən sonra olmalıdır).';return}
+ status.textContent='Mövcud tarixlər yoxlanılır…';
  try{
   const r=await fetch(`/.netlify/functions/availability?checkIn=${encodeURIComponent(ci)}&checkOut=${encodeURIComponent(co)}&guestCount=${guests}&unitId=${encodeURIComponent(unitId)}`);
   const data=await r.json();if(!r.ok)throw new Error(data.error||'Mövcudluğu yoxlamaq mümkün olmadı.');
-  availabilityCache=data.units||[];unitSel.innerHTML='';
-  const available=availabilityCache.filter(u=>u.available);
-  if(!available.length){unitSel.innerHTML='<option value="">Bu tarixlərdə boş ev yoxdur</option>';status.textContent='Bu tarixlərdə seçilmiş ev növü üçün boş yer tapılmadı. Başqa tarix seçin.';updateQuote(null);return}
-  available.forEach(u=>{const o=document.createElement('option');o.value=u.id;o.textContent=`${u.name} — ${u.id.startsWith('aframe-')?'2–10 nəfər':`2–${u.capacity} nəfər`} — ${u.quote?(u.isDemoRate?'nümunə tarif: ':'')+money(u.quote.total):'tarif qurulmalıdır'}`;unitSel.appendChild(o)});
-  unitSel.disabled=false;updateQuote(selectedUnit());
-  const demo=available.some(u=>u.isDemoRate);status.textContent=`${available.length} uyğun ev tapıldı. ${demo?'Qeyd: rezervasiyanı aktivləşdirmək üçün Supabase-də real tariflər təsdiqlənməlidir.':'Seçilmiş tarixlər üçün mövcudluq yeniləndi.'}`;
- }catch(e){unitSel.disabled=true;unitSel.innerHTML='<option value="">Mövcudluq yoxlanmadı</option>';status.textContent=e.message+' Sistemin administrator quraşdırması hələ tamamlanmamış ola bilər.'}
+  availabilityCache=data.units||[];
+  const chosen=selectedUnit();
+  if(!chosen){status.textContent='Bu ev seçilmiş tarixlərdə boş deyil və ya qonaq sayı tutuma uyğun gəlmir. Başqa tarix və ya ev seçin.';updateQuote(null);return}
+  if(!chosen.quote){status.textContent=chosen.pricingError||'Bu ev üçün tarif təyin edilməyib.';updateQuote(chosen);return}
+  updateQuote(chosen);
+  status.textContent=`${chosen.name} seçilmiş tarixlərdə boşdur. ${chosen.quote.nights} gecə üçün ümumi məbləğ: ${money(chosen.quote.total)}. Avans: ${money(Math.max(50,Math.round(chosen.quote.total*0.5*100)/100)}.`;
+ }catch(e){availabilityCache=[];status.textContent=e.message+' Sistemin administrator quraşdırması hələ tamamlanmamış ola bilər.';updateQuote(null)}
 }
 document.getElementById('checkAvailability').addEventListener('click',checkAvailability);
-['checkin','checkout','guests','house'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{document.getElementById('unit').value='';checkAvailability()}));
-document.getElementById('unit').addEventListener('change',()=>updateQuote(selectedUnit()));
+['checkin','checkout','guests','house'].forEach(id=>document.getElementById(id).addEventListener('change',checkAvailability));
 document.getElementById('deposit').addEventListener('change',()=>updateQuote(selectedUnit()));
 document.getElementById('quickIn').addEventListener('change',e=>{document.getElementById('checkin').value=e.target.value;checkAvailability()});
 document.getElementById('quickOut').addEventListener('change',e=>{document.getElementById('checkout').value=e.target.value;checkAvailability()});
 document.getElementById('quickGuests').addEventListener('change',e=>{document.getElementById('guests').value=e.target.value;checkAvailability()});
 
  async function createBooking(){
- const name=document.getElementById('name').value.trim(),phone=document.getElementById('phone').value.trim(),checkIn=dt('checkin'),checkOut=dt('checkout'),unitId=document.getElementById('unit').value;
- if(!name||!phone||!checkIn||!checkOut||!unitId){alert('Ad, telefon, tarixlər və boş ev seçimi mütləqdir. Əvvəl “Boş tarixləri və evləri yoxla” düyməsini basın.');return}
+ const name=document.getElementById('name').value.trim(),phone=document.getElementById('phone').value.trim(),checkIn=dt('checkin'),checkOut=dt('checkout'),unitId=document.getElementById('house').value;
+ if(!name||!phone||!checkIn||!checkOut||!unitId||!selectedUnit()){alert('Ad, telefon, tarixlər və boş ev seçimi mütləqdir. Əvvəl tarixlərin boş olduğunu yoxlayın.');return}
  const button=document.getElementById('bookAndPay');
  button.disabled=true;button.textContent='Rezervasiya yaradılır…';
  // Open a blank tab during the direct click so the browser does not block WhatsApp after the async request.
@@ -118,8 +119,8 @@ document.getElementById('quickGuests').addEventListener('change',e=>{document.ge
   if(waWindow){waWindow.location.href=waUrl;} 
   document.getElementById('bookingSuccess').scrollIntoView({behavior:'smooth',block:'center'});
   document.getElementById('reservationForm').reset();
-  document.getElementById('unit').innerHTML='<option value="">Əvvəl tarixləri yoxlayın</option>';
-  document.getElementById('unit').disabled=true;
+  availabilityCache=[];
+  updateQuote(null);
   document.getElementById('availabilityStatus').textContent='Rezervasiya yaradıldı. Status: avans gözlənilir. WhatsApp-da menecerə yazın.';
   button.disabled=false;button.textContent='✅ Rezervasiyanı təsdiqlə və avans ödə';
  }catch(e){
