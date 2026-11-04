@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 import vm from "node:vm";
 
 const root = process.cwd();
@@ -10,7 +11,6 @@ const htmlFiles = [
   "public/utility-management.html",
   "public/employee-payments.html"
 ];
-
 const functionDir = "netlify/functions";
 const functionFiles = readdirSync(join(root, functionDir)).filter(name => name.endsWith(".mjs"));
 const serverFiles = [
@@ -20,8 +20,12 @@ const serverFiles = [
 
 let checked = 0;
 for (const path of serverFiles) {
-  const source = readFileSync(join(root, path), "utf8");
-  new vm.SourceTextModule(source, { identifier: path });
+  const result = spawnSync(process.execPath, ["--check", path], {
+    cwd: root, encoding: "utf8"
+  });
+  if (result.status !== 0) {
+    throw new Error("JavaScript syntax check failed for " + path + ": " + (result.stderr || result.stdout));
+  }
   checked += 1;
 }
 
