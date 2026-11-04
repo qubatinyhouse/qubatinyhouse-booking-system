@@ -241,6 +241,26 @@ tbody tr:hover{background:#f8f8f2}
 #adminAuthGate h2{color:#294b37!important}
 #qthAdminLogin{background:linear-gradient(135deg,#c8ad73,#e6d6ad)!important;color:#29382f!important}
 
+
+.qth-modal[hidden]{display:none!important}
+.qth-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:18px}
+.qth-modal-backdrop{position:absolute;inset:0;background:rgba(20,31,24,.55);backdrop-filter:blur(4px)}
+.qth-modal-card{position:relative;width:min(920px,100%);max-height:min(88vh,900px);overflow:auto;background:#fffefa;border:1px solid #d8c9a6;border-radius:18px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.25);color:#29382f}
+.qth-modal-header{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:14px}
+.qth-modal-header h3{margin:0;font:600 23px Georgia,serif;color:#294b37}
+.qth-modal-close{background:#f1efe7;border:1px solid #ded8c9;border-radius:10px;padding:7px 12px;cursor:pointer}
+.qth-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.qth-detail-item{background:#f6f6f0;border:1px solid #e9e6db;border-radius:11px;padding:11px}
+.qth-detail-item small{display:block;color:#7a847b;font-size:11px;margin-bottom:4px}
+.qth-detail-item strong{color:#2e4b38;font-size:14px;overflow-wrap:anywhere}
+.qth-payment-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;background:#f8f7f1;border:1px solid #e7e1d2;border-radius:13px;padding:14px;margin-top:14px}
+.qth-payment-form label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:#68756b}
+.qth-payment-form input,.qth-payment-form select{width:100%;min-width:0}
+.qth-payment-form .wide{grid-column:1/-1}
+.qth-payment-history{width:100%;min-width:600px;border-collapse:collapse;margin-top:10px}
+.qth-payment-history th,.qth-payment-history td{padding:9px 10px;text-align:left;border-bottom:1px solid #ece9df;font-size:12px}
+@media(max-width:680px){.qth-modal{padding:8px}.qth-modal-card{padding:15px;max-height:94vh}.qth-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.qth-payment-form{grid-template-columns:1fr 1fr}.qth-modal-header h3{font-size:19px}}
+
 </style>
 </head>
 <body>
@@ -427,6 +447,16 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
     </div>
   </div>
 </section>
+<div id="reservationDetailsModal" class="qth-modal" hidden role="dialog" aria-modal="true" aria-labelledby="reservationDetailsTitle">
+  <div class="qth-modal-backdrop" onclick="closeReservationDetails()"></div>
+  <div class="qth-modal-card">
+    <div class="qth-modal-header">
+      <h3 id="reservationDetailsTitle">Rezervasiya detalları</h3>
+      <button class="qth-modal-close" type="button" onclick="closeReservationDetails()">Bağla ✕</button>
+    </div>
+    <div id="reservationDetailsContent"></div>
+  </div>
+</div>
 </section>
 
 <section class="section" id="calendar">
