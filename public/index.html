@@ -59,7 +59,7 @@ function money(n){return Number(n||0).toLocaleString('az-AZ',{maximumFractionDig
 let availabilityCache=[];
 
 function updateQuote(unit){
- if(!unit){document.getElementById('total').textContent='Tarixləri yoxlayın';return}
+ if(!unit){document.getElementById('total').textContent='Tarixləri və evi seçin';document.getElementById('priceNote').textContent='Ev və tarixləri seçdikdən sonra məbləğ hesablanacaq.';document.getElementById('nights').textContent='0';['nightPrice','depositAmount','remainingAmount'].forEach(id=>document.getElementById(id).textContent='0 AZN');return}
  if(!unit.quote){document.getElementById('total').textContent='Tarif təyin edilməyib';document.getElementById('priceNote').textContent=unit.pricingError||'Qiymət konfiqurasiyası tamamlanmalıdır.';['nights','nightPrice','depositAmount','remainingAmount'].forEach(id=>document.getElementById(id).textContent=id==='nights'?'0':'—');return}
  document.getElementById('nights').textContent=unit.quote.nights;
  document.getElementById('nightPrice').textContent=money(unit.quote.stayTotal);
@@ -86,7 +86,7 @@ async function checkAvailability(){
   if(!chosen){status.textContent='Bu ev seçilmiş tarixlərdə boş deyil və ya qonaq sayı tutuma uyğun gəlmir. Başqa tarix və ya ev seçin.';updateQuote(null);return}
   if(!chosen.quote){status.textContent=chosen.pricingError||'Bu ev üçün tarif təyin edilməyib.';updateQuote(chosen);return}
   updateQuote(chosen);
-  status.textContent=`${chosen.name} seçilmiş tarixlərdə boşdur. ${chosen.quote.nights} gecə üçün ümumi məbləğ: ${money(chosen.quote.total)}. Avans: ${money(Math.max(50,Math.round(chosen.quote.total*0.5*100)/100)}.`;
+  status.textContent=`${chosen.name} seçilmiş tarixlərdə boşdur. ${chosen.quote.nights} gecə üçün ümumi məbləğ: ${money(chosen.quote.total)}. Avans: ${money(Math.max(50,Math.round(chosen.quote.total*0.5*100)/100))}.`;
  }catch(e){availabilityCache=[];status.textContent=e.message+' Sistemin administrator quraşdırması hələ tamamlanmamış ola bilər.';updateQuote(null)}
 }
 document.getElementById('checkAvailability').addEventListener('click',checkAvailability);
