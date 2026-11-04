@@ -668,15 +668,15 @@ window.addEventListener("message", (event) => {
 </script>
 <script>
 const ADMIN_API_URL = "/.netlify/functions/admin-reservations";
-let adminToken = sessionStorage.getItem("qth_admin_api_token") || "";
+
 let allReservations = [];
 
-function getAdminToken() {
-  if (!adminToken) {
-    adminToken = window.prompt("Admin API giriş kodunu daxil edin:");
-    if (adminToken) sessionStorage.setItem("qth_admin_api_token", adminToken);
-  }
-  return adminToken || "";
+async function getAdminAccessToken() {
+  const auth = window.qthAdminAuthClient;
+  if (!auth) throw new Error("Admin giriş sessiyası tapılmadı.");
+  const sessionResult = await auth.auth.getSession();
+  if (sessionResult.error || !sessionResult.data?.session?.access_token) throw new Error("Sessiya bitib. Yenidən daxil olun.");
+  return sessionResult.data.session.access_token;
 }
 
 async function adminRequest(method = "GET", body = null) {
