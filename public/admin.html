@@ -680,21 +680,19 @@ async function getAdminAccessToken() {
 }
 
 async function adminRequest(method = "GET", body = null) {
-  const token = getAdminToken();
+  const token = await getAdminAccessToken();
   if (!token) throw new Error("Admin giriş kodu daxil edilməyib.");
   const response = await fetch(ADMIN_API_URL, {
     method,
     headers: {
       "Content-Type": "application/json",
-      "x-admin-token": token
+      "Authorization": "Bearer " + token
     },
     body: body ? JSON.stringify(body) : undefined
   });
   const result = await response.json().catch(() => ({}));
   if (response.status === 401) {
-    sessionStorage.removeItem("qth_admin_api_token");
-    adminToken = "";
-    throw new Error("Giriş kodu yanlışdır və ya Netlify-də ADMIN_API_TOKEN qurulmayıb.");
+    throw new Error("Admin sessiyası etibarlı deyil. Yenidən daxil olun.");
   }
   if (!response.ok) throw new Error(result.error || "Sorğu uğursuz oldu.");
   return result;
@@ -924,11 +922,11 @@ function escapeReservation(value) {
 
 const BLOCKED_DATES_API = "/.netlify/functions/admin-blocked-dates";
 async function blockedDatesRequest(method="GET", body=null) {
-  const token=getAdminToken();
+  const token=await getAdminAccessToken();
   if(!token) throw new Error("Admin giriş kodu daxil edilməyib.");
-  const response=await fetch(BLOCKED_DATES_API,{method,headers:{"Content-Type":"application/json","x-admin-token":token},body:body?JSON.stringify(body):undefined});
+  const response=await fetch(BLOCKED_DATES_API,{method,headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:body?JSON.stringify(body):undefined});
   const result=await response.json().catch(()=>({}));
-  if(response.status===401){sessionStorage.removeItem("qth_admin_api_token");adminToken="";throw new Error("Admin giriş kodu yanlışdır.");}
+  if(response.status===401){throw new Error("Admin sessiyası etibarlı deyil. Yenidən daxil olun.");}
   if(!response.ok) throw new Error(result.error||"Təqvim sorğusu uğursuz oldu.");
   return result;
 }
