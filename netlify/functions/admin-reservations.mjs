@@ -1,4 +1,4 @@
-import { db, json, validDate, getNights, quoteForUnit } from '../lib/_lib.mjs';
+import { db, json, validDate, getNights, quoteForUnit, requireQthAdmin } from '../lib/_lib.mjs';
 
 const allowedStatuses = new Set([
   'pending_payment',
@@ -10,12 +10,8 @@ const allowedStatuses = new Set([
 ]);
 
 export const handler = async (event) => {
-  const expectedToken = process.env.ADMIN_API_TOKEN;
-  const suppliedToken = event.headers?.['x-admin-token'] || event.headers?.['X-Admin-Token'];
-
-  if (!expectedToken || !suppliedToken || suppliedToken !== expectedToken) {
-    return json(401, { error: 'Admin icazəsi tələb olunur.' });
-  }
+  const admin = await requireQthAdmin(event);
+  if (!admin) return json(401, { error: 'Admin sessiyası etibarlı deyil. Yenidən daxil olun.' });
 
   try {
     const client = db();
