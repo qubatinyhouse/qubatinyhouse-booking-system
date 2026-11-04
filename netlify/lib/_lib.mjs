@@ -32,7 +32,7 @@ const QTH_ADMIN_AUTH_KEY = "sb_publishable_WM8Bxho4Xrp2SJR_uCNb-Q_MaxQeE4N";
 export async function requireQthAdmin(event) {
   const headers = event?.headers || {};
   const authorization = headers.authorization || headers.Authorization || "";
-  const match = String(authorization).match(/^Bearer\\s+(.+)$/i);
+  const match = String(authorization).match(/^Bearer\s+(.+)$/i);
   if (!match) return null;
 
   try {
