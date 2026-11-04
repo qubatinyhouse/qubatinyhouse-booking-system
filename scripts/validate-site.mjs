@@ -31,7 +31,7 @@ for (const path of serverFiles) {
 
 for (const path of htmlFiles) {
   const source = readFileSync(join(root, path), "utf8");
-  const scripts = [...source.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)];
+  const scripts = [...source.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
   let inlineCount = 0;
   for (const match of scripts) {
     const code = match[1].trim();
