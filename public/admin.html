@@ -261,6 +261,52 @@ tbody tr:hover{background:#f8f8f2}
 .qth-payment-history th,.qth-payment-history td{padding:9px 10px;text-align:left;border-bottom:1px solid #ece9df;font-size:12px}
 @media(max-width:680px){.qth-modal{padding:8px}.qth-modal-card{padding:15px;max-height:94vh}.qth-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.qth-payment-form{grid-template-columns:1fr 1fr}.qth-modal-header h3{font-size:19px}}
 
+
+/* Mobile-first admin refinements */
+@media(max-width:700px){
+ html,body{width:100%;overflow-x:hidden}
+ .app{display:block!important;min-width:0}
+ .sidebar{width:100%!important;position:sticky;top:0;z-index:100;padding:10px 12px 8px!important}
+ .logo{padding:2px 5px 9px!important;font-size:15px!important}
+ .logo small{display:inline-block!important}
+ .sidebar nav{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden;gap:6px!important;padding:2px 1px 8px!important;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+ .nav{flex:0 0 auto!important;width:auto!important;white-space:nowrap!important;font-size:11px!important;padding:10px 12px!important;scroll-snap-align:start}
+ .main{width:100%;min-width:0;padding:15px 11px!important}
+ .header{gap:8px;align-items:flex-start!important;flex-wrap:wrap;margin-bottom:15px!important}
+ .header>div{min-width:0}
+ h1{font-size:20px!important;line-height:1.2}
+ .date{max-width:100%;white-space:normal}
+ .dashboard-hero{min-height:190px!important;padding:20px 16px!important}
+ .cards{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+ .card{min-width:0;padding:13px!important}
+ .card-value{font-size:19px!important;overflow-wrap:anywhere}
+ .panel{padding:14px!important;margin-top:12px!important}
+ .quick{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .quick button{min-width:0;padding:12px!important}
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ input,select,textarea,button{max-width:100%}
+ input,select,textarea{font-size:16px!important;min-width:0}
+ .table-wrap{max-width:100%;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+ table{min-width:620px}
+ iframe{display:block;max-width:100%;width:100%}
+ #financeFrame{height:2600px!important;min-height:2600px!important}
+ #employeesFrame{height:2800px!important;min-height:2800px!important}
+ #cleaningFrame{height:1900px!important;min-height:1900px!important}
+ #utilitiesFrame{height:1900px!important;min-height:1900px!important}
+ #reportsFrame{height:2100px!important;min-height:2100px!important}
+ #settingsFrame{height:1900px!important;min-height:1900px!important}
+ .qth-modal{padding:7px!important}
+ .qth-modal-card{width:100%!important;max-height:94dvh!important;padding:13px!important}
+ .qth-payment-form{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:390px){
+ .main{padding:12px 8px!important}
+ .cards,.quick,.grid{grid-template-columns:1fr!important}
+ .date{font-size:10px}
+ .dashboard-hero h2{font-size:22px!important}
+ .qth-detail-grid{grid-template-columns:1fr 1fr!important}
+}
+
 </style>
 </head>
 <body>
