@@ -847,45 +847,72 @@ window.changeReservationStatus = async function (id, status) {
   }
 };
 
-function updateAdminCampaignOptions(){
- const unit=document.getElementById("adminUnitId").value;
- const guests=Number(document.getElementById("adminGuestCount").value);
- const ci=document.getElementById("adminCheckIn").value,co=document.getElementById("adminCheckOut").value;
- const nights=ci&&co?Math.round((Date.parse(co+"T00:00:00Z")-Date.parse(ci+"T00:00:00Z"))/86400000):0;
- const sel=document.getElementById("adminCampaignCode"),old=sel.value;
- const scandi=["scandi-large-1","scandi-large-2","scandi-small-1","scandi-small-2"].includes(unit);
- const aframe=["aframe-1","aframe-2"].includes(unit);
- const opts=[["","Adi tarif — kampaniya yoxdur"]];
- if(scandi&&nights===3&&co<="2026-11-05"){
-  if(guests===2)opts.push(["autumn_149","Payız kampaniyası — 3 gecə / 4 gün — 149 AZN"]);
-  if(guests>=3&&guests<=4)opts.push(["autumn_179","Payız kampaniyası — 3 gecə / 4 gün — 179 AZN"]);
-  if(guests>=6&&guests<=7)opts.push(["autumn_249","Payız kampaniyası — 3 gecə / 4 gün — 249 AZN"]);
- }
- if(aframe&&guests===2){
-  if(nights===1)opts.push(["romantic_179","Romantik paket — 1 gecə / 2 gün — 179 AZN"]);
-  if(nights===3)opts.push(["honeymoon_349","Balayı paketi — 3 gecə / 4 gün — 349 AZN"]);
- }
- sel.innerHTML="";
- opts.forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;sel.appendChild(o)});
- sel.value=opts.some(x=>x[0]===old)?old:"";
- const packageCode=sel.value,marriage=aframe&&["romantic_179","honeymoon_349"].includes(packageCode);
- document.getElementById("adminMarriageWrap").style.display=marriage?"block":"none";
- if(!marriage)document.getElementById("adminMarriageConfirmed").checked=false;
- const help=document.getElementById("adminCampaignHelp");
- help.textContent=marriage?"Romantik və balayı paketləri yalnız 2 nəfərlik rəsmi nikahlı cütlüklər üçündür. Nikah şəhadətnaməsi yoxlanılmalıdır. Avans 50%.":scandi?"Payız kampaniyası Orange, White, Blue və Green evlərində 3 gecəlik qalış və 5 noyabr 2026-dək çıxış üçün keçərlidir. ":aframe?"A-FRAME evlərində 2 nəfərlik Romantik (1 gecə) və Balayı (3 gecə) paketləri mövcuddur.":"Kampaniya seçilmədikdə standart tarif tətbiq olunur.";
+const adminPaymentDate = document.getElementById("adminPaymentDate");
+if (adminPaymentDate && !adminPaymentDate.value) {
+  adminPaymentDate.value = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Baku" });
 }
-["adminUnitId","adminGuestCount","adminCheckIn","adminCheckOut"].forEach(id=>document.getElementById(id).addEventListener("change",updateAdminCampaignOptions));
-document.getElementById("adminCampaignCode").addEventListener("change",updateAdminCampaignOptions);
 window.createAdminReservation = async function () {
- const message=document.getElementById("adminCreateMessage");
- const payload={guestName:document.getElementById("adminGuestName").value.trim(),phone:document.getElementById("adminGuestPhone").value.trim(),unitId:document.getElementById("adminUnitId").value,checkIn:document.getElementById("adminCheckIn").value,checkOut:document.getElementById("adminCheckOut").value,guestCount:Number(document.getElementById("adminGuestCount").value),note:document.getElementById("adminBookingNote").value.trim(),campaignCode:document.getElementById("adminCampaignCode").value,marriageConfirmed:document.getElementById("adminMarriageConfirmed").checked};
- if(!payload.guestName||!payload.phone||!payload.checkIn||!payload.checkOut){message.textContent="Ad, telefon və tarixləri doldurun.";return;}
-  if(["romantic_179","honeymoon_349"].includes(payload.campaignCode)&&!payload.marriageConfirmed){message.textContent="Bu paketlər yalnız rəsmi nikahda olan cütlüklər üçündür. Təsdiqi işarələyin.";return;}
- if(payload.checkOut<=payload.checkIn){message.textContent="Çıxış tarixi giriş tarixindən sonra olmalıdır.";return;}
- if(!confirm("Bu məlumatlarla rezervasiya yaratmaq və onu təsdiqləmək istəyirsiniz?"))return;
- message.textContent="Qiymət və mövcudluq yoxlanılır...";
- try{const result=await adminRequest("POST",payload);const r=result.reservation;message.textContent="Rezervasiya yaradıldı: "+(r.booking_code||r.id)+" | Cəmi: "+money(result.quote.total)+" | Kampaniya: "+(result.quote.campaignName||"Adi tarif")+" | 50% beh: "+money(result.quote.deposit)+" | Qalıq: "+money(result.quote.remaining)+". "+result.quote.ruleText;document.getElementById("adminGuestName").value="";document.getElementById("adminGuestPhone").value="";document.getElementById("adminBookingNote").value="";await loadReservations();}
- catch(error){message.textContent="Rezervasiya yaradılmadı: "+error.message;}
+  const message = document.getElementById("adminCreateMessage");
+  const button = document.querySelector("#adminCreateReservationPanel button.btn");
+  const payload = {
+    guestName: document.getElementById("adminGuestName").value.trim(),
+    phone: document.getElementById("adminGuestPhone").value.trim(),
+    unitId: document.getElementById("adminUnitId").value,
+    checkIn: document.getElementById("adminCheckIn").value,
+    checkOut: document.getElementById("adminCheckOut").value,
+    guestCount: Number(document.getElementById("adminGuestCount").value),
+    note: document.getElementById("adminBookingNote").value.trim(),
+    paidAmount: Number(document.getElementById("adminPaidAmount").value || 0),
+    paymentMethod: document.getElementById("adminPaymentMethod").value,
+    paymentDate: document.getElementById("adminPaymentDate").value,
+    paymentRequestId: crypto.randomUUID()
+  };
+  if (!payload.guestName || !payload.phone || !payload.checkIn || !payload.checkOut) {
+    message.textContent = "Ad, telefon və tarixləri doldurun.";
+    return;
+  }
+  if (!Number.isFinite(payload.paidAmount) || payload.paidAmount < 0) {
+    message.textContent = "Ödəniş məbləği düzgün deyil.";
+    return;
+  }
+  if (payload.checkOut <= payload.checkIn) {
+    message.textContent = "Çıxış tarixi giriş tarixindən sonra olmalıdır.";
+    return;
+  }
+  const yes = confirm(
+    "Standart tariflə rezervasiya yaradılsın?\\n" +
+    "Faktiki alınmış ödəniş: " + money(payload.paidAmount) +
+    "\\nÖdəniş 50% avans həddinə çatarsa rezervasiya təsdiqlənəcək."
+  );
+  if (!yes) return;
+
+  if (button) { button.disabled = true; button.textContent = "Yaradılır..."; }
+  message.textContent = "Tarif və mövcudluq yoxlanılır...";
+  try {
+    const result = await adminRequest("POST", payload);
+    const reservation = result.reservation;
+    if (result.payment) {
+      try {
+        await qthQueueBookingPayment(result.payment, reservation);
+      } catch (financeError) {
+        message.textContent = "Rezervasiya yaradıldı, lakin ödəniş maliyyəyə ötürülmədi: " + financeError.message;
+      }
+    }
+    const statusText = reservation.status === "confirmed" ? "Təsdiqlənib" : "Avans gözlənilir";
+    message.textContent =
+      "Bron: " + (reservation.booking_code || reservation.id) +
+      " | " + statusText +
+      " | Cəmi: " + money(result.quote.total) +
+      " | Ödənilib: " + money(reservation.paid_amount) +
+      " | Qalıq: " + money(reservation.remaining_amount) + ".";
+    ["adminGuestName","adminGuestPhone","adminBookingNote"].forEach(id => document.getElementById(id).value = "");
+    document.getElementById("adminPaidAmount").value = "0";
+    await loadReservations();
+  } catch (error) {
+    message.textContent = "Rezervasiya yaradılmadı: " + error.message;
+  } finally {
+    if (button) { button.disabled = false; button.textContent = "Rezervasiyanı yarat"; }
+  }
 };
 window.cancelAdminReservation=async function(id){
  const r=allReservations.find(item=>item.id===id);if(!r||r.status==="cancelled"||r.status==="expired")return;
