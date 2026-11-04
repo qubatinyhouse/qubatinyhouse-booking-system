@@ -32,7 +32,7 @@ export const handler = async (event) => {
           typeof guestName !== 'string' || guestName.trim().length < 2 || guestName.length > 120 ||
           typeof phone !== 'string' || phone.replace(/\D/g, '').length < 7 || phone.length > 30 ||
           !Number.isInteger(guests) || guests < 1 || guests > 10 ||
-          !Number.isFinite(total) || total < 50 || !Number.isFinite(paid) || paid < 0 || paid > total) {
+          !Number.isFinite(total) || total <= 0 || !Number.isFinite(paid) || paid < 0 || paid > total) {
         return json(400, { error: 'Müştəri, ev, qonaq sayı, ödəniş və tarixləri düzgün daxil edin. Qalma müddəti 1–30 gecə olmalıdır.' });
       }
 
@@ -49,7 +49,7 @@ export const handler = async (event) => {
       if (blockError) throw blockError;
       if (blocks?.length) return json(409, { error: 'Seçilmiş tarixlər admin təqvimində bağlıdır. Əvvəl təqvimi yoxlayın.' });
 
-      const deposit = paid > 0 ? paid : Math.min(50, total);
+      const deposit = paid;
       const remaining = Math.round((total - paid) * 100) / 100;
 
       const rpc = await client.rpc('create_admin_booking_atomic', {
