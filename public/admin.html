@@ -261,6 +261,87 @@ tbody tr:hover{background:#f8f8f2}
 .qth-payment-history th,.qth-payment-history td{padding:9px 10px;text-align:left;border-bottom:1px solid #ece9df;font-size:12px}
 @media(max-width:680px){.qth-modal{padding:8px}.qth-modal-card{padding:15px;max-height:94vh}.qth-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.qth-payment-form{grid-template-columns:1fr 1fr}.qth-modal-header h3{font-size:19px}}
 
+
+/* QTH MOBILE-FIRST ADMIN EXPERIENCE */
+@media (max-width: 620px) {
+  html, body { width:100%; max-width:100%; overflow-x:hidden; -webkit-text-size-adjust:100%; }
+  body { padding-bottom:env(safe-area-inset-bottom); }
+  .app { display:block; width:100%; min-width:0; }
+  .sidebar {
+    position:sticky; top:0; z-index:100;
+    width:100%; padding:9px 10px 8px;
+    border-right:0; border-bottom:1px solid #e4dfd1;
+    box-shadow:0 5px 16px rgba(35,49,38,.09);
+  }
+  .logo { display:flex; align-items:center; gap:8px; padding:2px 5px 8px; font-size:14px; }
+  .logo:before { flex:0 0 30px; width:30px; height:30px; margin:0; }
+  .logo:after { left:14px; top:11px; }
+  .logo small { margin-left:auto; font-size:8px; letter-spacing:1.5px; }
+  .sidebar nav {
+    display:flex; gap:6px; overflow-x:auto; overflow-y:hidden;
+    padding:2px 1px 7px; margin:0; scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  .sidebar nav::-webkit-scrollbar { display:none; }
+  .nav {
+    flex:0 0 auto; width:auto; min-height:40px; margin:0;
+    padding:10px 12px; font-size:12px; line-height:1.2;
+    white-space:nowrap; scroll-snap-align:start;
+  }
+  .main { width:100%; min-width:0; padding:14px 12px 28px; }
+  .header { display:flex; align-items:flex-start; gap:8px; margin-bottom:14px; padding-bottom:12px; }
+  h1 { font-size:20px; line-height:1.2; }
+  .sub { font-size:11px; line-height:1.4; }
+  .date { max-width:44%; white-space:normal; text-align:right; font-size:10px; padding:7px 8px; }
+  .dashboard-hero { min-height:180px; padding:19px 16px; margin-bottom:13px; }
+  .dashboard-hero h2 { font-size:23px; }
+  .dashboard-hero p { max-width:78%; font-size:11px; }
+  .hero-kicker { font-size:9px; letter-spacing:2px; }
+  .hero-chip { font-size:8px; padding:6px 9px; }
+  .cards { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .card { min-width:0; min-height:100px; padding:12px 11px; border-radius:12px; }
+  .card-label { font-size:10px; line-height:1.35; }
+  .card-value { font-size:clamp(17px,5vw,21px); overflow-wrap:anywhere; margin-top:9px; }
+  .card-note { font-size:9px; line-height:1.35; }
+  .panel { min-width:0; padding:13px; margin-top:12px; border-radius:13px; }
+  .panel h3 { font-size:14px; margin-bottom:12px; }
+  .quick { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
+  .quick button { min-width:0; min-height:72px; padding:11px 9px; }
+  .quick strong { font-size:11px; line-height:1.3; }
+  .quick span { font-size:10px; line-height:1.35; }
+  .grid { grid-template-columns:minmax(0,1fr); gap:10px; }
+  label { min-width:0; font-size:12px; }
+  input, select, textarea { width:100%; min-width:0; min-height:44px; font-size:16px !important; }
+  textarea { min-height:90px; }
+  button, .btn, a.link { touch-action:manipulation; }
+  .btn, button.btn { min-height:44px; padding:11px 14px; }
+  .table-wrap { width:100%; max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  table { display:block; width:100%; max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  th, td { white-space:nowrap; padding:11px 9px; font-size:11px; }
+  #financeFrame { display:block; width:100% !important; min-width:0 !important; height:2200px; min-height:2200px; border:0; }
+  .qth-modal { padding:6px; align-items:end; }
+  .qth-modal-card { width:100%; max-height:94dvh; padding:13px; border-radius:17px 17px 10px 10px; }
+  .qth-modal-header { position:sticky; top:-13px; z-index:2; padding:7px 0 10px; background:#fffefa; }
+  .qth-modal-header h3 { font-size:18px; }
+  .qth-detail-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
+  .qth-detail-item { min-width:0; padding:9px; }
+  .qth-detail-item strong { font-size:12px; overflow-wrap:anywhere; }
+  .qth-payment-form { grid-template-columns:minmax(0,1fr); padding:10px; gap:9px; }
+  .qth-payment-form .wide { grid-column:auto; }
+  .qth-payment-history { min-width:560px; }
+  #adminAuthGate { min-height:100dvh !important; padding:14px !important; }
+  #adminAuthGate > section { padding:22px 18px !important; }
+}
+@media (max-width:380px) {
+  .main { padding-left:9px; padding-right:9px; }
+  .cards { gap:6px; }
+  .card { padding:10px 9px; }
+  .quick { gap:6px; }
+  .quick button { padding:10px 8px; }
+  .nav { padding:9px 10px; font-size:11px; }
+  .date { font-size:9px; }
+}
+
 </style>
 </head>
 <body>
