@@ -680,28 +680,7 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
 })();
 </script>
 <script>
-// Maliyyə göstəriciləri yalnız maliyyə modulunda administrator sessiyası açıldıqdan sonra iframe-dən alınır.
-const qthPendingFinanceSync = new Map();
-function qthSendPendingFinanceSync() {
-  const frame = document.getElementById("financeFrame");
-  if (!frame || !frame.contentWindow) return;
-  for (const [id, payload] of qthPendingFinanceSync) {
-    frame.contentWindow.postMessage({ type: "QTH_RECORD_BOOKING_DEPOSIT", payload }, window.location.origin);
-  }
-}
-window.addEventListener("message", (event) => {
-  const financeFrame = document.getElementById("financeFrame");
-  if (event.origin !== window.location.origin || !financeFrame || event.source !== financeFrame.contentWindow) return;
-  if (event.data?.type === "QTH_FINANCE_READY") { qthSendPendingFinanceSync(); return; }
-  if (event.data?.type === "QTH_BOOKING_DEPOSIT_RECORDED" && event.data.reservationId) {
-    qthPendingFinanceSync.delete(event.data.reservationId);
-    const note = document.getElementById("reservationMessage");
-    if (note) note.textContent = event.data.error
-      ? "Rezervasiya təsdiqləndi, lakin beh Maliyyəyə yazılmadı: " + event.data.error
-      : "Rezervasiya təsdiqləndi. " + event.data.amount + " AZN beh Maliyyə → Gəlirlər bölməsinə yazıldı.";
-    return;
-  }
-});
+// Rezervasiya ödənişləri ayrıca payment ID ilə bir dəfə Maliyyəyə ötürülür.
 async function qthQueueBookingPayment(payment, reservation) {
   if (!payment?.id || !reservation?.id || Number(payment.amount || 0) <= 0) {
     throw new Error("Ödəniş jurnalı üçün lazımi məlumat tapılmadı.");
