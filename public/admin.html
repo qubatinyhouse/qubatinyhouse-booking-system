@@ -373,8 +373,9 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
 <label>Çıxış tarixi<input id="adminCheckOut" type="date" required></label>
 <label>Qonaq sayı<input id="adminGuestCount" type="number" min="1" max="10" value="2" required></label>
 
-<label>Ümumi rezervasiya məbləği (AZN)<input id="adminTotalAmount" type="number" min="50" step="0.01" placeholder="Məsələn: 400" required></label>
-<label>Alınmış avans (AZN)<input id="adminPaidAmount" type="number" min="0" step="0.01" value="0" required></label>
+<label>Ümumi ödəniləcək məbləğ (AZN)<input id="adminTotalAmount" type="number" min="0.01" step="0.01" placeholder="Qiyməti özünüz daxil edin" oninput="updateAdminManualBalance()" required></label>
+<label>Alınacaq avans (AZN)<input id="adminPaidAmount" type="number" min="0" step="0.01" value="0" oninput="updateAdminManualBalance()" required></label>
+<label>Qalıq məbləğ (AZN)<input id="adminRemainingAmount" type="text" value="0.00 AZN" readonly></label>
 <label>Ödəniş üsulu<select id="adminPaymentMethod"><option value="bank">Bank</option><option value="cash">Nağd</option><option value="card">Kart</option><option value="transfer">Köçürmə</option></select></label>
 <label>Ödəniş tarixi<input id="adminPaymentDate" type="date"></label>
 <label>Qeyd<input id="adminBookingNote" type="text" maxlength="1500" placeholder="Əlavə qeyd"></label></div>
@@ -889,7 +890,7 @@ const adminPaymentDate = document.getElementById("adminPaymentDate");
 if (adminPaymentDate && !adminPaymentDate.value) {
   adminPaymentDate.value = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Baku" });
 }
-window.createAdminReservation = async function () {
+window.updateAdminManualBalance = function () {\n  const total = Number(document.getElementById("adminTotalAmount")?.value || 0);\n  const paid = Number(document.getElementById("adminPaidAmount")?.value || 0);\n  const remaining = Math.max(0, total - paid);\n  const output = document.getElementById("adminRemainingAmount");\n  if (output) output.value = remaining.toFixed(2) + " AZN";\n};\nwindow.createAdminReservation = async function () {
   const message = document.getElementById("adminCreateMessage");
   const button = document.querySelector("#adminCreateReservationPanel button.btn");
   const payload = {
