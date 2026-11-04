@@ -46,6 +46,7 @@
 <div style="margin-top:12px"><strong>Avans ödənişi</strong><div id="paymentCardDetails">Kart məlumatlarını almaq üçün WhatsApp vasitəsilə menecerlə əlaqə yaradın. Kart məlumatları saytda göstərilmir.</div></div>
 <button class="btn gold" type="button" id="sendReceiptWhatsApp" style="margin-top:14px">📲 WhatsApp-da menecerə yaz</button>
 </div></div></div></form></div></section>
+<section id="booking-status" style="padding-top:15px"><div class="container"><div class="panel" style="max-width:760px;margin:0 auto"><div class="eyebrow">Reservation status</div><h2 style="margin:6px 0 8px">Rezervasiyanı yoxla</h2><p class="small">Rezervasiya yaradıldıqdan sonra verilən bron kodunu daxil edin.</p><div class="formgrid"><div class="formfield"><label for="lookupBookingCode">Bron kodu</label><input id="lookupBookingCode" type="text" maxlength="14" placeholder="QTH-XXXXXXXXXX" autocapitalize="characters"></div><div class="formfield" style="align-self:end"><button class="btn gold" type="button" id="lookupBookingButton">Statusu yoxla</button></div></div><div id="lookupBookingResult" class="notice" hidden aria-live="polite"></div></div></div></section>
 <section><div class="container"><div class="sectionHead reveal"><div class="eyebrow">Rates</div><h2>Tarif qaydaları</h2><p>Qiymətlər evə və tarixə görə avtomatik hesablanır. Yay mövsümündə, həftəsonlarında və bayram günlərində uyğun tarif tətbiq olunur.</p></div><div class="features reveal"><div class="feature"><div class="icon">🌱</div><h3>Standart gün</h3><p>Adi həftəiçi günlər üçün tarif.</p></div><div class="feature"><div class="icon">☀️</div><h3>Həftəsonu</h3><p>Cümə və şənbə gecələri üçün yüksək tarif.</p></div><div class="feature"><div class="icon">🎉</div><h3>Bayram günləri</h3><p>Bayram təqvimindəki tarixlər üçün xüsusi tarif.</p></div></div></div></section>
 <section id="contact" class="contact"><div class="container"><div class="eyebrow">Contact</div><h2>Quba Tiny House</h2><p>📍 Quba, Qəçrəş meşəsi · ☎️ 050 369 90 00 · 📸 @quba_tiny_house</p><div class="social"><a href="tel:+994503699000">☎️ Zəng et</a><a href="https://wa.me/994503699000" target="_blank" rel="noopener">💬 WhatsApp</a><a href="https://instagram.com/quba_tiny_house" target="_blank" rel="noopener">📸 Instagram</a><a href="https://www.google.com/maps/search/?api=1&query=Q%C9%99%C3%A7r%C9%99%C5%9F%20Quba" target="_blank" rel="noopener">📍 Google Maps</a></div></div></section>
 <footer><div class="container footerin"><div><strong>Quba Tiny House</strong><br>Qəçrəş meşəsi, Quba</div><div>© 2026 Quba Tiny House</div></div></footer>
@@ -134,6 +135,21 @@ document.getElementById('quickGuests').addEventListener('change',e=>{document.ge
  }
 }
 document.getElementById('bookAndPay').addEventListener('click',createBooking);
+
+const lookupButton=document.getElementById('lookupBookingButton');
+lookupButton.addEventListener('click',async()=>{
+ const code=document.getElementById('lookupBookingCode').value.trim().toUpperCase();
+ const result=document.getElementById('lookupBookingResult');
+ if(!/^QTH-[A-F0-9]{10}$/.test(code)){result.hidden=false;result.textContent='Bron kodunu QTH-XXXXXXXXXX formatında daxil edin.';return}
+ lookupButton.disabled=true;lookupButton.textContent='Yoxlanılır…';result.hidden=false;result.textContent='Rezervasiya məlumatları yoxlanılır…';
+ try{
+  const response=await fetch('/.netlify/functions/booking-status?code='+encodeURIComponent(code));
+  const data=await response.json();if(!response.ok)throw new Error(data.error||'Bron tapılmadı.');
+  result.textContent='Status: '+data.statusLabel+' | Ev: '+data.unitName+' | Tarix: '+data.checkIn+' – '+data.checkOut+' | Ümumi: '+money(data.totalAmount)+' | Ödənilib: '+money(data.paidAmount)+' | Qalıq: '+money(data.remainingAmount);
+ }catch(error){result.textContent=error.message}
+ finally{lookupButton.disabled=false;lookupButton.textContent='Statusu yoxla'}
+});
+
 document.getElementById('reservationForm').addEventListener('submit',e=>{e.preventDefault();createBooking()});
 
 function sendWhatsApp(){const name=document.getElementById('name').value.trim(),phone=document.getElementById('phone').value.trim(),a=dt('checkin'),b=dt('checkout');if(!name||!phone||!a||!b||new Date(b)<=new Date(a)){alert('Zəhmət olmasa ad, telefon və düzgün giriş/çıxış tarixlərini doldurun.');return}const u=selectedUnit();const txt=`Quba Tiny House rezervasiya məlumatı\nAd: ${name}\nTelefon: ${phone}\nEv: ${u?u.name:'seçiləcək'}\nGiriş: ${a}\nÇıxış: ${b}\nQonaqlar: ${document.getElementById('guests').value}\nTəxmini məbləğ: ${document.getElementById('total').textContent}\nAvans: ${document.getElementById('depositAmount').textContent}\nQeyd: ${document.getElementById('note').value||'-'}`;window.open('https://wa.me/994503699000?text='+encodeURIComponent(txt),'_blank')}
