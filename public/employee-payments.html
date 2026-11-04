@@ -72,7 +72,9 @@ button:disabled{opacity:.55;cursor:not-allowed}
 <p class="muted">Təsdiqlənmiş ödəniş eyni əməliyyat daxilində ödəniş tarixçəsinə və Maliyyə bölməsinin xərc jurnalına yazılır.</p>
 </section>
 
-<section class="card">
+<section class="card" id="workAndDebtModule"><h2>Əməkhaqqı və borc uçotu</h2><p class="muted">Seçilmiş ay üzrə hesablanmış maaş, tamamlanmış təmizlik işləri və həmin dövrə aid ödənişlər.</p><label>Hesabat ayı<input id="payrollMonth" type="month"></label><div class="grid"><div class="card"><div class="muted">Hesablanmış</div><div class="metric" id="earnedTotal">0 AZN</div></div><div class="card"><div class="muted">Ödənilmiş</div><div class="metric" id="paidTotal">0 AZN</div></div><div class="card"><div class="muted">Qalıq borc</div><div class="metric red" id="debtTotal">0 AZN</div></div><div class="card"><div class="muted">Tamamlanmış iş</div><div class="metric" id="completedWorkCount">0</div></div></div><div class="table-wrap" id="payrollDebtTable">Yüklənir...</div></section>
+<section class="card" id="dailyWorkModule"><h2>Gündəlik görülən işi qeyd et</h2><div class="grid"><label>İşçi<select id="workEmployee"><option value="">İşçi seçin</option></select></label><label>Ev tipi<select id="workHouseType"><option value="scandinav">Skandinav</option><option value="aframe">A-FRAME</option></select></label><label>Ev adı<select id="workHouseName"><option>Orange House</option><option>Green House</option><option>Blue House</option><option>White House</option><option>A-FRAME-1</option><option>A-FRAME-2</option></select></label><label>Tarix<input id="workDate" type="date"></label><label>Məbləğ (AZN)<input id="workAmount" type="number" min="0" step="0.01"></label><label>Status<select id="workStatus"><option value="completed">Tamamlandı</option><option value="pending">Gözləyir</option></select></label></div><label>Qeyd<input id="workNotes" maxlength="500" placeholder="Görülən iş barədə qeyd"></label><button id="saveWork">Görülən işi yadda saxla</button><p class="message" id="workMessage"></p></section>
+<section class="card"><h2>Gündəlik işlərin tarixçəsi</h2><div id="workHistory" class="muted">Yüklənir...</div></section><section class="card">
 <h2>Son ödənişlər</h2><div id="paymentHistory" class="muted">Tarixçə yüklənir...</div>
 </section>
 </section>
@@ -156,9 +158,13 @@ async function savePayment(){
  $("paymentAmount").value="";$("paymentNotes").value="";
  await loadHistory();
 }
+function monthRange(){const v=$("payrollMonth").value||localToday().slice(0,7);const y=Number(v.slice(0,4)),m=Number(v.slice(5,7));return {start:v+"-01",end:new Date(y,m,0).toISOString().slice(0,10)};}
+async function loadWorkAndDebt(){const {start,end}=monthRange();const [wr,pr]=await Promise.all([db.from("cleaning_tasks").select("id,house_type,house_name,task_date,employee_id,status,amount,notes").gte("task_date",start).lte("task_date",end).order("task_date",{ascending:false}),db.from("salary_payments").select("id,employee_id,amount,payment_date,period_start,period_end")]);if(wr.error)throw wr.error;if(pr.error)throw pr.error;const works=wr.data||[],payments=pr.data||[];const rows=employees.filter(e=>e.active).map(e=>{const base=e.salary_type==="monthly"?Number(e.base_salary||0):0;const tasks=works.filter(w=>w.employee_id===e.id&&w.status==="completed");const cleaning=tasks.reduce((a,w)=>a+Number(w.amount||0),0);const paid=payments.filter(p=>p.employee_id===e.id&&((p.period_start&&p.period_end&&p.period_start<=end&&p.period_end>=start)||(!p.period_start&&!p.period_end&&p.payment_date>=start&&p.payment_date<=end))).reduce((a,p)=>a+Number(p.amount||0),0);const earned=base+cleaning;return {e,base,cleaning,paid,earned,debt:Math.max(0,earned-paid)};});const sum=k=>rows.reduce((a,r)=>a+r[k],0);$("earnedTotal").textContent=money(sum("earned"));$("paidTotal").textContent=money(sum("paid"));$("debtTotal").textContent=money(sum("debt"));$("completedWorkCount").textContent=String(works.filter(w=>w.status==="completed").length);$("payrollDebtTable").innerHTML='<div class="table-wrap"><table><thead><tr><th>İşçi</th><th>Sabit maaş</th><th>Təmizlik</th><th>Hesablanıb</th><th>Ödənilib</th><th>Borc</th></tr></thead><tbody>'+(rows.map(r=>'<tr><td>'+esc(r.e.full_name)+'</td><td>'+money(r.base)+'</td><td>'+money(r.cleaning)+'</td><td>'+money(r.earned)+'</td><td>'+money(r.paid)+'</td><td><b>'+money(r.debt)+'</b></td></tr>').join("")||'<tr><td colspan="6">Aktiv işçi yoxdur.</td></tr>')+'</tbody></table></div>'; $("workEmployee").innerHTML='<option value="">İşçi seçin</option>'+employees.filter(e=>e.active).map(e=>'<option value="'+esc(e.id)+'">'+esc(e.full_name)+'</option>').join("");$("workHistory").innerHTML=works.length?'<div class="table-wrap"><table><thead><tr><th>Tarix</th><th>Ev</th><th>İşçi</th><th>Məbləğ</th><th>Status</th></tr></thead><tbody>'+works.map(w=>'<tr><td>'+esc(w.task_date)+'</td><td>'+esc(w.house_name||w.house_type)+'</td><td>'+esc((employees.find(e=>e.id===w.employee_id)||{}).full_name||"—")+'</td><td>'+money(w.amount)+'</td><td>'+(w.status==="completed"?"Tamamlandı":"Gözləyir")+'</td></tr>').join("")+'</tbody></table></div>':'<p>Bu ay üçün iş qeydi yoxdur.</p>';}
+async function addDailyWork(){const employee_id=$("workEmployee").value,house_type=$("workHouseType").value,house_name=$("workHouseName").value,task_date=$("workDate").value,amount=Number($("workAmount").value),status=$("workStatus").value,notes=$("workNotes").value.trim(),msg=$("workMessage");if(!employee_id||!task_date||!Number.isFinite(amount)||amount<0){msg.textContent="İşçi, tarix və məbləği düzgün daxil edin.";return;} $("saveWork").disabled=true;const {error}=await db.from("cleaning_tasks").insert({employee_id,house_type,house_name,task_date,amount,status,notes:notes||null,completed_at:status==="completed"?new Date().toISOString():null});$("saveWork").disabled=false;if(error){msg.textContent="Xəta: "+error.message;return;}msg.textContent="İş qeydə alındı."; $("workNotes").value="";$("workAmount").value="";await loadWorkAndDebt();}
+
 async function showApp(){
  $("app").style.display="block";
- try{await loadSettings();await loadEmployees();await loadHistory()}catch(e){$("employeeMessage").textContent="Məlumat yüklənmədi: "+e.message}
+ try{await loadSettings();await loadEmployees();await loadHistory();$("workAmount").value=$("scandiRate").value||0;await loadWorkAndDebt()}catch(e){$("employeeMessage").textContent="Məlumat yüklənmədi: "+e.message}
 }
 async function connectSharedSession(){
  for(let i=0;i<100&&!window.parent.qthAdminAuthClient;i++)await new Promise(r=>setTimeout(r,50));
@@ -172,6 +178,10 @@ async function connectSharedSession(){
 $("saveSettings").addEventListener("click",saveSettings);
 $("addEmployee").addEventListener("click",addEmployee);
 $("savePayment").addEventListener("click",savePayment);
+$("saveWork").addEventListener("click",addDailyWork);
+$("payrollMonth").value=localToday().slice(0,7);$("workDate").value=localToday();
+$("payrollMonth").addEventListener("change",()=>loadWorkAndDebt().catch(e=>$("paymentMessage").textContent=e.message));
+$("workHouseType").addEventListener("change",()=>$("workAmount").value=$("workHouseType").value==="aframe"?$("aframeRate").value:$("scandiRate").value);
 connectSharedSession();
 </script>
 </body></html>
