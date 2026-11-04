@@ -1166,6 +1166,158 @@ window.releaseAllDateBlocks=async function(){
  catch(e){msg.textContent=e.message;}
 };
 
+
+const QTH_TARIFFS_API = "/.netlify/functions/admin-tariffs";
+async function tariffRequest(method="GET", body=null) {
+  const token = await getAdminAccessToken();
+  const response = await fetch(QTH_TARIFFS_API, {
+    method,
+    headers: {"Content-Type":"application/json","Authorization":"Bearer "+token},
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const result = await response.json().catch(()=>({}));
+  if (response.status === 401) {
+    throw new Error("Admin sessiyası etibarlı deyil. Yenidən daxil olun.");
+  }
+  if (!response.ok) throw new Error(result.error || "Tarif əməliyyatı uğursuz oldu.");
+  return result;
+}
+
+window.loadTariffs = async function() {
+  const message = document.getElementById("tariffMessage");
+  if (!message) return;
+  message.textContent = "Rezervasiya bazasından tariflər yüklənir...";
+  try {
+    const data = await tariffRequest("GET");
+    const units = data.units || [];
+    const seasonal = data.seasonalRates || [];
+    const dates = data.specialDates || [];
+    const names = new Map(units.map(unit=>[unit.id,unit.name]));
+    const host = document.getElementById("unitTariffCards");
+    host.innerHTML = units.map(unit => `
+      <article class="panel" data-unit-tariff="${escapeReservation(unit.id)}" style="margin:0">
+        <h3>${escapeReservation(unit.name)}</h3>
+        <div class="sub">${Number(unit.capacity)} nəfərlik · ${escapeReservation(unit.unit_type)}</div>
+        <div class="grid">
+          <label>Həftəiçi (AZN)<input type="number" min="0.01" step="0.01" data-field="weekdayRate" value="${Number(unit.weekday_rate||0)}"></label>
+          <label>Həftəsonu (AZN)<input type="number" min="0.01" step="0.01" data-field="weekendRate" value="${Number(unit.weekend_rate||0)}"></label>
+          <label>Bayram (AZN)<input type="number" min="0.01" step="0.01" data-field="holidayRate" value="${Number(unit.holiday_rate||0)}"></label>
+        </div>
+        <p class="muted">${unit.is_demo_rate ? "Nümunə tarif — aktiv deyil" : "Real tarif aktivdir"}</p>
+        <button class="btn" type="button" onclick="saveUnitTariff('${escapeReservation(unit.id)}')">Tarifləri yadda saxla</button>
+      </article>`).join("");
+
+    const select = document.getElementById("seasonalUnitSelect");
+    select.innerHTML = units.map(u=>'<option value="'+escapeReservation(u.id)+'">'+escapeReservation(u.name)+'</option>').join("");
+    const seasonalRows = seasonal.map(rate => `
+      <tr>
+        <td>${escapeReservation(names.get(rate.unit_id)||rate.unit_id)}</td>
+        <td>${escapeReservation(rate.label||"-")}</td>
+        <td>${escapeReservation(rate.start_date)}</td>
+        <td>${escapeReservation(rate.end_date)}</td>
+        <td>${money(rate.weekday_rate ?? rate.nightly_rate)}</td>
+        <td>${money(rate.weekend_rate ?? rate.nightly_rate)}</td>
+        <td>${rate.active ? "Aktiv" : "Deaktiv"}</td>
+        <td>${rate.active ? '<button type="button" onclick="deactivateSeasonalRate('+Number(rate.id)+')">Deaktiv et</button>' : ""}</td>
+      </tr>`).join("");
+    document.getElementById("seasonalRatesTable").innerHTML =
+      seasonalRows || '<tr><td colspan="8">Mövsümi tarif qeydə alınmayıb.</td></tr>';
+
+    const dateRows = dates.map(item => `
+      <tr>
+        <td>${escapeReservation(item.date)}</td>
+        <td>${escapeReservation(item.label)}</td>
+        <td>${item.active ? "Aktiv" : "Deaktiv"}</td>
+        <td>${item.active ? '<button type="button" onclick="deactivateSpecialDate(\''+escapeReservation(item.date)+'\')">Deaktiv et</button>' : ""}</td>
+      </tr>`).join("");
+    document.getElementById("specialDatesTable").innerHTML =
+      dateRows || '<tr><td colspan="4">Xüsusi tarix qeydə alınmayıb.</td></tr>';
+    message.textContent = units.length + " ev, " + seasonal.length + " mövsüm tarifi və " + dates.length + " xüsusi tarix yükləndi.";
+  } catch (error) {
+    message.textContent = "Tariflər yüklənmədi: " + error.message;
+  }
+};
+
+window.saveUnitTariff = async function(unitId) {
+  const card = document.querySelector('[data-unit-tariff="'+unitId+'"]');
+  if (!card) return;
+  const payload = {
+    action:"unit",
+    unitId,
+    weekdayRate:Number(card.querySelector('[data-field="weekdayRate"]').value),
+    weekendRate:Number(card.querySelector('[data-field="weekendRate"]').value),
+    holidayRate:Number(card.querySelector('[data-field="holidayRate"]').value)
+  };
+  if (![payload.weekdayRate,payload.weekendRate,payload.holidayRate].every(x=>Number.isFinite(x)&&x>0)) {
+    alert("Hər üç tarif 0-dan böyük olmalıdır.");
+    return;
+  }
+  try {
+    await tariffRequest("PATCH",payload);
+    document.getElementById("tariffMessage").textContent = "Ev tarifləri saxlanıldı. Yeni rezervasiyalarda dərhal istifadə olunacaq.";
+    await loadTariffs();
+  } catch(error) {
+    document.getElementById("tariffMessage").textContent = "Tarif dəyişdirilmədi: "+error.message;
+  }
+};
+
+window.createSeasonalRate = async function() {
+  const payload = {
+    action:"seasonal",
+    unitId:document.getElementById("seasonalUnitSelect").value,
+    label:document.getElementById("seasonalLabel").value.trim(),
+    startDate:document.getElementById("seasonalStart").value,
+    endDate:document.getElementById("seasonalEnd").value,
+    weekdayRate:Number(document.getElementById("seasonalWeekday").value),
+    weekendRate:Number(document.getElementById("seasonalWeekend").value)
+  };
+  try {
+    await tariffRequest("POST",payload);
+    ["seasonalLabel","seasonalStart","seasonalEnd","seasonalWeekday","seasonalWeekend"].forEach(id=>document.getElementById(id).value="");
+    document.getElementById("tariffMessage").textContent="Mövsümi tarif əlavə edildi.";
+    await loadTariffs();
+  } catch(error) {
+    document.getElementById("tariffMessage").textContent="Mövsüm əlavə edilmədi: "+error.message;
+  }
+};
+
+window.deactivateSeasonalRate = async function(id) {
+  if (!confirm("Bu mövsüm tarifini deaktiv etmək istəyirsiniz? Tarixçə saxlanılacaq.")) return;
+  try {
+    await tariffRequest("DELETE",{action:"seasonal",id});
+    await loadTariffs();
+  } catch(error) {
+    document.getElementById("tariffMessage").textContent="Mövsüm deaktiv edilmədi: "+error.message;
+  }
+};
+
+window.createSpecialDate = async function() {
+  const payload = {
+    action:"specialDate",
+    date:document.getElementById("specialDate").value,
+    label:document.getElementById("specialDateLabel").value.trim()
+  };
+  try {
+    await tariffRequest("POST",payload);
+    document.getElementById("specialDate").value="";
+    document.getElementById("specialDateLabel").value="";
+    await loadTariffs();
+    document.getElementById("tariffMessage").textContent="Bayram tarixi yadda saxlanıldı. Həmin tarixlər üçün bayram tarifi hesablanacaq.";
+  } catch(error) {
+    document.getElementById("tariffMessage").textContent="Bayram tarixi yadda saxlanılmadı: "+error.message;
+  }
+};
+
+window.deactivateSpecialDate = async function(date) {
+  if (!confirm(date+" tarixini xüsusi bayram tarifindən çıxarmaq istəyirsiniz?")) return;
+  try {
+    await tariffRequest("DELETE",{action:"specialDate",date});
+    await loadTariffs();
+  } catch(error) {
+    document.getElementById("tariffMessage").textContent="Tarix deaktiv edilmədi: "+error.message;
+  }
+};
+
 document.getElementById("stayReportMonth")?.addEventListener("change", renderStayMonthReport);
 // Rezervasiyalar yalnız vahid administrator sessiyası açıldıqdan sonra yüklənir.
 </script>
