@@ -288,6 +288,7 @@ tbody tr:hover{background:#f8f8f2}
 <button class="nav active" data-page="dashboard">▦ Dashboard</button>
 <button class="nav" data-page="reservations">▣ Rezervasiyalar</button>
 <button class="nav" data-page="calendar">▦ Təqvim və dolu günlər</button>
+<button class="nav" data-page="tariffs">₼ Tariflər</button>
 <button class="nav" data-page="finance">₼ Maliyyə</button>
 <button class="nav" data-page="employees">♙ İşçilər</button>
 <button class="nav" data-page="cleaning">✧ Təmizlik işləri</button>
@@ -482,6 +483,51 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
 <div class="table-wrap"><table><thead><tr><th><input type="checkbox" id="selectAllBlockedDates" aria-label="Hamısını seç" onchange="toggleAllBlockedDateChecks(this.checked)"></th><th>Ev</th><th>Başlanğıc</th><th>Son tarix</th><th>Səbəb</th><th>Qeyd</th><th>Əməliyyat</th></tr></thead><tbody id="blockedDatesTable"><tr><td colspan="7">Məlumat yüklənməyib.</td></tr></tbody></table></div></div>
 </section>
 
+<section class="section" id="tariffs">
+  <div class="cards">
+    <div class="card"><div class="card-label">Tarif mənbəyi</div><div class="card-value">Rezervasiya bazası</div><div class="card-note">Saytın qiyməti birbaşa buradan hesablanır</div></div>
+    <div class="card"><div class="card-label">Aktiv evlər</div><div class="card-value">6 ev</div><div class="card-note">Orange, White, Blue, Green və 2 A-FRAME</div></div>
+    <div class="card"><div class="card-label">Tarif növləri</div><div class="card-value">Adi · Həftəsonu · Bayram</div><div class="card-note">Mövsümi qiymətlər ayrıca</div></div>
+    <div class="card"><div class="card-label">Sinxronizasiya</div><div class="card-value">Canlı</div><div class="card-note">Dəyişiklikdən sonra yeni rezervasiyalara tətbiq olunur</div></div>
+  </div>
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div><h3>Altı evin əsas tarifləri</h3><div class="sub">Burada dəyişdirdiyiniz qiymətlər müştəri saytının rezervasiya hesablamasında istifadə olunur.</div></div>
+      <button class="btn" type="button" onclick="loadTariffs()">Tarifləri yenilə</button>
+    </div>
+    <p id="tariffMessage" class="notice" aria-live="polite">Tariflər yüklənir...</p>
+    <div id="unitTariffCards" class="grid"></div>
+  </div>
+  <div class="panel">
+    <h3>Mövsümi tarif əlavə et</h3>
+    <div class="grid">
+      <label>Ev<select id="seasonalUnitSelect"></select></label>
+      <label>Mövsümün adı<input id="seasonalLabel" maxlength="100" placeholder="Yay mövsümü"></label>
+      <label>Başlanğıc tarixi<input id="seasonalStart" type="date"></label>
+      <label>Son tarix (daxil deyil)<input id="seasonalEnd" type="date"></label>
+      <label>Həftəiçi (AZN)<input id="seasonalWeekday" type="number" min="0.01" step="0.01"></label>
+      <label>Həftəsonu (AZN)<input id="seasonalWeekend" type="number" min="0.01" step="0.01"></label>
+    </div>
+    <button class="btn" type="button" onclick="createSeasonalRate()">Mövsümü yadda saxla</button>
+    <div style="overflow-x:auto;margin-top:14px">
+      <table style="width:100%"><thead><tr><th>Ev</th><th>Mövsüm</th><th>Başlanğıc</th><th>Son</th><th>Həftəiçi</th><th>Həftəsonu</th><th>Status</th><th></th></tr></thead>
+      <tbody id="seasonalRatesTable"><tr><td colspan="8">Məlumat yüklənir...</td></tr></tbody></table>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>Bayram və xüsusi tarixlər</h3>
+    <div class="grid">
+      <label>Tarix<input id="specialDate" type="date"></label>
+      <label>Bayramın adı<input id="specialDateLabel" maxlength="100" placeholder="Novruz Bayramı"></label>
+    </div>
+    <button class="btn" type="button" onclick="createSpecialDate()">Bayram tarixini yadda saxla</button>
+    <div style="overflow-x:auto;margin-top:14px">
+      <table style="width:100%"><thead><tr><th>Tarix</th><th>Ad</th><th>Status</th><th></th></tr></thead>
+      <tbody id="specialDatesTable"><tr><td colspan="4">Məlumat yüklənir...</td></tr></tbody></table>
+    </div>
+  </div>
+</section>
+
 <section class="section" id="finance">
 <div class="panel" style="padding:12px">
 <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 8px 14px">
@@ -558,11 +604,11 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
 </div>
 <div class="panel" style="padding:12px">
  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 8px 14px">
-  <div><h3 style="margin:0 0 6px">Ev və rezervasiya parametrləri</h3><div class="sub">Qiymət, tutum, beh faizi, minimum gecə və aktivlik vəziyyətini idarə et</div></div>
+  <div><h3 style="margin:0 0 6px">Əlavə maliyyə ev parametrləri</h3><div class="sub">Bu köhnə maliyyə modulunun houses cədvəlidir; müştəri saytının canlı tarifləri Tariflər bölməsində idarə olunur.</div></div>
   <button class="btn" type="button" onclick="document.getElementById('settingsFrame').contentWindow.location.reload()">Yenilə</button>
  </div>
  <iframe id="settingsFrame" title="Quba Tiny House sistem parametrləri" src="/finance.html?view=settings" loading="eager" style="display:block;width:100%;height:1300px;border:1px solid var(--border);border-radius:12px;background:#f3f5f8"></iframe>
- <p class="notice" style="margin:12px 0 0">Dəyişikliklər mövcud houses cədvəlində saxlanılır. Mövcud rezervasiyalar və maliyyə əməliyyatları dəyişdirilmir.</p>
+ <p class="notice" style="margin:12px 0 0">Bu modulun houses cədvəli ictimai rezervasiya tariflərinə təsir etmir. Sayt tarifləri ayrıca Rezervasiya bazasının units və seasonal_rates cədvəllərində saxlanılır.</p>
 </div>
 </section>
 
@@ -579,7 +625,8 @@ employees:"İşçilər",
 cleaning:"Təmizlik işləri",
 utilities:"Kommunal borclar",
 reports:"Hesabatlar",
-settings:"Parametrlər"
+settings:"Parametrlər",
+tariffs:"Tariflər"
 };
 
 function openPage(page){
@@ -591,9 +638,8 @@ if(section)section.classList.add("active");
 const button=document.querySelector('[data-page="'+page+'"]');
 if(button)button.classList.add("active");
 document.getElementById("pageTitle").textContent=titles[page]||"Dashboard";
-if(page==="reservations" && typeof window.loadReservations==="function"){
-  window.loadReservations();
-}
+if(page==="reservations" && typeof window.loadReservations==="function"){ window.loadReservations(); }
+if(page==="tariffs" && typeof window.loadTariffs==="function"){ window.loadTariffs(); }
 }
 
 document.querySelectorAll(".nav").forEach(button=>{
