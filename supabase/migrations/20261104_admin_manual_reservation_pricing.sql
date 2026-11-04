@@ -6,7 +6,7 @@ language plpgsql security definer set search_path=public,pg_temp
 as $function$
 declare u public.units%rowtype; new_id uuid; new_code text; new_expiry timestamptz;
 begin
- if p_total_amount is null or p_total_amount<50 or p_paid_amount is null or p_paid_amount<0 or p_paid_amount>p_total_amount then raise exception 'INVALID_ADMIN_BOOKING_AMOUNT'; end if;
+ if p_total_amount is null or p_total_amount<=0 or p_paid_amount is null or p_paid_amount<0 or p_paid_amount>p_total_amount then raise exception 'INVALID_ADMIN_BOOKING_AMOUNT'; end if;
  if p_check_in is null or p_check_out is null or p_check_out<=p_check_in or p_check_out-p_check_in>30 then raise exception 'INVALID_DATES'; end if;
  perform pg_advisory_xact_lock(hashtext(p_unit_id));
  select * into u from public.units as units where units.id=p_unit_id and units.active=true for update;
