@@ -198,24 +198,29 @@ async function loadWorkAndDebt(){
  if(wr.error)throw wr.error;if(pr.error)throw pr.error;if(obr.error)throw obr.error;
  const allWorks=wr.data||[],allPayments=pr.data||[],openings=obr.data||[];
  const works=allWorks.filter(w=>w.task_date>=start&&w.task_date<=end);
+ const completedToDate=allWorks.filter(w=>w.status==="completed");
  const cleaningPayments=allPayments.filter(p=>(p.notes||"").startsWith("Təmizlik haqqı"));
+ const salaryPayments=allPayments.filter(p=>(p.notes||"").startsWith("Maaş"));
  const rows=employees.filter(e=>e.active).map(e=>{
-  const monthTasks=works.filter(w=>w.employee_id===e.id&&w.status==="completed");
-  const monthCleaning=monthTasks.reduce((a,w)=>a+Number(w.amount||0),0);
-  const openingBalance=openings.filter(o=>o.employee_id===e.id).reduce((a,o)=>a+Number(o.amount||0),0);
-  const earnedToDate=allWorks.filter(w=>w.employee_id===e.id&&w.status==="completed").reduce((a,w)=>a+Number(w.amount||0),0);
-  const paidToDate=cleaningPayments.filter(p=>p.employee_id===e.id).reduce((a,p)=>a+Number(p.amount||0),0);
-  const monthPaid=cleaningPayments.filter(p=>p.employee_id===e.id&&p.payment_date>=start&&p.payment_date<=end).reduce((a,p)=>a+Number(p.amount||0),0);
+  const monthCleaning=works.filter(w=>w.employee_id===e.id&&w.status==="completed").reduce((a,w)=>a+Number(w.amount||0),0);
+  const previousCleaning=completedToDate.filter(w=>w.employee_id===e.id).reduce((a,w)=>a+Number(w.amount||0),0);
+  const opening=openings.filter(o=>o.employee_id===e.id).reduce((a,o)=>a+Number(o.amount||0),0);
+  const cleaningPaidToDate=cleaningPayments.filter(p=>p.employee_id===e.id).reduce((a,p)=>a+Number(p.amount||0),0);
+  const cleaningPaidMonth=cleaningPayments.filter(p=>p.employee_id===e.id&&p.payment_date>=start&&p.payment_date<=end).reduce((a,p)=>a+Number(p.amount||0),0);
+  const salaryPaidMonth=salaryPayments.filter(p=>p.employee_id===e.id&&p.payment_date>=start&&p.payment_date<=end).reduce((a,p)=>a+Number(p.amount||0),0);
   const base=e.salary_type==="monthly"?Number(e.base_salary||0):0;
-  return {e,base,cleaning:monthCleaning,paid:monthPaid,earned:base+monthCleaning,debt:Math.max(0,openingBalance+earnedToDate-paidToDate),opening:openingBalance};
+  const monthlyEarned=base+monthCleaning;
+  const cleaningDebt=Math.max(0,opening+previousCleaning-cleaningPaidToDate);
+  const salaryDebt=Math.max(0,base-salaryPaidMonth);
+  return {e,base,cleaning:monthCleaning,cleaningPaid:cleaningPaidMonth,salaryPaid:salaryPaidMonth,monthlyEarned,cleaningDebt,salaryDebt,opening};
  });
  const sum=k=>rows.reduce((a,r)=>a+r[k],0);
- $("earnedTotal").textContent=money(sum("earned"));
- $("paidTotal").textContent=money(sum("paid"));
- $("debtTotal").textContent=money(sum("debt"));
+ $("earnedTotal").textContent=money(sum("monthlyEarned"));
+ $("paidTotal").textContent=money(sum("cleaningPaid")+sum("salaryPaid"));
+ $("debtTotal").textContent=money(sum("cleaningDebt")+sum("salaryDebt"));
  $("completedWorkCount").textContent=String(works.filter(w=>w.status==="completed").length);
- $("payrollDebtTable").innerHTML='<div class="table-wrap"><table><thead><tr><th>İşçi</th><th>Keçmişdən qalan borc</th><th>Bu ay görülən təmizlik</th><th>Bu ay təmizlik ödənişi</th><th>Ümumi qalıq təmizlik borcu</th></tr></thead><tbody>'+
- (rows.map(r=>'<tr><td>'+esc(r.e.full_name)+'</td><td>'+money(r.opening)+'</td><td>'+money(r.cleaning)+'</td><td>'+money(r.paid)+'</td><td><b>'+money(r.debt)+'</b></td></tr>').join("")||'<tr><td colspan="5">Aktiv işçi yoxdur.</td></tr>')+'</tbody></table></div>';
+ $("payrollDebtTable").innerHTML='<div class="table-wrap"><table><thead><tr><th>İşçi</th><th>Aylıq maaş</th><th>Bu ay təmizlik</th><th>Bu ay hesablanıb</th><th>Bu ay ödənilib</th><th>Əvvəlki təmizlik borcu</th><th>Qalıq ümumi borc</th></tr></thead><tbody>'+
+ (rows.map(r=>'<tr><td>'+esc(r.e.full_name)+'</td><td>'+money(r.base)+'</td><td>'+money(r.cleaning)+'</td><td>'+money(r.monthlyEarned)+'</td><td>'+money(r.cleaningPaid+r.salaryPaid)+'</td><td>'+money(r.opening)+'</td><td><b>'+money(r.cleaningDebt+r.salaryDebt)+'</b></td></tr>').join("")||'<tr><td colspan="7">Aktiv işçi yoxdur.</td></tr>')+'</tbody></table></div>';
  $("workEmployee").innerHTML='<option value="">İşçi seçin</option>'+employees.filter(e=>e.active).map(e=>'<option value="'+esc(e.id)+'">'+esc(e.full_name)+'</option>').join("");
  $("workHistory").innerHTML=works.length?'<div class="table-wrap"><table><thead><tr><th>Tarix</th><th>Ev</th><th>İşçi</th><th>Məbləğ</th><th>Status</th></tr></thead><tbody>'+
  works.map(w=>'<tr><td>'+esc(w.task_date)+'</td><td>'+esc(w.house_name||w.house_type)+'</td><td>'+esc((employees.find(e=>e.id===w.employee_id)||{}).full_name||"—")+'</td><td>'+money(w.amount)+'</td><td>'+(w.status==="completed"?"Tamamlandı":"Gözləyir")+'</td></tr>').join("")+'</tbody></table></div>':'<p>Bu ay üçün iş qeydi yoxdur.</p>';
