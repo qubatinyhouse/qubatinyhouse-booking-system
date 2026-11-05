@@ -28,20 +28,30 @@ export const handler = async (event) => {
     const daysInMonth = Math.round((Date.parse(rangeEnd + 'T00:00:00Z') - Date.parse(rangeStart + 'T00:00:00Z')) / 86400000);
 
     const client = db();
-    const [unitsResult, reservationsResult] = await Promise.all([
+    const [unitsResult, reservationsResult, paymentsResult] = await Promise.all([
       client.from('units').select('id,name,capacity,active,sort_order').eq('active', true).order('sort_order', { ascending: true }),
       client.from('reservations')
-        .select('id,booking_code,unit_id,check_in,check_out,guest_name,guest_count,total_amount,paid_amount,status')
+        .select('id,booking_code,unit_id,check_in,check_out,guest_name,guest_count,total_amount,status')
         .lt('check_in', rangeEnd)
         .gt('check_out', rangeStart)
         .order('check_in', { ascending: true })
+        .limit(5000),
+      // Cash income belongs to the month the payment was actually received,
+      // not necessarily the month the guest checks in.
+      client.from('reservation_payments')
+        .select('amount,payment_date,reservations!inner(unit_id)')
+        .gte('payment_date', rangeStart)
+        .lt('payment_date', rangeEnd)
+        .order('payment_date', { ascending: true })
         .limit(5000)
     ]);
     if (unitsResult.error) throw unitsResult.error;
     if (reservationsResult.error) throw reservationsResult.error;
+    if (paymentsResult.error) throw paymentsResult.error;
 
     const units = unitsResult.data || [];
     const reservations = reservationsResult.data || [];
+    const payments = paymentsResult.data || [];
     const stats = new Map(units.map((unit) => [unit.id, {
       unitId: unit.id,
       name: unit.name,
@@ -54,7 +64,16 @@ export const handler = async (event) => {
       occupancyRate: 0
     }]));
 
-    const monthlyReservations = [];
+    // Attribute only real recorded payments to this month and to the house
+    // attached to the reservation. This prevents counting the full booking value
+    // as income and prevents a deposit received last month being counted twice.
+    for (const payment of payments) {
+      const unitId = payment.reservations?.unit_id;
+      const stat = stats.get(unitId);
+      if (!stat) continue;
+      stat.paidRevenue += Math.max(0, Number(payment.amount || 0));
+    }
+
     for (const booking of reservations) {
       const status = String(booking.status || '').toLowerCase();
       if (!INCLUDED_STATUSES.has(status) || EXCLUDED_STATUSES.has(status)) continue;
@@ -70,7 +89,6 @@ export const handler = async (event) => {
       if (startsInMonth) {
         stat.reservationCount += 1;
         stat.guestCount += Math.max(0, Number(booking.guest_count || 0));
-        stat.paidRevenue += Math.max(0, Number(booking.paid_amount || 0));
         stat.bookingValue += Math.max(0, Number(booking.total_amount || 0));
         monthlyReservations.push(booking);
       }
@@ -85,7 +103,7 @@ export const handler = async (event) => {
 
     const byRevenue = [...result].sort((a, b) => b.paidRevenue - a.paidRevenue || b.reservationCount - a.reservationCount);
     const byGuests = [...result].sort((a, b) => b.guestCount - a.guestCount || b.reservationCount - a.reservationCount);
-    const byWeakness = [...result].filter((item) => item.reservationCount > 0 || item.paidRevenue > 0).sort((a, b) =>
+    const byWeakness = [...result].filter((item) => item.reservationCount > 0 || item.paidRevenue > 0 || item.occupiedNights > 0).sort((a, b) =>
       a.paidRevenue - b.paidRevenue ||
       a.reservationCount - b.reservationCount ||
       a.guestCount - b.guestCount
@@ -111,9 +129,9 @@ export const handler = async (event) => {
       mostReservations: byReservations[0] || null,
       weakest: byWeakness[0] || null,
       // Rank revenue-producing / reservation-accepting houses from highest paid revenue to lowest.
-      units: [...result].filter((item) => item.reservationCount > 0 || item.paidRevenue > 0)
+      units: [...result].filter((item) => item.reservationCount > 0 || item.paidRevenue > 0 || item.occupiedNights > 0)
         .sort((a, b) => b.paidRevenue - a.paidRevenue || b.reservationCount - a.reservationCount || b.guestCount - a.guestCount),
-      method: 'paid_amount per reservation check-in month; guests = guest_count; occupancy = overlapping active stay nights / calendar days',
+      method: 'reservation_payments.amount grouped by payment_date month and house; guest_count grouped by check-in month; occupancy = overlapping active stay nights / calendar days',
       truncated: reservations.length >= 5000
     });
   } catch (error) {
