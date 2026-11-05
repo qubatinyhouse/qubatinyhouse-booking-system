@@ -562,7 +562,7 @@ tbody tr:hover{background:#f8f8f2}
 <div class="panel qth-house-performance-panel">
  <div class="qth-house-performance-heading">
   <div><h3>Ev performansı — canlı dashboard</h3><p class="sub">Cari ay üzrə ən aktiv, ən çox gəlir gətirən və ən çox qonaq qəbul edən evlər.</p></div>
-  <div class="qth-house-performance-controls"><label>Hesabat ayı<input type="month" id="housePerformanceMonth"></label><button type="button" onclick="loadHousePerformance()">↻ Yenilə</button></div>
+  <div class="qth-house-performance-controls"><label>Hesabat ayı<select id="housePerformanceMonth"></select></label><button type="button" onclick="loadHousePerformance()">↻ Yenilə</button></div>
  </div>
  <div class="qth-house-winners">
   <article class="qth-house-winner qth-house-winner--gold">
@@ -658,7 +658,7 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
     <div class="panel" id="stayMonthReport" style="margin-top:18px">
       <h3>Qalma ayına görə rezervasiya hesabatı</h3>
       <p class="muted">Bu hesabat müştərinin qalacağı aya görə hesablanır. Beh əvvəlki ayda alınıbsa, burada rezervasiya kimi görünəcək, lakin pul axını hesabatında ikinci dəfə gəlir sayılmayacaq.</p>
-      <label>Qalma ayı<input type="month" id="stayReportMonth"></label>
+      <label>Qalma ayı<select id="stayReportMonth"></select></label>
       <div class="grid">
         <div class="panel"><div class="muted">Aktiv rezervasiyalar</div><div class="card-value" id="stayBookingCount">0</div></div>
         <div class="panel"><div class="muted">Rezervasiyaların ümumi dəyəri</div><div class="card-value" id="stayBookingTotal">0 AZN</div></div>
@@ -722,7 +722,7 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
   <div class="qth-calendar-month-control">
    <button type="button" class="qth-calendar-step" onclick="shiftReservationCalendar(-1)" aria-label="Əvvəlki ay">‹</button>
    <label for="reservationCalendarMonth">Ay</label>
-   <input type="month" id="reservationCalendarMonth" onchange="renderReservationCalendar()">
+   <select id="reservationCalendarMonth" onchange="renderReservationCalendar()"></select>
    <button type="button" class="qth-calendar-step" onclick="shiftReservationCalendar(1)" aria-label="Növbəti ay">›</button>
    <button type="button" onclick="setReservationCalendarToday()">Bu ay</button>
   </div>
@@ -1159,6 +1159,21 @@ const QTH_CALENDAR_ACTIVE_STATUSES = new Set(["confirmed","pending_payment","pay
 function qthCalendarCurrentMonth(){
  return new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Baku"}).slice(0,7);
 }
+function qthInitAdminMonthSelectors(){
+ const names=["Yanvar","Fevral","Mart","Aprel","May","İyun","İyul","Avqust","Sentyabr","Oktyabr","Noyabr","Dekabr"];
+ const now=new Date();const current=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
+ ["reservationCalendarMonth","stayReportMonth","housePerformanceMonth"].forEach(id=>{
+  const el=document.getElementById(id);if(!el||el.dataset.azMonthsReady==="1")return;
+  const old=el.value||current,options=[];
+  for(let offset=-18;offset<=18;offset++){
+   const d=new Date(now.getFullYear(),now.getMonth()+offset,1);
+   const value=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+   options.push('<option value="'+value+'">'+names[d.getMonth()]+" "+d.getFullYear()+'</option>');
+  }
+  el.innerHTML=options.join("");el.value=old;el.dataset.azMonthsReady="1";
+  if(!el.value)el.value=current;
+ });
+}
 window.setReservationCalendarToday=function(){
  const input=document.getElementById("reservationCalendarMonth");
  if(input){input.value=qthCalendarCurrentMonth();renderReservationCalendar();}
@@ -1271,6 +1286,7 @@ window.loadReservations = async function () {
     allReservations = result.reservations || [];
     if (typeof window.filterReservations === "function") window.filterReservations();
     else renderReservations(allReservations);
+    qthInitAdminMonthSelectors();
     renderStayMonthReport();
     renderReservationCalendar();
     if(typeof window.loadHousePerformance==="function")window.loadHousePerformance();
