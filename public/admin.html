@@ -365,6 +365,60 @@ tbody tr:hover{background:#f8f8f2}
 @media(max-width:390px){.main{padding-left:9px!important;padding-right:9px!important}.mobile-brand-tag{font-size:7px;padding:5px 6px}.card{padding:11px 9px!important}.card-value{font-size:19px!important}}
 @media(min-width:701px){.mobile-brand,.mobile-bottom-nav,.mobile-more-menu{display:none!important}}
 
+
+/* Desktop reservation calendar and active reservation shortcut */
+.qth-calendar-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:16px}
+.qth-calendar-heading h3{margin-bottom:6px}
+.qth-calendar-heading .sub{max-width:720px;line-height:1.5}
+.qth-calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0 15px}
+.qth-calendar-month-control{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.qth-calendar-month-control label{font-size:12px;color:#68736b}
+.qth-calendar-month-control input{width:155px;padding:9px 10px;border:1px solid #ded8ca;border-radius:9px;background:#fffefa;color:#24362d}
+.qth-calendar-step{width:38px;height:36px;border:1px solid #d8caa8!important;border-radius:9px!important;background:#f7f3e9!important;color:#745f36!important;font-size:20px!important;font-weight:700}
+.qth-calendar-summary{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;margin:12px 0}
+.qth-calendar-summary>div{min-width:155px;padding:10px 13px;border:1px solid #e7e0d1;border-radius:11px;background:#faf9f5}
+.qth-calendar-summary strong{display:block;color:#274f39;font-size:20px;line-height:1.1}
+.qth-calendar-summary span{display:block;margin-top:5px;color:#788078;font-size:10px}
+.qth-calendar-summary p{flex:1;align-self:center;margin:0 0 0 5px;color:#7b847d;font-size:11px}
+.qth-calendar-legend{display:flex;align-items:center;gap:15px;flex-wrap:wrap;margin:13px 0;color:#6f786f;font-size:11px}
+.qth-calendar-legend>span{display:inline-flex;align-items:center;gap:6px}
+.qth-legend-dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.qth-legend-confirmed{background:#208456}.qth-legend-pending{background:#d19a35}.qth-legend-review{background:#3984a9}
+.qth-calendar-hint{margin-left:auto;color:#93978d}
+.qth-calendar-scroll{max-width:100%;overflow:auto;border:1px solid #e3dfd5;border-radius:12px;max-height:680px;background:#fffefa}
+.qth-reservation-calendar{width:max-content!important;min-width:100%!important;border-collapse:separate!important;border-spacing:0!important;table-layout:fixed}
+.qth-reservation-calendar th,.qth-reservation-calendar td{padding:4px!important;border-right:1px solid #eeece5!important;border-bottom:1px solid #eae7df!important;text-align:center!important;vertical-align:middle!important;min-width:39px!important;height:42px}
+.qth-reservation-calendar thead th{position:sticky;top:0;z-index:4;background:#f5f2e9!important;color:#6c746b!important}
+.qth-reservation-calendar .qth-calendar-unit-head,.qth-reservation-calendar .qth-calendar-unit-name{position:sticky;left:0;z-index:5;width:158px;min-width:158px!important;text-align:left!important;background:#f8f6f0!important;padding:8px 12px!important;color:#263e30!important;font-weight:750}
+.qth-reservation-calendar .qth-calendar-unit-name{z-index:2}
+.qth-calendar-unit-name small{display:block;color:#8a9188;font-size:10px;font-weight:500;margin-top:4px}
+.qth-calendar-date-head strong{display:block;font-size:12px;color:#3d4a40}
+.qth-calendar-date-head small{display:block;font-size:9px;color:#92978e;font-weight:500}
+.qth-calendar-empty{background:#fffefa!important}
+.qth-calendar-occupied{padding:2px!important;background:#f2f5f0!important}
+.qth-calendar-has-confirmed{background:#e5f2e9!important}
+.qth-calendar-has-pending{background:#fff4de!important}
+.qth-calendar-has-review{background:#e8f2f7!important}
+.qth-calendar-booking{display:block;width:100%;min-width:0;min-height:29px;margin:1px 0;padding:4px 2px;border:0!important;border-radius:5px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px!important;font-weight:750!important;cursor:pointer}
+.qth-calendar-booking--confirmed{background:#208456!important;color:#fff!important}
+.qth-calendar-booking--pending{background:#d19a35!important;color:#2d2414!important}
+.qth-calendar-booking--review{background:#3984a9!important;color:#fff!important}
+.qth-calendar-booking:hover{filter:brightness(1.08);box-shadow:0 2px 6px #243a2a22}
+.qth-active-reservation-filter{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 15px!important;border:1px solid #197348!important;border-radius:9px!important;background:linear-gradient(135deg,#1b8956,#12663f)!important;color:#fff!important;font-size:12px!important;font-weight:800!important;box-shadow:0 4px 12px #176c4426}
+.qth-active-reservation-filter:hover{background:#0d5b37!important}
+.qth-reservation-quick-actions{display:flex;gap:9px;flex-wrap:wrap;margin:0 0 16px}
+.qth-reservation-quick-actions>button:first-child{border:1px solid #d7d2c5!important;border-radius:9px!important;background:#f8f7f2!important;color:#4e5b51!important;padding:9px 13px}
+@media(max-width:700px){
+ .qth-calendar-heading{display:block}
+ .qth-calendar-heading .qth-active-reservation-filter{margin-top:8px}
+ .qth-calendar-summary>div{min-width:calc(50% - 8px);flex:1}
+ .qth-calendar-summary p{flex-basis:100%;margin:4px 0}
+ .qth-calendar-hint{margin-left:0}
+ .qth-calendar-scroll{max-height:520px}
+ .qth-reservation-calendar .qth-calendar-unit-head,.qth-reservation-calendar .qth-calendar-unit-name{width:125px;min-width:125px!important}
+ .qth-reservation-calendar th,.qth-reservation-calendar td{min-width:35px!important}
+}
+
 </style>
 </head>
 <body>
@@ -470,6 +524,10 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
 <section class="section" id="reservations">
   <div class="panel">
     <h3>Rezervasiyaların idarə edilməsi</h3>
+<div class="qth-reservation-quick-actions">
+ <button type="button" onclick="showAllReservations()">Bütün rezervasiyalar</button>
+ <button type="button" class="qth-active-reservation-filter" onclick="showActiveReservations()">✓ Aktiv rezervasiyalar</button>
+</div>
 <div class="panel" id="adminCreateReservationPanel"><h3>＋ Yeni rezervasiya yarat</h3>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
 <label>Müştərinin adı<input id="adminGuestName" type="text" maxlength="120" placeholder="Ad Soyad" required></label>
@@ -569,6 +627,40 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
 </section>
 
 <section class="section" id="calendar">
+<div class="panel qth-reservation-calendar-panel">
+ <div class="qth-calendar-heading">
+  <div><h3>Rezervasiya təqvimi</h3><p class="sub">Altı ev üzrə müştəri bronlarını gün-gün izləyin. Rəngli xana üzərinə klikləyərək rezervasiya məlumatını açın.</p></div>
+  <button class="qth-active-reservation-filter" type="button" onclick="showActiveReservations()">✓ Aktiv rezervasiyalar</button>
+ </div>
+ <div class="qth-calendar-toolbar">
+  <div class="qth-calendar-month-control">
+   <button type="button" class="qth-calendar-step" onclick="shiftReservationCalendar(-1)" aria-label="Əvvəlki ay">‹</button>
+   <label for="reservationCalendarMonth">Ay</label>
+   <input type="month" id="reservationCalendarMonth" onchange="renderReservationCalendar()">
+   <button type="button" class="qth-calendar-step" onclick="shiftReservationCalendar(1)" aria-label="Növbəti ay">›</button>
+   <button type="button" onclick="setReservationCalendarToday()">Bu ay</button>
+  </div>
+  <button type="button" onclick="loadReservations()">Məlumatı yenilə</button>
+ </div>
+ <div class="qth-calendar-summary">
+  <div><strong id="calendarConfirmedCount">0</strong><span>Təsdiqlənmiş aktiv bron</span></div>
+  <div><strong id="calendarPendingCount">0</strong><span>Avans gözləyən</span></div>
+  <div><strong id="calendarTotalCount">0</strong><span>Seçilmiş ayda bron</span></div>
+  <p id="reservationCalendarMessage" aria-live="polite">Rezervasiyalar yüklənir...</p>
+ </div>
+ <div class="qth-calendar-legend">
+  <span><i class="qth-legend-dot qth-legend-confirmed"></i>Təsdiqlənib / Aktiv</span>
+  <span><i class="qth-legend-dot qth-legend-pending"></i>Avans gözlənilir</span>
+  <span><i class="qth-legend-dot qth-legend-review"></i>Yoxlama tələb olunur</span>
+  <span class="qth-calendar-hint">Çıxış tarixi gecələmə günlərinə daxil edilmir.</span>
+ </div>
+ <div class="qth-calendar-scroll">
+  <table class="qth-reservation-calendar">
+   <thead id="reservationCalendarHead"><tr><th>Ev</th></tr></thead>
+   <tbody id="reservationCalendarTable"><tr><td>Rezervasiyalar yüklənir...</td></tr></tbody>
+  </table>
+ </div>
+</div>
 <div class="panel">
 <h3>Ev tarixlərini əl ilə bağla</h3>
 <div class="grid">
@@ -772,6 +864,10 @@ function openPage(page){
  toggleMobileMore(false);
  document.getElementById("pageTitle").textContent=titles[page]||"Dashboard";
  if(page==="reservations" && typeof window.loadReservations==="function"){window.loadReservations();}
+ if(page==="calendar"){
+  if(typeof window.loadReservations==="function")window.loadReservations();
+  if(typeof window.loadDateBlocks==="function")window.loadDateBlocks();
+ }
  if(page==="tariffs" && typeof window.loadTariffs==="function"){window.loadTariffs();}
  if(window.matchMedia && window.matchMedia("(max-width:700px)").matches)window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -961,6 +1057,103 @@ function renderStayMonthReport() {
   }).join("");
 }
 
+
+const QTH_CALENDAR_UNITS = [
+ {id:"scandi-large-1",name:"Orange House"},
+ {id:"scandi-large-2",name:"White House"},
+ {id:"scandi-small-1",name:"Blue House"},
+ {id:"scandi-small-2",name:"Green House"},
+ {id:"aframe-1",name:"A-FRAME-1"},
+ {id:"aframe-2",name:"A-FRAME-2"}
+];
+const QTH_CALENDAR_ACTIVE_STATUSES = new Set(["confirmed","pending_payment","payment_review"]);
+function qthCalendarCurrentMonth(){
+ return new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Baku"}).slice(0,7);
+}
+window.setReservationCalendarToday=function(){
+ const input=document.getElementById("reservationCalendarMonth");
+ if(input){input.value=qthCalendarCurrentMonth();renderReservationCalendar();}
+};
+window.shiftReservationCalendar=function(delta){
+ const input=document.getElementById("reservationCalendarMonth");
+ if(!input)return;
+ const value=input.value||qthCalendarCurrentMonth();
+ const parts=value.split("-").map(Number);
+ const moved=new Date(Date.UTC(parts[0],parts[1]-1+Number(delta),1));
+ input.value=moved.getUTCFullYear()+"-"+String(moved.getUTCMonth()+1).padStart(2,"0");
+ renderReservationCalendar();
+};
+window.renderReservationCalendar=function(){
+ const head=document.getElementById("reservationCalendarHead");
+ const body=document.getElementById("reservationCalendarTable");
+ const input=document.getElementById("reservationCalendarMonth");
+ if(!head||!body||!input)return;
+ if(!input.value)input.value=qthCalendarCurrentMonth();
+ const parts=input.value.split("-").map(Number);
+ const year=parts[0], month=parts[1];
+ if(!year||!month||month<1||month>12){body.innerHTML='<tr><td>Ay seçimi düzgün deyil.</td></tr>';return;}
+ const monthStart=input.value+"-01";
+ const monthEnd=new Date(Date.UTC(year,month,1)).toISOString().slice(0,10);
+ const dayCount=new Date(year,month,0).getDate();
+ const weekdayNames=["B.","B.e.","Ç.a.","Ç.","C.a.","C.","Ş."];
+ const days=[];
+ for(let day=1;day<=dayCount;day++){
+  const key=monthStart.slice(0,8)+String(day).padStart(2,"0");
+  days.push({key,day,weekday:weekdayNames[new Date(Date.UTC(year,month-1,day)).getUTCDay()]});
+ }
+ const monthItems=allReservations.filter(r=>{
+  const status=String(r.status||"").toLowerCase();
+  return QTH_CALENDAR_ACTIVE_STATUSES.has(status)&&String(r.check_in||"")<monthEnd&&String(r.check_out||"")>monthStart;
+ });
+ const confirmed=monthItems.filter(r=>r.status==="confirmed").length;
+ const pending=monthItems.filter(r=>r.status==="pending_payment").length;
+ const review=monthItems.filter(r=>r.status==="payment_review").length;
+ document.getElementById("calendarConfirmedCount").textContent=String(confirmed);
+ document.getElementById("calendarPendingCount").textContent=String(pending+review);
+ document.getElementById("calendarTotalCount").textContent=String(monthItems.length);
+ const msg=document.getElementById("reservationCalendarMessage");
+ msg.textContent=input.value+" ayı üzrə "+monthItems.length+" aktiv rezervasiya göstərilir. Təsdiqlənmiş: "+confirmed+" · Avans/yoxlama: "+(pending+review)+".";
+ const header='<tr><th class="qth-calendar-unit-head">Ev / tarix</th>'+days.map(d=>'<th class="qth-calendar-date-head" title="'+d.weekday+'"><strong>'+d.day+'</strong><small>'+d.weekday+'</small></th>').join("")+'</tr>';
+ head.innerHTML=header;
+ const rows=QTH_CALENDAR_UNITS.map(unit=>{
+  const unitItems=monthItems.filter(r=>r.unit_id===unit.id);
+  const cells=days.map(day=>{
+   const dayBookings=unitItems.filter(r=>String(r.check_in||"")<new Date(Date.UTC(year,month-1,day.day+1)).toISOString().slice(0,10)&&String(r.check_out||"")>day.key);
+   if(!dayBookings.length)return '<td class="qth-calendar-empty"></td>';
+   const buttons=dayBookings.map(r=>{
+    const status=String(r.status||"").toLowerCase();
+    const style=status==="confirmed"?"confirmed":status==="payment_review"?"review":"pending";
+    const firstVisibleDay=String(r.check_in||"")<monthStart?monthStart:String(r.check_in||"");
+    const isStart=day.key===firstVisibleDay;
+    const label=isStart?((String(r.check_in||"")<monthStart)?"↳ ":"")+(r.guest_name||"Bron"):"●";
+    const detail=(r.guest_name||"Müştəri")+" · "+(r.booking_code||r.id)+" · "+(r.check_in||"")+" – "+(r.check_out||"")+" · "+(r.status==="confirmed"?"Təsdiqlənib":r.status==="payment_review"?"Yoxlama tələb olunur":"Avans gözlənilir");
+    return '<button type="button" class="qth-calendar-booking qth-calendar-booking--'+style+'" data-reservation-id="'+escapeReservation(r.id)+'" title="'+escapeReservation(detail)+'" aria-label="'+escapeReservation(detail)+'">'+escapeReservation(label)+'</button>';
+   }).join("");
+   const classes=dayBookings.map(r=>r.status==="confirmed"?"qth-calendar-has-confirmed":r.status==="payment_review"?"qth-calendar-has-review":"qth-calendar-has-pending").join(" ");
+   return '<td class="qth-calendar-occupied '+classes+'">'+buttons+'</td>';
+  }).join("");
+  return '<tr><th class="qth-calendar-unit-name">'+escapeReservation(unit.name)+'<small>'+unitItems.length+' bron</small></th>'+cells+'</tr>';
+ }).join("");
+ body.innerHTML=rows||'<tr><td colspan="'+(dayCount+1)+'">Ev siyahısı mövcud deyil.</td></tr>';
+ body.querySelectorAll("[data-reservation-id]").forEach(button=>{
+  button.addEventListener("click",()=>window.showReservationDetails(button.dataset.reservationId));
+ });
+};
+window.showActiveReservations=function(){
+ const status=document.getElementById("reservationStatusFilter");
+ const search=document.getElementById("reservationSearch");
+ if(status)status.value="confirmed";
+ if(search)search.value="";
+ openPage("reservations");
+};
+window.showAllReservations=function(){
+ const status=document.getElementById("reservationStatusFilter");
+ const search=document.getElementById("reservationSearch");
+ if(status)status.value="";
+ if(search)search.value="";
+ openPage("reservations");
+};
+
 window.loadReservations = async function () {
   const message = document.getElementById("reservationMessage");
   const table = document.getElementById("reservationTable");
@@ -968,12 +1161,18 @@ window.loadReservations = async function () {
   try {
     const result = await adminRequest("GET");
     allReservations = result.reservations || [];
-    renderReservations(allReservations);
+    if (typeof window.filterReservations === "function") window.filterReservations();
+    else renderReservations(allReservations);
     renderStayMonthReport();
+    renderReservationCalendar();
     document.getElementById("bookingCount").textContent =
       Number.isFinite(Number(result.totalCount)) ? Number(result.totalCount).toLocaleString("az-AZ") : allReservations.length.toLocaleString("az-AZ");
     document.getElementById("bookingCountNote").textContent =
       "Baza ilə əlaqə aktivdir · son yenilənmə " + new Date().toLocaleTimeString("az-AZ", {hour:"2-digit",minute:"2-digit"});
+    const confirmedCount = allReservations.filter(r => r.status === "confirmed").length;
+    document.querySelectorAll(".qth-active-reservation-filter").forEach(button => {
+      button.setAttribute("aria-label", "Aktiv rezervasiyalar: " + confirmedCount);
+    });
     message.textContent = "Cəmi " + document.getElementById("bookingCount").textContent + " rezervasiya tapıldı.";
   } catch (error) {
     message.textContent = error.message;
