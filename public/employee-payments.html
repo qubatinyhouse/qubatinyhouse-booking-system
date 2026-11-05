@@ -188,7 +188,40 @@ async function savePayment(){
  await loadHistory();
 }
 function monthRange(){const v=$("payrollMonth").value||localToday().slice(0,7);const y=Number(v.slice(0,4)),m=Number(v.slice(5,7));return {start:v+"-01",end:new Date(y,m,0).toISOString().slice(0,10)};}
-async function loadWorkAndDebt(){const {start,end}=monthRange();const [wr,pr]=await Promise.all([db.from("cleaning_tasks").select("id,house_type,house_name,task_date,employee_id,status,amount,notes").gte("task_date",start).lte("task_date",end).order("task_date",{ascending:false}),db.from("salary_payments").select("id,employee_id,amount,payment_date,period_start,period_end")]);if(wr.error)throw wr.error;if(pr.error)throw pr.error;const works=wr.data||[],payments=pr.data||[];const rows=employees.filter(e=>e.active).map(e=>{const base=e.salary_type==="monthly"?Number(e.base_salary||0):0;const tasks=works.filter(w=>w.employee_id===e.id&&w.status==="completed");const cleaning=tasks.reduce((a,w)=>a+Number(w.amount||0),0);const paid=payments.filter(p=>p.employee_id===e.id&&((p.period_start&&p.period_end&&p.period_start<=end&&p.period_end>=start)||(!p.period_start&&!p.period_end&&p.payment_date>=start&&p.payment_date<=end))).reduce((a,p)=>a+Number(p.amount||0),0);const earned=base+cleaning;return {e,base,cleaning,paid,earned,debt:Math.max(0,earned-paid)};});const sum=k=>rows.reduce((a,r)=>a+r[k],0);$("earnedTotal").textContent=money(sum("earned"));$("paidTotal").textContent=money(sum("paid"));$("debtTotal").textContent=money(sum("debt"));$("completedWorkCount").textContent=String(works.filter(w=>w.status==="completed").length);$("payrollDebtTable").innerHTML='<div class="table-wrap"><table><thead><tr><th>İşçi</th><th>Sabit maaş</th><th>Təmizlik</th><th>Hesablanıb</th><th>Ödənilib</th><th>Borc</th></tr></thead><tbody>'+(rows.map(r=>'<tr><td>'+esc(r.e.full_name)+'</td><td>'+money(r.base)+'</td><td>'+money(r.cleaning)+'</td><td>'+money(r.earned)+'</td><td>'+money(r.paid)+'</td><td><b>'+money(r.debt)+'</b></td></tr>').join("")||'<tr><td colspan="6">Aktiv işçi yoxdur.</td></tr>')+'</tbody></table></div>'; $("workEmployee").innerHTML='<option value="">İşçi seçin</option>'+employees.filter(e=>e.active).map(e=>'<option value="'+esc(e.id)+'">'+esc(e.full_name)+'</option>').join("");$("workHistory").innerHTML=works.length?'<div class="table-wrap"><table><thead><tr><th>Tarix</th><th>Ev</th><th>İşçi</th><th>Məbləğ</th><th>Status</th></tr></thead><tbody>'+works.map(w=>'<tr><td>'+esc(w.task_date)+'</td><td>'+esc(w.house_name||w.house_type)+'</td><td>'+esc((employees.find(e=>e.id===w.employee_id)||{}).full_name||"—")+'</td><td>'+money(w.amount)+'</td><td>'+(w.status==="completed"?"Tamamlandı":"Gözləyir")+'</td></tr>').join("")+'</tbody></table></div>':'<p>Bu ay üçün iş qeydi yoxdur.</p>';}
+async function loadWorkAndDebt(){
+ const {start,end}=monthRange();
+ const [wr,pr,obr]=await Promise.all([
+  db.from("cleaning_tasks").select("id,house_type,house_name,task_date,employee_id,status,amount,notes").lte("task_date",end).order("task_date",{ascending:true}),
+  db.from("salary_payments").select("id,employee_id,amount,payment_date,period_start,period_end,notes").lte("payment_date",end).order("payment_date",{ascending:true}),
+  db.from("employee_opening_balances").select("id,employee_id,balance_month,amount,notes").lte("balance_month",end).order("balance_month",{ascending:true})
+ ]);
+ if(wr.error)throw wr.error;if(pr.error)throw pr.error;if(obr.error)throw obr.error;
+ const allWorks=wr.data||[],allPayments=pr.data||[],openings=obr.data||[];
+ const works=allWorks.filter(w=>w.task_date>=start&&w.task_date<=end);
+ const cleaningPayments=allPayments.filter(p=>(p.notes||"").startsWith("Təmizlik haqqı"));
+ const rows=employees.filter(e=>e.active).map(e=>{
+  const monthTasks=works.filter(w=>w.employee_id===e.id&&w.status==="completed");
+  const monthCleaning=monthTasks.reduce((a,w)=>a+Number(w.amount||0),0);
+  const openingTotal=openings.filter(o=>o.employee_id===e.id).reduce((a,o)=>a+Number(o.amount||0),0);
+  const allEarned=allWorks.filter(w=>w.employee_id===e.id&&w.status==="completed").reduce((a,w)=>a+Number(w.amount||0),0);
+  const allPaid=cleaningPayments.filter(p=>p.employee_id===e.id).reduce((a,p)=>a+Number(p.amount||0),0);
+  const monthPaid=cleaningPayments.filter(p=>p.employee_id===e.id&&p.payment_date>=start&&p.payment_date<=end).reduce((a,p)=>a+Number(p.amount||0),0);
+  const openingBalance=openingTotal;
+  const outstanding=Math.max(0,openingBalance+allEarned-allPaid);
+  const base=e.salary_type==="monthly"?Number(e.base_salary||0):0;
+  return {e,base,cleaning:monthCleaning,paid:monthPaid,earned:base+monthCleaning,debt:outstanding,opening:openingBalance};
+ });
+ const sum=k=>rows.reduce((a,r)=>a+r[k],0);
+ $("earnedTotal").textContent=money(sum("earned"));
+ $("paidTotal").textContent=money(sum("paid"));
+ $("debtTotal").textContent=money(sum("debt"));
+ $("completedWorkCount").textContent=String(works.filter(w=>w.status==="completed").length);
+ $("payrollDebtTable").innerHTML='<div class="table-wrap"><table><thead><tr><th>İşçi</th><th>Əvvəlki borc</th><th>Bu ay təmizlik</th><th>Bu ay ödənilib</th><th>Ümumi qalıq borc</th></tr></thead><tbody>'+
+ (rows.map(r=>'<tr><td>'+esc(r.e.full_name)+'</td><td>'+money(r.opening)+'</td><td>'+money(r.cleaning)+'</td><td>'+money(r.paid)+'</td><td><b>'+money(r.debt)+'</b></td></tr>').join("")||'<tr><td colspan="5">Aktiv işçi yoxdur.</td></tr>')+'</tbody></table></div>';
+ $("workEmployee").innerHTML='<option value="">İşçi seçin</option>'+employees.filter(e=>e.active).map(e=>'<option value="'+esc(e.id)+'">'+esc(e.full_name)+'</option>').join("");
+ $("workHistory").innerHTML=works.length?'<div class="table-wrap"><table><thead><tr><th>Tarix</th><th>Ev</th><th>İşçi</th><th>Məbləğ</th><th>Status</th></tr></thead><tbody>'+
+ works.map(w=>'<tr><td>'+esc(w.task_date)+'</td><td>'+esc(w.house_name||w.house_type)+'</td><td>'+esc((employees.find(e=>e.id===w.employee_id)||{}).full_name||"—")+'</td><td>'+money(w.amount)+'</td><td>'+(w.status==="completed"?"Tamamlandı":"Gözləyir")+'</td></tr>').join("")+'</tbody></table></div>':'<p>Bu ay üçün iş qeydi yoxdur.</p>';
+}
 async function addDailyWork(){const employee_id=$("workEmployee").value,house_type=$("workHouseType").value,house_name=$("workHouseName").value,task_date=$("workDate").value,amount=Number($("workAmount").value),status=$("workStatus").value,notes=$("workNotes").value.trim(),msg=$("workMessage");if(!employee_id||!task_date||!Number.isFinite(amount)||amount<0){msg.textContent="İşçi, tarix və məbləği düzgün daxil edin.";return;} $("saveWork").disabled=true;const {error}=await db.from("cleaning_tasks").insert({employee_id,house_type,house_name,task_date,amount,status,notes:notes||null,completed_at:status==="completed"?new Date().toISOString():null});$("saveWork").disabled=false;if(error){msg.textContent="Xəta: "+error.message;return;}msg.textContent="İş qeydə alındı."; $("workNotes").value="";$("workAmount").value="";await loadWorkAndDebt();}
 
 async function showApp(){
