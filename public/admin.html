@@ -399,6 +399,8 @@ tbody tr:hover{background:#f8f8f2}
 .qth-calendar-has-confirmed{background:#e5f2e9!important}
 .qth-calendar-has-pending{background:#fff4de!important}
 .qth-calendar-has-review{background:#e8f2f7!important}
+.qth-calendar-has-staying{background:#e7f1f7!important}
+.qth-calendar-has-checkout{background:#eceeeb!important}
 .qth-calendar-booking{display:block;width:100%;min-width:0;min-height:29px;margin:1px 0;padding:4px 2px;border:0!important;border-radius:5px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px!important;font-weight:750!important;cursor:pointer}
 .qth-calendar-booking--confirmed{background:#208456!important;color:#fff!important}
 .qth-calendar-booking--pending{background:#d19a35!important;color:#2d2414!important}
@@ -1206,6 +1208,21 @@ window.loadReservations = async function () {
     table.innerHTML = '<tr><td colspan="10">Məlumat yüklənmədi.</td></tr>';
   }
 };
+
+// Keep the reservation list and calendar in sync with new bookings/payments.
+// Refresh only while the admin is signed in and the tab is visible.
+if (!window.qthReservationRefreshTimer) {
+  window.qthReservationRefreshTimer = window.setInterval(() => {
+    if (document.visibilityState === "visible" && document.body.classList.contains("qth-authenticated")) {
+      window.loadReservations();
+    }
+  }, 60000);
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && document.body.classList.contains("qth-authenticated")) {
+    window.loadReservations();
+  }
+});
 
 function renderReservations(items) {
   const table = document.getElementById("reservationTable");
