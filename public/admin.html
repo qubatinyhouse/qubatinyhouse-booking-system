@@ -574,7 +574,7 @@ tbody tr:hover{background:#f8f8f2}
    <strong id="houseTopGuestsName">—</strong><span id="houseTopGuestsValue">—</span><small id="houseTopGuestsNote">Qonaq sayı cəmi</small>
   </article>
   <article class="qth-house-winner qth-house-winner--green">
-   <div class="qth-house-winner-icon">⌂</div><div class="qth-house-winner-label">Cari ay ən çox dolu gecəsi olan ev</div>
+   <div class="qth-house-winner-icon">⌂</div><div class="qth-house-winner-label">Cari ay ən çox bron olunmuş gecəsi olan ev</div>
    <strong id="houseBusiestName">—</strong><span id="houseBusiestValue">—</span><small id="houseBusiestNote">Bron edilmiş gecələr</small>
   </article>
   <article class="qth-house-winner qth-house-winner--weak">
@@ -586,12 +586,12 @@ tbody tr:hover{background:#f8f8f2}
   <div><small>Ümumi alınmış gəlir</small><strong id="housePerformanceRevenue">—</strong></div>
   <div><small>Ümumi qonaq sayı</small><strong id="housePerformanceGuests">—</strong></div>
   <div><small>Rezervasiya sayı</small><strong id="housePerformanceBookings">—</strong></div>
-  <div><small>Dolu gecələrin sayı</small><strong id="housePerformanceNights">—</strong></div>
+  <div><small>Bron olunmuş gecələr</small><strong id="housePerformanceNights">—</strong></div>
  </div>
  <div class="qth-house-performance-table-wrap">
   <h4>Altı ev üzrə müqayisə</h4>
   <div class="table-wrap"><table class="qth-house-performance-table">
-   <thead><tr><th>Sıra</th><th>Ev</th><th>Alınmış gəlir</th><th>Qonaq sayı</th><th>Rezervasiya</th><th>Dolu gecə</th><th>Doluluq</th><th>Gəlir payı</th></tr></thead>
+   <thead><tr><th>Sıra</th><th>Ev</th><th>Alınmış gəlir</th><th>Qonaq sayı</th><th>Rezervasiya</th><th>Bron gecəsi</th><th>Doluluq</th><th>Gəlir payı</th></tr></thead>
    <tbody id="housePerformanceRows"><tr><td colspan="8">Hesabat yüklənir...</td></tr></tbody>
   </table></div>
  </div>
@@ -1838,7 +1838,7 @@ window.loadHousePerformance=async function(){
   const busiest=data.busiest;
   const busyHasData=busiest&&Number(busiest.occupiedNights||0)>0;
   document.getElementById("houseBusiestName").textContent=busyHasData?busiest.name:"Məlumat yoxdur";
-  document.getElementById("houseBusiestValue").textContent=busyHasData?busiest.occupiedNights+" dolu gecə":"0 dolu gecə";
+  document.getElementById("houseBusiestValue").textContent=busyHasData?busiest.occupiedNights+" bron gecəsi":"0 dolu gecə";
   document.getElementById("houseBusiestNote").textContent=busyHasData?busiest.reservationCount+" rezervasiya · "+busiest.occupancyRate+"% doluluq":"Seçilmiş ayda dolu gecə yoxdur";
   document.getElementById("houseWeakestName").textContent=hasBookings?weakest.name:"Müqayisə üçün məlumat yoxdur";
   document.getElementById("houseWeakestValue").textContent=hasBookings?money(weakest.paidRevenue):"—";
@@ -1863,7 +1863,7 @@ window.loadHousePerformance=async function(){
     '<td><div class="qth-house-share"><span>'+share.toLocaleString("az-AZ",{maximumFractionDigits:1})+'%</span><i><b style="width:'+Math.max(0,Math.min(100,bar))+'%"></b></i></div></td>'+
    '</tr>';
   }).join("")||'<tr><td colspan="8">Aktiv ev tapılmadı.</td></tr>';
-  message.textContent="Hesabat dövrü: "+data.rangeStart+" – "+data.rangeEnd+". Gəlir həmin ay faktiki daxil olmuş ödəniş jurnalından hesablanır; sıralama gəlirə görə azalan qaydadadır. Qonaq və rezervasiya sayı giriş tarixi həmin ay olan aktiv bronlardan, ən çox işləyən ev isə dolu gecələrin sayından müəyyən edilir."+(data.truncated?" Qeyd: rezervasiya siyahısı 5000 sətirlə məhdudlaşıb.":"");
+  message.textContent="Hesabat dövrü: "+data.rangeStart+" – "+data.rangeEnd+". Gəlir həmin ay faktiki daxil olmuş ödəniş jurnalından hesablanır; sıralama gəlirə görə azalan qaydadadır. Qonaq və rezervasiya sayı giriş tarixi həmin ay olan aktiv bronlardan, ən çox işləyən ev isə bron gecələriin sayından müəyyən edilir."+(data.truncated?" Qeyd: rezervasiya siyahısı 5000 sətirlə məhdudlaşıb.":"");
  }catch(error){
   message.textContent="Ev analitikası yüklənmədi: "+error.message;
   tbody.innerHTML='<tr><td colspan="8">Hesabat məlumatı əldə edilmədi.</td></tr>';
