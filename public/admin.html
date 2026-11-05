@@ -1863,13 +1863,22 @@ window.loadHousePerformance=async function(){
     '<td><div class="qth-house-share"><span>'+share.toLocaleString("az-AZ",{maximumFractionDigits:1})+'%</span><i><b style="width:'+Math.max(0,Math.min(100,bar))+'%"></b></i></div></td>'+
    '</tr>';
   }).join("")||'<tr><td colspan="7">Aktiv ev tapılmadı.</td></tr>';
-  message.textContent="Hesabat dövrü: "+data.rangeStart+" – "+data.rangeEnd+". Sıralama faktiki alınmış gəlirə görə azalan qaydadadır. Cari ay ən çox işləyən ev dolu gecələrin sayına görə seçilir. Gəlir və qonaq sayı giriş tarixi seçilmiş ayda olan aktiv rezervasiyalardan hesablanır."+(data.truncated?" Qeyd: rezervasiya siyahısı 5000 sətirlə məhdudlaşıb.":"");
+  message.textContent="Hesabat dövrü: "+data.rangeStart+" – "+data.rangeEnd+". Gəlir həmin ay faktiki daxil olmuş ödəniş jurnalından hesablanır; sıralama gəlirə görə azalan qaydadadır. Qonaq və rezervasiya sayı giriş tarixi həmin ay olan aktiv bronlardan, ən çox işləyən ev isə dolu gecələrin sayından müəyyən edilir."+(data.truncated?" Qeyd: rezervasiya siyahısı 5000 sətirlə məhdudlaşıb.":"");
  }catch(error){
   message.textContent="Ev analitikası yüklənmədi: "+error.message;
   tbody.innerHTML='<tr><td colspan="7">Hesabat məlumatı əldə edilmədi.</td></tr>';
  }
 };
 document.getElementById("housePerformanceMonth")?.addEventListener("change",()=>window.loadHousePerformance());
+let qthHousePerformanceTimer=null;
+if(!qthHousePerformanceTimer){
+ qthHousePerformanceTimer=window.setInterval(()=>{
+  const dashboard=document.getElementById("dashboard");
+  if(document.visibilityState==="visible"&&dashboard?.classList.contains("active")&&window.qthAdminAuthClient){
+   window.loadHousePerformance();
+  }
+ },60000);
+}
 
 // Rezervasiyalar yalnız vahid administrator sessiyası açıldıqdan sonra yüklənir.
 </script>
