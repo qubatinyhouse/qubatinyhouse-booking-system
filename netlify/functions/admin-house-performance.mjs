@@ -85,10 +85,16 @@ export const handler = async (event) => {
 
     const byRevenue = [...result].sort((a, b) => b.paidRevenue - a.paidRevenue || b.reservationCount - a.reservationCount);
     const byGuests = [...result].sort((a, b) => b.guestCount - a.guestCount || b.reservationCount - a.reservationCount);
-    const byWeakness = [...result].sort((a, b) =>
+    const byWeakness = [...result].filter((item) => item.reservationCount > 0 || item.paidRevenue > 0).sort((a, b) =>
       a.paidRevenue - b.paidRevenue ||
       a.reservationCount - b.reservationCount ||
       a.guestCount - b.guestCount
+    );
+    const byOccupiedNights = [...result].sort((a, b) =>
+      b.occupiedNights - a.occupiedNights || b.reservationCount - a.reservationCount || b.guestCount - a.guestCount
+    );
+    const byReservations = [...result].sort((a, b) =>
+      b.reservationCount - a.reservationCount || b.occupiedNights - a.occupiedNights || b.paidRevenue - a.paidRevenue
     );
 
     return json(200, {
@@ -101,8 +107,12 @@ export const handler = async (event) => {
       totalReservations: result.reduce((sum, item) => sum + item.reservationCount, 0),
       topRevenue: byRevenue[0] || null,
       topGuests: byGuests[0] || null,
+      busiest: byOccupiedNights[0] || null,
+      mostReservations: byReservations[0] || null,
       weakest: byWeakness[0] || null,
-      units: result.sort((a, b) => a.name.localeCompare(b.name)),
+      // Rank revenue-producing / reservation-accepting houses from highest paid revenue to lowest.
+      units: [...result].filter((item) => item.reservationCount > 0 || item.paidRevenue > 0)
+        .sort((a, b) => b.paidRevenue - a.paidRevenue || b.reservationCount - a.reservationCount || b.guestCount - a.guestCount),
       method: 'paid_amount per reservation check-in month; guests = guest_count; occupancy = overlapping active stay nights / calendar days',
       truncated: reservations.length >= 5000
     });
