@@ -89,7 +89,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 <h2>İşçiyə ödəniş et</h2>
 <div class="grid">
 <label>İşçi<select id="paymentEmployee"><option value="">İşçi seçin</option></select></label>
-<label>Ödəniş növü<select id="paymentCategory"><option value="Maaş">Maaş</option><option value="Təmizlik haqqı">Təmizlik haqqı</option></select></label>
+<label>Ödəniş növü<select id="paymentCategory"><option value="Maaş">Maaş</option><option value="Təmizlik haqqı">Cari təmizlik haqqı</option><option value="Qalıq borcun ödənişi">Qalıq borcun ödənişi</option></select></label>
 <label>Ödəniş məbləği (AZN)<input id="paymentAmount" type="number" min="0.01" step="0.01"></label>
 <label>Ödəniş tarixi<input id="paymentDate" type="date"></label>
 <label>Ödəniş üsulu<select id="paymentMethod"><option value="cash">Nağd</option><option value="bank">Bank</option><option value="card">Kart</option><option value="transfer">Köçürmə</option></select></label>
@@ -180,7 +180,7 @@ async function savePayment(){
  if(category==="Maaş"&&(!period_start||!period_end||period_end<period_start)){msg.textContent="Maaş ödənişi üçün dövrü düzgün seçin.";return}
  $("savePayment").disabled=true;msg.textContent="Borc yoxlanılır və ödəniş bölüşdürülür...";
  try{
-  if(category==="Təmizlik haqqı"){
+  if(category==="Təmizlik haqqı"||category==="Qalıq borcun ödənişi"){
    const [wr,pr,obr]=await Promise.all([
     db.from("cleaning_tasks").select("task_date,amount,status").eq("employee_id",employee_id).eq("status","completed").lte("task_date",payment_date).order("task_date",{ascending:true}),
     db.from("salary_payments").select("amount,period_start,notes").eq("employee_id",employee_id).lte("payment_date",payment_date),
@@ -200,11 +200,11 @@ async function savePayment(){
     const part=Math.min(left,item.balance),year=Number(item.month.slice(0,4)),month=Number(item.month.slice(5,7));
     const pstart=item.month+"-01",pend=new Date(year,month,0).toISOString().slice(0,10);
     const monthLabel=new Intl.DateTimeFormat("az-AZ",{month:"long",year:"numeric",timeZone:"Asia/Baku"}).format(new Date(Date.UTC(year,month-1,1)));
-    const {error}=await db.rpc("pay_employee_compensation",{p_employee_id:employee_id,p_amount:Number(part.toFixed(2)),p_payment_date:payment_date,p_payment_method:payment_method,p_period_start:pstart,p_period_end:pend,p_notes:"Təmizlik haqqı — borc ödənişi: "+monthLabel+(notes?" — "+notes:""),p_category:"Təmizlik haqqı"});
+    const {error}=await db.rpc("pay_employee_compensation",{p_employee_id:employee_id,p_amount:Number(part.toFixed(2)),p_payment_date:payment_date,p_payment_method:payment_method,p_period_start:pstart,p_period_end:pend,p_notes:"Təmizlik haqqı — "+(category==="Qalıq borcun ödənişi"?"qalıq borc ödənişi: ":"ödəniş: ")+monthLabel+(notes?" — "+notes:""),p_category:"Təmizlik haqqı"});
     if(error)throw error;
     left=Number((left-part).toFixed(2));
    }
-   msg.textContent="Ödəniş qeydə alındı. Əvvəlcə ən köhnə ayın borcu bağlandı.";
+   msg.textContent=category==="Qalıq borcun ödənişi"?"Qalıq borc ödənişi qeydə alındı. Ən köhnə ayın borcundan başlayaraq azaldıldı.":"Cari təmizlik haqqı ödənişi qeydə alındı. Ən köhnə borcdan başlayaraq azaldıldı.";
   }else{
    const {error}=await db.rpc("pay_employee_compensation",{p_employee_id:employee_id,p_amount:amount,p_payment_date:payment_date,p_payment_method:payment_method,p_period_start:period_start,p_period_end:period_end,p_notes:notes,p_category:category});
    if(error)throw error;
