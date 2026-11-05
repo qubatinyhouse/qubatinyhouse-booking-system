@@ -57,6 +57,7 @@ export const handler = async (event) => {
       name: unit.name,
       capacity: Number(unit.capacity || 0),
       reservationCount: 0,
+      occupiedReservationCount: 0,
       guestCount: 0,
       paidRevenue: 0,
       paymentCount: 0,
@@ -83,10 +84,13 @@ export const handler = async (event) => {
       if (!stat) continue;
 
       const nights = overlapNights(booking.check_in, booking.check_out, rangeStart, rangeEnd);
-      if (nights > 0) stat.occupiedNights += nights;
+      if (nights > 0) {
+        stat.occupiedNights += nights;
+        stat.occupiedReservationCount += 1;
+      }
 
-      // Revenue and guest totals are attributed to the month the stay starts,
-      // while occupied nights include stays that overlap the selected month.
+      // Guest and check-in totals are attributed to the check-in month;
+      // occupied nights and overlapping booking count include stays in the selected month.
       const startsInMonth = booking.check_in >= rangeStart && booking.check_in < rangeEnd;
       if (startsInMonth) {
         stat.reservationCount += 1;
