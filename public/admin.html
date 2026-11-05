@@ -574,8 +574,8 @@ tbody tr:hover{background:#f8f8f2}
    <strong id="houseTopGuestsName">—</strong><span id="houseTopGuestsValue">—</span><small id="houseTopGuestsNote">Qonaq sayı cəmi</small>
   </article>
   <article class="qth-house-winner qth-house-winner--green">
-   <div class="qth-house-winner-icon">⌂</div><div class="qth-house-winner-label">Cari ay ən çox işləyən ev</div>
-   <strong id="houseBusiestName">—</strong><span id="houseBusiestValue">—</span><small id="houseBusiestNote">Ən çox dolu gecə</small>
+   <div class="qth-house-winner-icon">⌂</div><div class="qth-house-winner-label">Cari ay ən çox dolu gecəsi olan ev</div>
+   <strong id="houseBusiestName">—</strong><span id="houseBusiestValue">—</span><small id="houseBusiestNote">Bron edilmiş gecələr</small>
   </article>
   <article class="qth-house-winner qth-house-winner--weak">
    <div class="qth-house-winner-icon">!</div><div class="qth-house-winner-label">Ən zəif ev</div>
@@ -1828,10 +1828,10 @@ window.loadHousePerformance=async function(){
   const topRevenue=data.topRevenue,topGuests=data.topGuests,weakest=data.weakest;
   const hasRevenue=topRevenue&&topRevenue.paidRevenue>0;
   const hasGuests=topGuests&&topGuests.guestCount>0;
-  const hasBookings=weakest&&weakest.reservationCount>0;
+  const hasBookings=weakest&&(weakest.reservationCount>0||weakest.paidRevenue>0||weakest.occupiedNights>0);
   document.getElementById("houseTopRevenueName").textContent=hasRevenue?topRevenue.name:"Məlumat yoxdur";
   document.getElementById("houseTopRevenueValue").textContent=hasRevenue?money(topRevenue.paidRevenue):"0.00 AZN";
-  document.getElementById("houseTopRevenueNote").textContent=hasRevenue?topRevenue.reservationCount+" rezervasiya üzrə alınmış ödəniş":"Seçilmiş ayda alınmış ödəniş qeydə alınmayıb";
+  document.getElementById("houseTopRevenueNote").textContent=hasRevenue?topRevenue.paymentCount+" faktiki ödəniş":"Seçilmiş ayda alınmış ödəniş qeydə alınmayıb";
   document.getElementById("houseTopGuestsName").textContent=hasGuests?topGuests.name:"Məlumat yoxdur";
   document.getElementById("houseTopGuestsValue").textContent=hasGuests?topGuests.guestCount+" qonaq":"0 qonaq";
   document.getElementById("houseTopGuestsNote").textContent=hasGuests?topGuests.reservationCount+" rezervasiyadan":"Seçilmiş ayda qonaq qeydə alınmayıb";
@@ -1862,11 +1862,11 @@ window.loadHousePerformance=async function(){
     '<td>'+Number(item.occupancyRate||0).toLocaleString("az-AZ",{maximumFractionDigits:1})+'%</td>'+
     '<td><div class="qth-house-share"><span>'+share.toLocaleString("az-AZ",{maximumFractionDigits:1})+'%</span><i><b style="width:'+Math.max(0,Math.min(100,bar))+'%"></b></i></div></td>'+
    '</tr>';
-  }).join("")||'<tr><td colspan="7">Aktiv ev tapılmadı.</td></tr>';
+  }).join("")||'<tr><td colspan="8">Aktiv ev tapılmadı.</td></tr>';
   message.textContent="Hesabat dövrü: "+data.rangeStart+" – "+data.rangeEnd+". Gəlir həmin ay faktiki daxil olmuş ödəniş jurnalından hesablanır; sıralama gəlirə görə azalan qaydadadır. Qonaq və rezervasiya sayı giriş tarixi həmin ay olan aktiv bronlardan, ən çox işləyən ev isə dolu gecələrin sayından müəyyən edilir."+(data.truncated?" Qeyd: rezervasiya siyahısı 5000 sətirlə məhdudlaşıb.":"");
  }catch(error){
   message.textContent="Ev analitikası yüklənmədi: "+error.message;
-  tbody.innerHTML='<tr><td colspan="7">Hesabat məlumatı əldə edilmədi.</td></tr>';
+  tbody.innerHTML='<tr><td colspan="8">Hesabat məlumatı əldə edilmədi.</td></tr>';
  }
 };
 document.getElementById("housePerformanceMonth")?.addEventListener("change",()=>window.loadHousePerformance());
