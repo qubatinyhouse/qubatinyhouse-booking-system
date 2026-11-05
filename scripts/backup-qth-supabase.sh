@@ -46,6 +46,18 @@ readonly VERIFY_DIR="$WORK_DIR/remote-verify"
 readonly VERIFY_FILE="$VERIFY_DIR/$ARCHIVE_NAME"
 readonly VERIFY_CHECKSUM="$VERIFY_DIR/$ARCHIVE_NAME.sha256"
 readonly VERIFY_TAR="$VERIFY_DIR/verified.tar.gz"
+readonly CLI_WORKDIR="$WORK_DIR/cli"
+
+# This repository does not have a Supabase CLI config.toml. Create a minimal
+# temporary config outside the checkout so the backup job does not alter app files.
+mkdir -p "$CLI_WORKDIR/supabase"
+cat > "$CLI_WORKDIR/supabase/config.toml" <<'EOF'
+project_id = "qthbackup00000000000"
+
+[db]
+major_version = 17
+EOF
+export SUPABASE_WORKDIR="$CLI_WORKDIR"
 
 cleanup() {
   rm -f "$PASS_FILE"
