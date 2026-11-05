@@ -403,6 +403,9 @@ tbody tr:hover{background:#f8f8f2}
 .qth-calendar-booking--confirmed{background:#208456!important;color:#fff!important}
 .qth-calendar-booking--pending{background:#d19a35!important;color:#2d2414!important}
 .qth-calendar-booking--review{background:#3984a9!important;color:#fff!important}
+.qth-calendar-booking--staying{background:#2878a8!important;color:#fff!important}
+.qth-calendar-booking--checkout{background:#6e7771!important;color:#fff!important}
+.qth-calendar-booking--checkin{background:#208456!important;color:#fff!important}
 .qth-calendar-booking:hover{filter:brightness(1.08);box-shadow:0 2px 6px #243a2a22}
 .qth-active-reservation-filter{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 15px!important;border:1px solid #197348!important;border-radius:9px!important;background:linear-gradient(135deg,#1b8956,#12663f)!important;color:#fff!important;font-size:12px!important;font-weight:800!important;box-shadow:0 4px 12px #176c4426}
 .qth-active-reservation-filter:hover{background:#0d5b37!important}
@@ -559,6 +562,7 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
         <select id="reservationStatusFilter"
           onchange="filterReservations()">
           <option value="">Bütün rezervasiyalar</option>
+          <option value="__active__">Aktiv rezervasiyalar (təsdiqlənmiş + gözləyən)</option>
           <option value="pending_payment">Avans gözlənilir</option>
           <option value="confirmed">Təsdiqlənib</option>
           <option value="cancelled">Ləğv edilib</option><option value="expired">Vaxtı bitib</option><option value="payment_failed">Ödəniş alınmadı</option><option value="payment_review">Yoxlama tələb olunur</option>
@@ -649,9 +653,11 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
   <p id="reservationCalendarMessage" aria-live="polite">Rezervasiyalar yüklənir...</p>
  </div>
  <div class="qth-calendar-legend">
-  <span><i class="qth-legend-dot qth-legend-confirmed"></i>Təsdiqlənib / Aktiv</span>
-  <span><i class="qth-legend-dot qth-legend-pending"></i>Avans gözlənilir</span>
-  <span><i class="qth-legend-dot qth-legend-review"></i>Yoxlama tələb olunur</span>
+  <span><i class="qth-legend-dot qth-legend-confirmed"></i>Təsdiqlənib / Giriş</span>
+  <span><i class="qth-legend-dot" style="background:#2878a8"></i>Qonaq hazırda evdədir</span>
+  <span><i class="qth-legend-dot" style="background:#6e7771"></i>Çıxış günü</span>
+  <span><i class="qth-legend-dot qth-legend-pending"></i>Bron gözlənilir</span>
+  <span><i class="qth-legend-dot qth-legend-review"></i>Ödəniş yoxlanılır</span>
   <span class="qth-calendar-hint">Çıxış tarixi gecələmə günlərinə daxil edilmir.</span>
  </div>
  <div class="qth-calendar-scroll">
@@ -1095,15 +1101,17 @@ window.renderReservationCalendar=function(){
  const monthStart=input.value+"-01";
  const monthEnd=new Date(Date.UTC(year,month,1)).toISOString().slice(0,10);
  const dayCount=new Date(year,month,0).getDate();
+ const today=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Baku",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
  const weekdayNames=["B.","B.e.","Ç.a.","Ç.","C.a.","C.","Ş."];
  const days=[];
  for(let day=1;day<=dayCount;day++){
   const key=monthStart.slice(0,8)+String(day).padStart(2,"0");
   days.push({key,day,weekday:weekdayNames[new Date(Date.UTC(year,month-1,day)).getUTCDay()]});
  }
+ // Include the checkout date in the display range so the departure is visible.
  const monthItems=allReservations.filter(r=>{
   const status=String(r.status||"").toLowerCase();
-  return QTH_CALENDAR_ACTIVE_STATUSES.has(status)&&String(r.check_in||"")<monthEnd&&String(r.check_out||"")>monthStart;
+  return QTH_CALENDAR_ACTIVE_STATUSES.has(status)&&String(r.check_in||"")<monthEnd&&String(r.check_out||"")>=monthStart;
  });
  const confirmed=monthItems.filter(r=>r.status==="confirmed").length;
  const pending=monthItems.filter(r=>r.status==="pending_payment").length;
@@ -1112,24 +1120,41 @@ window.renderReservationCalendar=function(){
  document.getElementById("calendarPendingCount").textContent=String(pending+review);
  document.getElementById("calendarTotalCount").textContent=String(monthItems.length);
  const msg=document.getElementById("reservationCalendarMessage");
- msg.textContent=input.value+" ayı üzrə "+monthItems.length+" aktiv rezervasiya göstərilir. Təsdiqlənmiş: "+confirmed+" · Avans/yoxlama: "+(pending+review)+".";
+ msg.textContent=input.value+" ayı üzrə "+monthItems.length+" aktiv rezervasiya göstərilir. Yaşıl: təsdiqlənib/giriş, mavi: hazırda qonaq qalır, boz: çıxış günü, narıncı: bron gözləyir.";
  const header='<tr><th class="qth-calendar-unit-head">Ev / tarix</th>'+days.map(d=>'<th class="qth-calendar-date-head" title="'+d.weekday+'"><strong>'+d.day+'</strong><small>'+d.weekday+'</small></th>').join("")+'</tr>';
  head.innerHTML=header;
  const rows=QTH_CALENDAR_UNITS.map(unit=>{
   const unitItems=monthItems.filter(r=>r.unit_id===unit.id);
   const cells=days.map(day=>{
-   const dayBookings=unitItems.filter(r=>String(r.check_in||"")<new Date(Date.UTC(year,month-1,day.day+1)).toISOString().slice(0,10)&&String(r.check_out||"")>day.key);
+   const dayEnd=new Date(Date.UTC(year,month-1,day.day+1)).toISOString().slice(0,10);
+   const dayBookings=unitItems.filter(r=>{
+    const status=String(r.status||"").toLowerCase();
+    if(!QTH_CALENDAR_ACTIVE_STATUSES.has(status))return false;
+    const startDate=String(r.check_in||"");
+    const endDate=String(r.check_out||"");
+    return (startDate<dayEnd&&endDate>day.key)||(endDate===day.key);
+   });
    if(!dayBookings.length)return '<td class="qth-calendar-empty"></td>';
    const buttons=dayBookings.map(r=>{
     const status=String(r.status||"").toLowerCase();
-    const style=status==="confirmed"?"confirmed":status==="payment_review"?"review":"pending";
-    const firstVisibleDay=String(r.check_in||"")<monthStart?monthStart:String(r.check_in||"");
-    const isStart=day.key===firstVisibleDay;
-    const label=isStart?((String(r.check_in||"")<monthStart)?"↳ ":"")+(r.guest_name||"Bron"):"●";
-    const detail=(r.guest_name||"Müştəri")+" · "+(r.booking_code||r.id)+" · "+(r.check_in||"")+" – "+(r.check_out||"")+" · "+(r.status==="confirmed"?"Təsdiqlənib":r.status==="payment_review"?"Yoxlama tələb olunur":"Avans gözlənilir");
+    const checkIn=String(r.check_in||"");
+    const checkOut=String(r.check_out||"");
+    const isCheckout=checkOut===day.key;
+    const isCheckin=checkIn===day.key;
+    const isStaying=status==="confirmed"&&checkIn<day.key&&checkOut>day.key;
+    let style=status==="payment_review"?"review":status==="pending_payment"?"pending":isCheckout?"checkout":isStaying?"staying":"checkin";
+    let phase=status==="pending_payment"?"Bron gözləyir":status==="payment_review"?"Ödəniş yoxlanılır":isCheckout?"Çıxış günü":isStaying?"Qonaq hazırda evdədir":isCheckin?"Giriş günü":"Təsdiqlənib";
+    const label=isCheckout?"ÇIXIŞ":isStaying?"QALIR":isCheckin?"GİRİŞ":((checkIn<monthStart)?"↳ ":"")+(r.guest_name||"Bron");
+    const detail=(r.guest_name||"Müştəri")+" · "+(r.booking_code||r.id)+" · "+checkIn+" – "+checkOut+" · "+phase;
     return '<button type="button" class="qth-calendar-booking qth-calendar-booking--'+style+'" data-reservation-id="'+escapeReservation(r.id)+'" title="'+escapeReservation(detail)+'" aria-label="'+escapeReservation(detail)+'">'+escapeReservation(label)+'</button>';
    }).join("");
-   const classes=dayBookings.map(r=>r.status==="confirmed"?"qth-calendar-has-confirmed":r.status==="payment_review"?"qth-calendar-has-review":"qth-calendar-has-pending").join(" ");
+   const classes=dayBookings.map(r=>{
+    if(r.status==="pending_payment")return "qth-calendar-has-pending";
+    if(r.status==="payment_review")return "qth-calendar-has-review";
+    if(String(r.check_out||"")===day.key)return "qth-calendar-has-checkout";
+    if(String(r.check_in||"")<day.key&&String(r.check_out||"")>day.key&&today>=String(r.check_in||"")&&today<String(r.check_out||""))return "qth-calendar-has-staying";
+    return "qth-calendar-has-confirmed";
+   }).join(" ");
    return '<td class="qth-calendar-occupied '+classes+'">'+buttons+'</td>';
   }).join("");
   return '<tr><th class="qth-calendar-unit-name">'+escapeReservation(unit.name)+'<small>'+unitItems.length+' bron</small></th>'+cells+'</tr>';
@@ -1142,7 +1167,7 @@ window.renderReservationCalendar=function(){
 window.showActiveReservations=function(){
  const status=document.getElementById("reservationStatusFilter");
  const search=document.getElementById("reservationSearch");
- if(status)status.value="confirmed";
+ if(status)status.value="__active__";
  if(search)search.value="";
  openPage("reservations");
 };
@@ -1169,7 +1194,7 @@ window.loadReservations = async function () {
       Number.isFinite(Number(result.totalCount)) ? Number(result.totalCount).toLocaleString("az-AZ") : allReservations.length.toLocaleString("az-AZ");
     document.getElementById("bookingCountNote").textContent =
       "Baza ilə əlaqə aktivdir · son yenilənmə " + new Date().toLocaleTimeString("az-AZ", {hour:"2-digit",minute:"2-digit"});
-    const confirmedCount = allReservations.filter(r => r.status === "confirmed").length;
+    const confirmedCount = allReservations.filter(r => ["confirmed","pending_payment","payment_review"].includes(String(r.status||"").toLowerCase())).length;
     document.querySelectorAll(".qth-active-reservation-filter").forEach(button => {
       button.setAttribute("aria-label", "Aktiv rezervasiyalar: " + confirmedCount);
     });
@@ -1217,11 +1242,15 @@ function renderReservations(items) {
 window.filterReservations = function () {
   const search = document.getElementById("reservationSearch").value.toLowerCase().trim();
   const status = document.getElementById("reservationStatusFilter").value;
+  const activeStatuses = ["confirmed","pending_payment","payment_review"];
   renderReservations(allReservations.filter(r => {
     const matchesSearch = (r.guest_name || "").toLowerCase().includes(search) ||
       (r.phone || "").toLowerCase().includes(search) ||
       (r.booking_code || "").toLowerCase().includes(search);
-    return matchesSearch && (!status || r.status === status);
+    const matchesStatus = status === "__active__"
+      ? activeStatuses.includes(String(r.status || "").toLowerCase())
+      : (!status || r.status === status);
+    return matchesSearch && matchesStatus;
   }));
 };
 
