@@ -59,6 +59,7 @@ export const handler = async (event) => {
       reservationCount: 0,
       guestCount: 0,
       paidRevenue: 0,
+      paymentCount: 0,
       bookingValue: 0,
       occupiedNights: 0,
       occupancyRate: 0
@@ -72,6 +73,7 @@ export const handler = async (event) => {
       const stat = stats.get(unitId);
       if (!stat) continue;
       stat.paidRevenue += Math.max(0, Number(payment.amount || 0));
+      stat.paymentCount += 1;
     }
 
     for (const booking of reservations) {
@@ -90,13 +92,13 @@ export const handler = async (event) => {
         stat.reservationCount += 1;
         stat.guestCount += Math.max(0, Number(booking.guest_count || 0));
         stat.bookingValue += Math.max(0, Number(booking.total_amount || 0));
-        monthlyReservations.push(booking);
       }
     }
 
     const result = [...stats.values()].map((item) => ({
       ...item,
       paidRevenue: Math.round(item.paidRevenue * 100) / 100,
+      paymentCount: item.paymentCount,
       bookingValue: Math.round(item.bookingValue * 100) / 100,
       occupancyRate: daysInMonth ? Math.round((item.occupiedNights / daysInMonth) * 1000) / 10 : 0
     }));
