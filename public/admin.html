@@ -1143,9 +1143,9 @@ window.renderReservationCalendar=function(){
     const checkOut=String(r.check_out||"");
     const isCheckout=checkOut===day.key;
     const isCheckin=checkIn===day.key;
-    const isStaying=status==="confirmed"&&checkIn<day.key&&checkOut>day.key;
+    const isStaying=status==="confirmed"&&checkIn<today&&checkOut>today&&day.key===today;
     let style=status==="payment_review"?"review":status==="pending_payment"?"pending":isCheckout?"checkout":isStaying?"staying":"checkin";
-    let phase=status==="pending_payment"?"Bron gözləyir":status==="payment_review"?"Ödəniş yoxlanılır":isCheckout?"Çıxış günü":isStaying?"Qonaq hazırda evdədir":isCheckin?"Giriş günü":"Təsdiqlənib";
+    let phase=status==="pending_payment"?"Bron gözləyir":status==="payment_review"?"Ödəniş yoxlanılır":isCheckout?"Çıxış günü":isStaying?"Qonaq hazırda evdədir":isCheckin?"Giriş günü":(checkIn<day.key&&checkOut>day.key?"Qalma günü":"Təsdiqlənib");
     const label=isCheckout?"ÇIXIŞ":isStaying?"QALIR":isCheckin?"GİRİŞ":((checkIn<monthStart)?"↳ ":"")+(r.guest_name||"Bron");
     const detail=(r.guest_name||"Müştəri")+" · "+(r.booking_code||r.id)+" · "+checkIn+" – "+checkOut+" · "+phase;
     return '<button type="button" class="qth-calendar-booking qth-calendar-booking--'+style+'" data-reservation-id="'+escapeReservation(r.id)+'" title="'+escapeReservation(detail)+'" aria-label="'+escapeReservation(detail)+'">'+escapeReservation(label)+'</button>';
@@ -1256,16 +1256,22 @@ function renderReservations(items) {
   }).join("");
 }
 
+function qthTodayDate() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Baku", year: "numeric", month: "2-digit", day: "2-digit"
+  }).format(new Date());
+}
 window.filterReservations = function () {
   const search = document.getElementById("reservationSearch").value.toLowerCase().trim();
   const status = document.getElementById("reservationStatusFilter").value;
   const activeStatuses = ["confirmed","pending_payment","payment_review"];
+  const today = qthTodayDate();
   renderReservations(allReservations.filter(r => {
     const matchesSearch = (r.guest_name || "").toLowerCase().includes(search) ||
       (r.phone || "").toLowerCase().includes(search) ||
       (r.booking_code || "").toLowerCase().includes(search);
     const matchesStatus = status === "__active__"
-      ? activeStatuses.includes(String(r.status || "").toLowerCase())
+      ? activeStatuses.includes(String(r.status || "").toLowerCase()) && String(r.check_out || "") >= today
       : (!status || r.status === status);
     return matchesSearch && matchesStatus;
   }));
