@@ -1874,7 +1874,7 @@ let qthHousePerformanceTimer=null;
 if(!qthHousePerformanceTimer){
  qthHousePerformanceTimer=window.setInterval(()=>{
   const dashboard=document.getElementById("dashboard");
-  if(document.visibilityState==="visible"&&dashboard?.classList.contains("active")&&window.qthAdminAuthClient){
+  if(document.visibilityState==="visible"&&document.body.classList.contains("qth-authenticated")&&dashboard?.classList.contains("active")&&window.qthAdminAuthClient){
    window.loadHousePerformance();
   }
  },60000);
