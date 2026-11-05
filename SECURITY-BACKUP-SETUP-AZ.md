@@ -4,6 +4,8 @@ Bu sənəd yalnız backup infrastrukturunun qurulması üçündür. Mövcud reze
 
 ## Hazırkı vəziyyət
 
+- Hazırlanmış workflow hazırda `security/qth-backup-automation-2026-11-05` branch-indədir; hələ `main`-a birləşdirilməyib və buna görə gündəlik avtomatik işləmir. R2 bucket və GitHub Secrets hazırlandıqdan, test planı razılaşdırıldıqdan sonra aktivləşdirilməlidir.
+
 - Rezervasiya bazası: `dwxwgxdzlspqwebewxej` — PostgreSQL 17.11, ACTIVE_HEALTHY.
 - Admin/maliyyə bazası: `fynbzmyoleqcnqkhyfzd` — PostgreSQL 17.11, ACTIVE_HEALTHY.
 - Hər iki bazada hazırda 1 Auth istifadəçisi var.
