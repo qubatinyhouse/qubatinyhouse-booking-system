@@ -433,7 +433,7 @@ tbody tr:hover{background:#f8f8f2}
 .qth-house-performance-heading input{padding:9px 10px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text)}
 .qth-house-performance-controls{display:flex;align-items:end;gap:8px;flex-wrap:wrap}
 .qth-house-performance-controls button{padding:9px 12px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);color:var(--text);font-weight:700;cursor:pointer}
-.qth-house-winners{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.qth-house-winners{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .qth-house-winner{position:relative;min-height:152px;padding:16px;border:1px solid var(--border);border-radius:13px;background:var(--surface);display:flex;flex-direction:column;gap:5px;overflow:hidden}
 .qth-house-winner-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:var(--surface-2);font-weight:900}
 .qth-house-winner-label{font-size:11px;color:var(--muted);margin-top:5px}
@@ -446,12 +446,12 @@ tbody tr:hover{background:#f8f8f2}
 .qth-house-winner--green .qth-house-winner-icon{background:#e4efe7;color:#27613f}
 .qth-house-winner--weak{border-color:#d9b3a9}
 .qth-house-winner--weak .qth-house-winner-icon{background:#f4e7e4;color:#985b50}
-.qth-house-performance-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0;padding:14px;border-radius:11px;background:var(--surface-2)}
+.qth-house-performance-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0;padding:14px;border-radius:11px;background:var(--surface-2)}
 .qth-house-performance-stats div{display:grid;gap:5px}
 .qth-house-performance-stats small{font-size:10px;color:var(--muted)}
 .qth-house-performance-stats strong{font-size:16px;color:var(--text)}
 .qth-house-performance-table-wrap h4{margin:12px 0}
-.qth-house-performance-table{min-width:760px!important;width:100%;border-collapse:collapse}
+.qth-house-performance-table{min-width:900px!important;width:100%;border-collapse:collapse}
 .qth-house-performance-table th,.qth-house-performance-table td{padding:11px 9px;text-align:left;border-bottom:1px solid var(--border);font-size:11px;white-space:nowrap}
 .qth-house-performance-table th{color:var(--muted);font-weight:700}
 .qth-house-share{min-width:90px;display:flex;align-items:center;gap:7px}
@@ -461,7 +461,7 @@ tbody tr:hover{background:#f8f8f2}
 .qth-house-weak-row{background:rgba(190,112,92,.07)}
 .qth-house-weak-label{display:block;margin-top:4px;color:#a45c4e;font-size:9px;font-weight:800}
 .qth-house-performance-note{margin-top:12px;line-height:1.55}
-@media(max-width:850px){.qth-house-winners{grid-template-columns:1fr 1fr}.qth-house-winner--weak{grid-column:1/-1}}
+@media(max-width:850px){.qth-house-winners{grid-template-columns:1fr 1fr}.qth-house-performance-stats{grid-template-columns:1fr 1fr}.qth-house-winner--weak{grid-column:1/-1}}
 @media(max-width:600px){.qth-house-winners{grid-template-columns:1fr}.qth-house-winner--weak{grid-column:auto}.qth-house-performance-stats{grid-template-columns:1fr 1fr}.qth-house-performance-heading{display:block}.qth-house-performance-heading label{margin-top:12px;max-width:180px}.qth-house-winner{min-height:130px}}
 
 </style>
@@ -574,8 +574,8 @@ tbody tr:hover{background:#f8f8f2}
    <strong id="houseTopGuestsName">—</strong><span id="houseTopGuestsValue">—</span><small id="houseTopGuestsNote">Qonaq sayı cəmi</small>
   </article>
   <article class="qth-house-winner qth-house-winner--green">
-   <div class="qth-house-winner-icon">⌂</div><div class="qth-house-winner-label">Cari ay ən çox işləyən ev</div>
-   <strong id="houseBusiestName">—</strong><span id="houseBusiestValue">—</span><small id="houseBusiestNote">Ən çox dolu gecə</small>
+   <div class="qth-house-winner-icon">⌂</div><div class="qth-house-winner-label">Cari ay ən çox bron olunmuş gecəsi olan ev</div>
+   <strong id="houseBusiestName">—</strong><span id="houseBusiestValue">—</span><small id="houseBusiestNote">Bron edilmiş gecələr</small>
   </article>
   <article class="qth-house-winner qth-house-winner--weak">
    <div class="qth-house-winner-icon">!</div><div class="qth-house-winner-label">Ən zəif ev</div>
@@ -586,12 +586,12 @@ tbody tr:hover{background:#f8f8f2}
   <div><small>Ümumi alınmış gəlir</small><strong id="housePerformanceRevenue">—</strong></div>
   <div><small>Ümumi qonaq sayı</small><strong id="housePerformanceGuests">—</strong></div>
   <div><small>Rezervasiya sayı</small><strong id="housePerformanceBookings">—</strong></div>
-  <div><small>Dolu gecələrin sayı</small><strong id="housePerformanceNights">—</strong></div>
+  <div><small>Bron olunmuş gecələr</small><strong id="housePerformanceNights">—</strong></div>
  </div>
  <div class="qth-house-performance-table-wrap">
-  <h4>Altı ev üzrə müqayisə</h4>
+  <h4>Rezervasiya qəbul etmiş evlər — gəlir sıralaması</h4>
   <div class="table-wrap"><table class="qth-house-performance-table">
-   <thead><tr><th>Sıra</th><th>Ev</th><th>Alınmış gəlir</th><th>Qonaq sayı</th><th>Rezervasiya</th><th>Dolu gecə</th><th>Doluluq</th><th>Gəlir payı</th></tr></thead>
+   <thead><tr><th>Sıra</th><th>Ev</th><th>Alınmış gəlir</th><th>Qonaq sayı</th><th>Rezervasiya</th><th>Bron gecəsi</th><th>Doluluq</th><th>Gəlir payı</th></tr></thead>
    <tbody id="housePerformanceRows"><tr><td colspan="8">Hesabat yüklənir...</td></tr></tbody>
   </table></div>
  </div>
@@ -1828,18 +1828,18 @@ window.loadHousePerformance=async function(){
   const topRevenue=data.topRevenue,topGuests=data.topGuests,weakest=data.weakest;
   const hasRevenue=topRevenue&&topRevenue.paidRevenue>0;
   const hasGuests=topGuests&&topGuests.guestCount>0;
-  const hasBookings=weakest&&weakest.reservationCount>0;
+  const hasBookings=weakest&&(weakest.reservationCount>0||weakest.paidRevenue>0||weakest.occupiedNights>0);
   document.getElementById("houseTopRevenueName").textContent=hasRevenue?topRevenue.name:"Məlumat yoxdur";
   document.getElementById("houseTopRevenueValue").textContent=hasRevenue?money(topRevenue.paidRevenue):"0.00 AZN";
-  document.getElementById("houseTopRevenueNote").textContent=hasRevenue?topRevenue.reservationCount+" rezervasiya üzrə alınmış ödəniş":"Seçilmiş ayda alınmış ödəniş qeydə alınmayıb";
+  document.getElementById("houseTopRevenueNote").textContent=hasRevenue?topRevenue.paymentCount+" faktiki ödəniş":"Seçilmiş ayda alınmış ödəniş qeydə alınmayıb";
   document.getElementById("houseTopGuestsName").textContent=hasGuests?topGuests.name:"Məlumat yoxdur";
   document.getElementById("houseTopGuestsValue").textContent=hasGuests?topGuests.guestCount+" qonaq":"0 qonaq";
   document.getElementById("houseTopGuestsNote").textContent=hasGuests?topGuests.reservationCount+" rezervasiyadan":"Seçilmiş ayda qonaq qeydə alınmayıb";
   const busiest=data.busiest;
   const busyHasData=busiest&&Number(busiest.occupiedNights||0)>0;
   document.getElementById("houseBusiestName").textContent=busyHasData?busiest.name:"Məlumat yoxdur";
-  document.getElementById("houseBusiestValue").textContent=busyHasData?busiest.occupiedNights+" dolu gecə":"0 dolu gecə";
-  document.getElementById("houseBusiestNote").textContent=busyHasData?busiest.reservationCount+" rezervasiya · "+busiest.occupancyRate+"% doluluq":"Seçilmiş ayda dolu gecə yoxdur";
+  document.getElementById("houseBusiestValue").textContent=busyHasData?busiest.occupiedNights+" bron gecəsi":"0 dolu gecə";
+  document.getElementById("houseBusiestNote").textContent=busyHasData?(busiest.occupiedReservationCount||0)+" aktiv bron · "+busiest.occupancyRate+"% doluluq":"Seçilmiş ayda dolu gecə yoxdur";
   document.getElementById("houseWeakestName").textContent=hasBookings?weakest.name:"Müqayisə üçün məlumat yoxdur";
   document.getElementById("houseWeakestValue").textContent=hasBookings?money(weakest.paidRevenue):"—";
   document.getElementById("houseWeakestNote").textContent=hasBookings?"Ən aşağı alınmış gəlir · "+weakest.reservationCount+" rezervasiya":"Bu ay üzrə aktiv rezervasiya yoxdur";
@@ -1862,14 +1862,23 @@ window.loadHousePerformance=async function(){
     '<td>'+Number(item.occupancyRate||0).toLocaleString("az-AZ",{maximumFractionDigits:1})+'%</td>'+
     '<td><div class="qth-house-share"><span>'+share.toLocaleString("az-AZ",{maximumFractionDigits:1})+'%</span><i><b style="width:'+Math.max(0,Math.min(100,bar))+'%"></b></i></div></td>'+
    '</tr>';
-  }).join("")||'<tr><td colspan="7">Aktiv ev tapılmadı.</td></tr>';
-  message.textContent="Hesabat dövrü: "+data.rangeStart+" – "+data.rangeEnd+". Sıralama faktiki alınmış gəlirə görə azalan qaydadadır. Cari ay ən çox işləyən ev dolu gecələrin sayına görə seçilir. Gəlir və qonaq sayı giriş tarixi seçilmiş ayda olan aktiv rezervasiyalardan hesablanır."+(data.truncated?" Qeyd: rezervasiya siyahısı 5000 sətirlə məhdudlaşıb.":"");
+  }).join("")||'<tr><td colspan="8">Aktiv ev tapılmadı.</td></tr>';
+  message.textContent="Hesabat dövrü: "+data.rangeStart+" – "+data.rangeEnd+". Gəlir həmin ay faktiki daxil olmuş ödəniş jurnalından hesablanır; sıralama gəlirə görə azalan qaydadadır. Qonaq və rezervasiya sayı giriş tarixi həmin ay olan aktiv bronlardan, ən çox işləyən ev isə bron gecələriin sayından müəyyən edilir."+(data.truncated?" Qeyd: rezervasiya siyahısı 5000 sətirlə məhdudlaşıb.":"");
  }catch(error){
   message.textContent="Ev analitikası yüklənmədi: "+error.message;
-  tbody.innerHTML='<tr><td colspan="7">Hesabat məlumatı əldə edilmədi.</td></tr>';
+  tbody.innerHTML='<tr><td colspan="8">Hesabat məlumatı əldə edilmədi.</td></tr>';
  }
 };
 document.getElementById("housePerformanceMonth")?.addEventListener("change",()=>window.loadHousePerformance());
+let qthHousePerformanceTimer=null;
+if(!qthHousePerformanceTimer){
+ qthHousePerformanceTimer=window.setInterval(()=>{
+  const dashboard=document.getElementById("dashboard");
+  if(document.visibilityState==="visible"&&document.body.classList.contains("qth-authenticated")&&dashboard?.classList.contains("active")&&window.qthAdminAuthClient){
+   window.loadHousePerformance();
+  }
+ },60000);
+}
 
 // Rezervasiyalar yalnız vahid administrator sessiyası açıldıqdan sonra yüklənir.
 </script>
