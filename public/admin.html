@@ -424,6 +424,46 @@ tbody tr:hover{background:#f8f8f2}
  .qth-reservation-calendar th,.qth-reservation-calendar td{min-width:35px!important}
 }
 
+
+/* House performance analytics */
+.qth-house-performance-panel{margin-top:18px}
+.qth-house-performance-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.qth-house-performance-heading h3{margin:0 0 5px}
+.qth-house-performance-heading label{display:grid;gap:5px;font-size:11px;color:var(--muted)}
+.qth-house-performance-heading input{padding:9px 10px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text)}
+.qth-house-performance-controls{display:flex;align-items:end;gap:8px;flex-wrap:wrap}
+.qth-house-performance-controls button{padding:9px 12px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);color:var(--text);font-weight:700;cursor:pointer}
+.qth-house-winners{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.qth-house-winner{position:relative;min-height:152px;padding:16px;border:1px solid var(--border);border-radius:13px;background:var(--surface);display:flex;flex-direction:column;gap:5px;overflow:hidden}
+.qth-house-winner-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:var(--surface-2);font-weight:900}
+.qth-house-winner-label{font-size:11px;color:var(--muted);margin-top:5px}
+.qth-house-winner strong{font-size:18px;color:var(--text);line-height:1.25}
+.qth-house-winner span{font-size:14px;font-weight:800;color:var(--text)}
+.qth-house-winner small{font-size:10px;color:var(--muted);line-height:1.4}
+.qth-house-winner--gold{border-color:#c7ad75}
+.qth-house-winner--gold .qth-house-winner-icon{background:#f4ead3;color:#87662b}
+.qth-house-winner--green{border-color:#9bbca4}
+.qth-house-winner--green .qth-house-winner-icon{background:#e4efe7;color:#27613f}
+.qth-house-winner--weak{border-color:#d9b3a9}
+.qth-house-winner--weak .qth-house-winner-icon{background:#f4e7e4;color:#985b50}
+.qth-house-performance-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0;padding:14px;border-radius:11px;background:var(--surface-2)}
+.qth-house-performance-stats div{display:grid;gap:5px}
+.qth-house-performance-stats small{font-size:10px;color:var(--muted)}
+.qth-house-performance-stats strong{font-size:16px;color:var(--text)}
+.qth-house-performance-table-wrap h4{margin:12px 0}
+.qth-house-performance-table{min-width:760px!important;width:100%;border-collapse:collapse}
+.qth-house-performance-table th,.qth-house-performance-table td{padding:11px 9px;text-align:left;border-bottom:1px solid var(--border);font-size:11px;white-space:nowrap}
+.qth-house-performance-table th{color:var(--muted);font-weight:700}
+.qth-house-share{min-width:90px;display:flex;align-items:center;gap:7px}
+.qth-house-share span{min-width:35px}
+.qth-house-share i{display:block;width:45px;height:6px;background:var(--surface-2);border-radius:9px;overflow:hidden}
+.qth-house-share b{display:block;height:100%;background:#b69a60;border-radius:9px}
+.qth-house-weak-row{background:rgba(190,112,92,.07)}
+.qth-house-weak-label{display:block;margin-top:4px;color:#a45c4e;font-size:9px;font-weight:800}
+.qth-house-performance-note{margin-top:12px;line-height:1.55}
+@media(max-width:850px){.qth-house-winners{grid-template-columns:1fr 1fr}.qth-house-winner--weak{grid-column:1/-1}}
+@media(max-width:600px){.qth-house-winners{grid-template-columns:1fr}.qth-house-winner--weak{grid-column:auto}.qth-house-performance-stats{grid-template-columns:1fr 1fr}.qth-house-performance-heading{display:block}.qth-house-performance-heading label{margin-top:12px;max-width:180px}.qth-house-winner{min-height:130px}}
+
 </style>
 </head>
 <body>
@@ -516,6 +556,46 @@ tbody tr:hover{background:#f8f8f2}
 <button onclick="openPage('utilities')"><strong>⚡ Kommunal</strong><span>Borclar və ödənişlər</span></button>
 <button onclick="openPage('reports')"><strong>▤ Hesabatlar</strong><span>Maliyyə nəticələri</span></button>
 </div>
+</div>
+
+
+<div class="panel qth-house-performance-panel">
+ <div class="qth-house-performance-heading">
+  <div><h3>Ev performansı — canlı dashboard</h3><p class="sub">Cari ay üzrə ən aktiv, ən çox gəlir gətirən və ən çox qonaq qəbul edən evlər.</p></div>
+  <div class="qth-house-performance-controls"><label>Hesabat ayı<input type="month" id="housePerformanceMonth"></label><button type="button" onclick="loadHousePerformance()">↻ Yenilə</button></div>
+ </div>
+ <div class="qth-house-winners">
+  <article class="qth-house-winner qth-house-winner--gold">
+   <div class="qth-house-winner-icon">₼</div><div class="qth-house-winner-label">Ən çox gəlir gətirən ev</div>
+   <strong id="houseTopRevenueName">—</strong><span id="houseTopRevenueValue">—</span><small id="houseTopRevenueNote">Faktiki alınmış ödənişlərə əsasən</small>
+  </article>
+  <article class="qth-house-winner qth-house-winner--green">
+   <div class="qth-house-winner-icon">♙</div><div class="qth-house-winner-label">Ən çox müştəri gələn ev</div>
+   <strong id="houseTopGuestsName">—</strong><span id="houseTopGuestsValue">—</span><small id="houseTopGuestsNote">Qonaq sayı cəmi</small>
+  </article>
+  <article class="qth-house-winner qth-house-winner--green">
+   <div class="qth-house-winner-icon">⌂</div><div class="qth-house-winner-label">Cari ay ən çox işləyən ev</div>
+   <strong id="houseBusiestName">—</strong><span id="houseBusiestValue">—</span><small id="houseBusiestNote">Ən çox dolu gecə</small>
+  </article>
+  <article class="qth-house-winner qth-house-winner--weak">
+   <div class="qth-house-winner-icon">!</div><div class="qth-house-winner-label">Ən zəif ev</div>
+   <strong id="houseWeakestName">—</strong><span id="houseWeakestValue">—</span><small id="houseWeakestNote">Ən aşağı alınmış gəlirə görə</small>
+  </article>
+ </div>
+ <div class="qth-house-performance-stats">
+  <div><small>Ümumi alınmış gəlir</small><strong id="housePerformanceRevenue">—</strong></div>
+  <div><small>Ümumi qonaq sayı</small><strong id="housePerformanceGuests">—</strong></div>
+  <div><small>Rezervasiya sayı</small><strong id="housePerformanceBookings">—</strong></div>
+  <div><small>Dolu gecələrin sayı</small><strong id="housePerformanceNights">—</strong></div>
+ </div>
+ <div class="qth-house-performance-table-wrap">
+  <h4>Altı ev üzrə müqayisə</h4>
+  <div class="table-wrap"><table class="qth-house-performance-table">
+   <thead><tr><th>Sıra</th><th>Ev</th><th>Alınmış gəlir</th><th>Qonaq sayı</th><th>Rezervasiya</th><th>Dolu gecə</th><th>Doluluq</th><th>Gəlir payı</th></tr></thead>
+   <tbody id="housePerformanceRows"><tr><td colspan="8">Hesabat yüklənir...</td></tr></tbody>
+  </table></div>
+ </div>
+ <p class="notice qth-house-performance-note" id="housePerformanceMessage" aria-live="polite">Göstəricilər yüklənir...</p>
 </div>
 
 <div class="panel">
@@ -871,7 +951,8 @@ function openPage(page){
  if(moreButton)moreButton.classList.toggle("active",["tariffs","finance","employees","cleaning","utilities","reports","settings"].includes(page));
  toggleMobileMore(false);
  document.getElementById("pageTitle").textContent=titles[page]||"Dashboard";
- if(page==="reservations" && typeof window.loadReservations==="function"){window.loadReservations();}
+ if(page==="dashboard" && typeof window.loadHousePerformance==="function"){window.loadHousePerformance();}
+  if(page==="reservations" && typeof window.loadReservations==="function"){window.loadReservations();}
  if(page==="calendar"){
   if(typeof window.loadReservations==="function")window.loadReservations();
   if(typeof window.loadDateBlocks==="function")window.loadDateBlocks();
@@ -913,7 +994,7 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
  const app=document.querySelector(".app");
  const message=document.getElementById("qthAdminAuthMessage");
  async function showSession(session){
-   if(session){document.body.classList.add("qth-authenticated");gate.style.display="none";app.style.display="flex";}
+   if(session){document.body.classList.add("qth-authenticated");gate.style.display="none";app.style.display="flex";if(typeof window.loadHousePerformance==="function")window.loadHousePerformance();}
    else{document.body.classList.remove("qth-authenticated");app.style.display="none";gate.style.display="flex";}
  }
  document.getElementById("qthAdminLogout").addEventListener("click",async()=>{
@@ -1192,6 +1273,7 @@ window.loadReservations = async function () {
     else renderReservations(allReservations);
     renderStayMonthReport();
     renderReservationCalendar();
+    if(typeof window.loadHousePerformance==="function")window.loadHousePerformance();
     document.getElementById("bookingCount").textContent =
       Number.isFinite(Number(result.totalCount)) ? Number(result.totalCount).toLocaleString("az-AZ") : allReservations.length.toLocaleString("az-AZ");
     document.getElementById("bookingCountNote").textContent =
@@ -1724,6 +1806,71 @@ window.deactivateSpecialDate = async function(date) {
 };
 
 document.getElementById("stayReportMonth")?.addEventListener("change", renderStayMonthReport);
+
+const HOUSE_PERFORMANCE_API="/.netlify/functions/admin-house-performance";
+window.loadHousePerformance=async function(){
+ const monthInput=document.getElementById("housePerformanceMonth");
+ const tbody=document.getElementById("housePerformanceRows");
+ const message=document.getElementById("housePerformanceMessage");
+ if(!tbody||!monthInput)return;
+ if(!monthInput.value){
+  monthInput.value=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Baku",year:"numeric",month:"2-digit"}).format(new Date());
+ }
+ message.textContent="Ev göstəriciləri yüklənir...";
+ try{
+  const token=await getAdminAccessToken();
+  const response=await fetch(HOUSE_PERFORMANCE_API+"?month="+encodeURIComponent(monthInput.value),{
+   headers:{"Authorization":"Bearer "+token}
+  });
+  const data=await response.json().catch(()=>({}));
+  if(response.status===401)throw new Error("Admin sessiyası bitib. Yenidən daxil olun.");
+  if(!response.ok)throw new Error(data.error||"Hesabat yüklənmədi.");
+  const topRevenue=data.topRevenue,topGuests=data.topGuests,weakest=data.weakest;
+  const hasRevenue=topRevenue&&topRevenue.paidRevenue>0;
+  const hasGuests=topGuests&&topGuests.guestCount>0;
+  const hasBookings=weakest&&weakest.reservationCount>0;
+  document.getElementById("houseTopRevenueName").textContent=hasRevenue?topRevenue.name:"Məlumat yoxdur";
+  document.getElementById("houseTopRevenueValue").textContent=hasRevenue?money(topRevenue.paidRevenue):"0.00 AZN";
+  document.getElementById("houseTopRevenueNote").textContent=hasRevenue?topRevenue.reservationCount+" rezervasiya üzrə alınmış ödəniş":"Seçilmiş ayda alınmış ödəniş qeydə alınmayıb";
+  document.getElementById("houseTopGuestsName").textContent=hasGuests?topGuests.name:"Məlumat yoxdur";
+  document.getElementById("houseTopGuestsValue").textContent=hasGuests?topGuests.guestCount+" qonaq":"0 qonaq";
+  document.getElementById("houseTopGuestsNote").textContent=hasGuests?topGuests.reservationCount+" rezervasiyadan":"Seçilmiş ayda qonaq qeydə alınmayıb";
+  const busiest=data.busiest;
+  const busyHasData=busiest&&Number(busiest.occupiedNights||0)>0;
+  document.getElementById("houseBusiestName").textContent=busyHasData?busiest.name:"Məlumat yoxdur";
+  document.getElementById("houseBusiestValue").textContent=busyHasData?busiest.occupiedNights+" dolu gecə":"0 dolu gecə";
+  document.getElementById("houseBusiestNote").textContent=busyHasData?busiest.reservationCount+" rezervasiya · "+busiest.occupancyRate+"% doluluq":"Seçilmiş ayda dolu gecə yoxdur";
+  document.getElementById("houseWeakestName").textContent=hasBookings?weakest.name:"Müqayisə üçün məlumat yoxdur";
+  document.getElementById("houseWeakestValue").textContent=hasBookings?money(weakest.paidRevenue):"—";
+  document.getElementById("houseWeakestNote").textContent=hasBookings?"Ən aşağı alınmış gəlir · "+weakest.reservationCount+" rezervasiya":"Bu ay üzrə aktiv rezervasiya yoxdur";
+  document.getElementById("housePerformanceRevenue").textContent=money(data.totalPaidRevenue||0);
+  document.getElementById("housePerformanceGuests").textContent=String(data.totalGuests||0);
+  document.getElementById("housePerformanceBookings").textContent=String(data.totalReservations||0);
+  document.getElementById("housePerformanceNights").textContent=String((data.units||[]).reduce((sum,item)=>sum+Number(item.occupiedNights||0),0));
+  const maxRevenue=Math.max(0,...(data.units||[]).map(item=>Number(item.paidRevenue||0)));
+  tbody.innerHTML=(data.units||[]).map((item,index)=>{
+   const share=data.totalPaidRevenue>0?Number(item.paidRevenue||0)/data.totalPaidRevenue*100:0;
+   const bar=maxRevenue>0?Number(item.paidRevenue||0)/maxRevenue*100:0;
+   const isWeak=hasBookings&&weakest&&item.unitId===weakest.unitId;
+   return '<tr class="'+(isWeak?"qth-house-weak-row":"")+'">'+
+    '<td><strong>#'+(index+1)+'</strong></td>'+
+    '<td><strong>'+escapeReservation(item.name)+'</strong>'+(isWeak?'<small class="qth-house-weak-label">Ən zəif göstərici</small>':'')+'</td>'+
+    '<td><strong>'+money(item.paidRevenue)+'</strong></td>'+
+    '<td>'+Number(item.guestCount||0)+'</td>'+
+    '<td>'+Number(item.reservationCount||0)+'</td>'+
+    '<td>'+Number(item.occupiedNights||0)+'</td>'+
+    '<td>'+Number(item.occupancyRate||0).toLocaleString("az-AZ",{maximumFractionDigits:1})+'%</td>'+
+    '<td><div class="qth-house-share"><span>'+share.toLocaleString("az-AZ",{maximumFractionDigits:1})+'%</span><i><b style="width:'+Math.max(0,Math.min(100,bar))+'%"></b></i></div></td>'+
+   '</tr>';
+  }).join("")||'<tr><td colspan="7">Aktiv ev tapılmadı.</td></tr>';
+  message.textContent="Hesabat dövrü: "+data.rangeStart+" – "+data.rangeEnd+". Sıralama faktiki alınmış gəlirə görə azalan qaydadadır. Cari ay ən çox işləyən ev dolu gecələrin sayına görə seçilir. Gəlir və qonaq sayı giriş tarixi seçilmiş ayda olan aktiv rezervasiyalardan hesablanır."+(data.truncated?" Qeyd: rezervasiya siyahısı 5000 sətirlə məhdudlaşıb.":"");
+ }catch(error){
+  message.textContent="Ev analitikası yüklənmədi: "+error.message;
+  tbody.innerHTML='<tr><td colspan="7">Hesabat məlumatı əldə edilmədi.</td></tr>';
+ }
+};
+document.getElementById("housePerformanceMonth")?.addEventListener("change",()=>window.loadHousePerformance());
+
 // Rezervasiyalar yalnız vahid administrator sessiyası açıldıqdan sonra yüklənir.
 </script>
 </body>
