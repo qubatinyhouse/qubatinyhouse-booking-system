@@ -253,7 +253,7 @@ async function loadWorkAndDebt(){
  $("paidTotal").textContent=money(sum("cleaningPaid"));
  $("debtTotal").textContent=money(sum("cleaningDebt"));
  $("completedWorkCount").textContent=String(works.filter(w=>w.status==="completed").length);
- $("payrollDebtTable").innerHTML='<div class="table-wrap"><table><thead><tr><th>İşçi</th><th>Aylıq maaş</th><th>Bu ay təmizlik</th><th>Bu ay təmizlik haqqı</th><th>Bu ay ödənilib</th><th>Əvvəlki təmizlik borcu</th><th>Borc qalan aylar</th><th>Qalıq təmizlik borcu</th></tr></thead><tbody>'+
+ $("payrollDebtTable").innerHTML='<div class="table-wrap"><table><thead><tr><th>İşçi</th><th>Aylıq maaş</th><th>Bu ay tamamlanan iş sayı</th><th>Bu ay təmizlik haqqı</th><th>Bu ay ödənilib</th><th>Əvvəlki təmizlik borcu</th><th>Borc qalan aylar</th><th>Qalıq təmizlik borcu</th></tr></thead><tbody>'+
  (rows.map(r=>'<tr><td>'+esc(r.e.full_name)+'</td><td>'+money(r.base)+'</td><td>'+money(r.cleaning)+'</td><td>'+money(r.cleaning)+'</td><td>'+money(r.cleaningPaid)+'</td><td>'+money(r.opening)+'</td><td>'+esc(r.monthDebts.map(x=>{const p=x.month.split("-").map(Number);return new Intl.DateTimeFormat("az-AZ",{month:"long",year:"numeric"}).format(new Date(p[0],p[1]-1,1))+": "+money(x.balance)}).join(" · ")||"Borc yoxdur")+'</td><td><b>'+money(r.cleaningDebt)+'</b></td></tr>').join("")||'<tr><td colspan="8">Aktiv işçi yoxdur.</td></tr>')+'</tbody></table></div>';
  $("workEmployee").innerHTML='<option value="">İşçi seçin</option>'+employees.filter(e=>e.active).map(e=>'<option value="'+esc(e.id)+'">'+esc(e.full_name)+'</option>').join("");
  $("workHistory").innerHTML=works.length?'<div class="table-wrap"><table><thead><tr><th>Tarix</th><th>Ev</th><th>İşçi</th><th>Məbləğ</th><th>Status</th></tr></thead><tbody>'+
