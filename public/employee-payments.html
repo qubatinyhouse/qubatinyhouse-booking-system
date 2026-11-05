@@ -175,17 +175,45 @@ async function loadHistory(){
  '</tbody></table></div>':'<p>Hələ ödəniş qeydə alınmayıb.</p>';
 }
 async function savePayment(){
- const employee_id=$("paymentEmployee").value,amount=Number($("paymentAmount").value),payment_date=$("paymentDate").value,payment_method=$("paymentMethod").value,period_start=$("periodStart").value,period_end=$("periodEnd").value,notes=$("paymentNotes").value.trim(),category=$("paymentCategory").value;
- const msg=$("paymentMessage");
- if(!employee_id||!Number.isFinite(amount)||amount<=0||!payment_date||!period_start||!period_end){msg.textContent="İşçi, məbləğ və tarixləri doldurun.";return}
- if(period_end<period_start){msg.textContent="Dövrün son tarixi başlanğıcdan əvvəl ola bilməz.";return}
- $("savePayment").disabled=true;msg.textContent="Ödəniş bazaya yazılır...";
- const {error}=await db.rpc("pay_employee_compensation",{p_employee_id:employee_id,p_amount:amount,p_payment_date:payment_date,p_payment_method:payment_method,p_period_start:period_start,p_period_end:period_end,p_notes:notes,p_category:category});
- $("savePayment").disabled=false;
- if(error){msg.textContent="Ödəniş qeydə alınmadı: "+error.message;return}
- msg.textContent="Ödəniş qeydə alındı və maliyyə xərclərinə əlavə edildi.";
- $("paymentAmount").value="";$("paymentNotes").value="";
- await loadHistory();
+ const employee_id=$("paymentEmployee").value,amount=Number($("paymentAmount").value),payment_date=$("paymentDate").value,payment_method=$("paymentMethod").value,period_start=$("periodStart").value,period_end=$("periodEnd").value,notes=$("paymentNotes").value.trim(),category=$("paymentCategory").value,msg=$("paymentMessage");
+ if(!employee_id||!Number.isFinite(amount)||amount<=0||!payment_date){msg.textContent="İşçi, məbləğ və ödəniş tarixini düzgün daxil edin.";return}
+ if(category==="Maaş"&&(!period_start||!period_end||period_end<period_start)){msg.textContent="Maaş ödənişi üçün dövrü düzgün seçin.";return}
+ $("savePayment").disabled=true;msg.textContent="Borc yoxlanılır və ödəniş bölüşdürülür...";
+ try{
+  if(category==="Təmizlik haqqı"){
+   const [wr,pr,obr]=await Promise.all([
+    db.from("cleaning_tasks").select("task_date,amount,status").eq("employee_id",employee_id).eq("status","completed").lte("task_date",payment_date).order("task_date",{ascending:true}),
+    db.from("salary_payments").select("amount,period_start,notes").eq("employee_id",employee_id).lte("payment_date",payment_date),
+    db.from("employee_opening_balances").select("balance_month,amount").eq("employee_id",employee_id).lte("balance_month",payment_date)
+   ]);
+   if(wr.error)throw wr.error;if(pr.error)throw pr.error;if(obr.error)throw obr.error;
+   const buckets={};
+   (obr.data||[]).forEach(x=>{const m=String(x.balance_month).slice(0,7);buckets[m]=(buckets[m]||0)+Number(x.amount||0)});
+   (wr.data||[]).forEach(x=>{const m=String(x.task_date).slice(0,7);buckets[m]=(buckets[m]||0)+Number(x.amount||0)});
+   (pr.data||[]).filter(x=>(x.notes||"").startsWith("Təmizlik haqqı")).forEach(x=>{const m=String(x.period_start||"").slice(0,7);if(m)buckets[m]=(buckets[m]||0)-Number(x.amount||0)});
+   const months=Object.keys(buckets).sort().map(m=>({month:m,balance:Math.max(0,buckets[m])})).filter(x=>x.balance>0);
+   const totalDebt=months.reduce((a,x)=>a+x.balance,0);
+   if(amount>totalDebt+0.001)throw new Error("Daxil edilən məbləğ qalıq təmizlik borcundan çoxdur. Hazırkı borc: "+money(totalDebt));
+   let left=amount;
+   for(const item of months){
+    if(left<=0.001)break;
+    const part=Math.min(left,item.balance),year=Number(item.month.slice(0,4)),month=Number(item.month.slice(5,7));
+    const pstart=item.month+"-01",pend=new Date(year,month,0).toISOString().slice(0,10);
+    const monthLabel=new Intl.DateTimeFormat("az-AZ",{month:"long",year:"numeric",timeZone:"Asia/Baku"}).format(new Date(Date.UTC(year,month-1,1)));
+    const {error}=await db.rpc("pay_employee_compensation",{p_employee_id:employee_id,p_amount:Number(part.toFixed(2)),p_payment_date:payment_date,p_payment_method:payment_method,p_period_start:pstart,p_period_end:pend,p_notes:"Borc ödənişi — "+monthLabel+(notes?" — "+notes:""),p_category:"Təmizlik haqqı"});
+    if(error)throw error;
+    left=Number((left-part).toFixed(2));
+   }
+   msg.textContent="Ödəniş qeydə alındı. Əvvəlcə ən köhnə ayın borcu bağlandı.";
+  }else{
+   const {error}=await db.rpc("pay_employee_compensation",{p_employee_id:employee_id,p_amount:amount,p_payment_date:payment_date,p_payment_method:payment_method,p_period_start:period_start,p_period_end:period_end,p_notes:notes,p_category:category});
+   if(error)throw error;
+   msg.textContent="Maaş ödənişi qeydə alındı və maliyyə xərclərinə əlavə edildi.";
+  }
+  $("paymentAmount").value="";$("paymentNotes").value="";
+  await loadHistory();await loadWorkAndDebt();
+ }catch(error){msg.textContent="Ödəniş qeydə alınmadı: "+(error.message||String(error))}
+ finally{$("savePayment").disabled=false}
 }
 function monthRange(){const v=$("payrollMonth").value||localToday().slice(0,7);const y=Number(v.slice(0,4)),m=Number(v.slice(5,7));return {start:v+"-01",end:new Date(y,m,0).toISOString().slice(0,10)};}
 async function loadWorkAndDebt(){
