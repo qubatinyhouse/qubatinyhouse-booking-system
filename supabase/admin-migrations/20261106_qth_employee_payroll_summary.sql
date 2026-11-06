@@ -45,7 +45,7 @@ begin
     select t.id,t.employee_id,t.task_date,greatest(0,t.amount-coalesce(sum(cp.amount),0)) as remaining
     from public.cleaning_tasks t
     left join public.cleaning_task_payments cp on cp.cleaning_task_id=t.id
-    where t.status='completed' and t.task_date <= v_month_end
+    where lower(coalesce(t.status,'')) not in ('cancelled','canceled','ləğv edilib','legv edilib') and t.task_date <= v_month_end
     group by t.id,t.employee_id,t.task_date,t.amount
   ),
   per_employee as (
