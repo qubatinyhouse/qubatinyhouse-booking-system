@@ -743,12 +743,57 @@ const expenseBreakdown=Object.entries(expenseGroups)
   .filter(([,amount])=>amount>0)
   .map(([name,amount])=>({name,amount}))
   .sort((a,b)=>a.amount-b.amount);
+
+// Əməkhaqqı borcu: aylıq maaş öhdəliyi və tamamlanmış təmizlik işləri.
+const monthStart=currentMonth+"-01";
+const monthEnd=new Date(Number(currentMonth.slice(0,4)),Number(currentMonth.slice(5,7)),0).toISOString().slice(0,10);
+const [employeesRes,salaryRes,openingRes,cleaningRes,cleaningPaymentsRes]=await Promise.all([
+  client.from("employees").select("id,salary_type,base_salary,active"),
+  client.from("salary_payments").select("employee_id,amount,payment_date,period_start,period_end"),
+  client.from("employee_opening_balances").select("employee_id,balance_month,amount"),
+  client.from("cleaning_tasks").select("id,task_date,employee_id,status,amount").eq("status","completed"),
+  client.from("cleaning_task_payments").select("cleaning_task_id,amount,payment_date")
+]);
+const payrollErrors=[employeesRes,salaryRes,openingRes,cleaningRes,cleaningPaymentsRes].filter(x=>x.error);
+let payrollSummary=null;
+if(!payrollErrors.length){
+  const employees=employeesRes.data||[], salaryRows=salaryRes.data||[], openingRows=openingRes.data||[];
+  const tasks=cleaningRes.data||[], cleaningPayments=cleaningPaymentsRes.data||[];
+  const overlap=(aStart,aEnd,bStart,bEnd)=>aStart<=bEnd&&aEnd>=bStart;
+  const currentSalaryAccrued=employees.filter(e=>e.active&&e.salary_type==="monthly").reduce((sum,e)=>sum+Number(e.base_salary||0),0);
+  const currentSalaryPaid=salaryRows.filter(p=>p.period_start&&p.period_end&&overlap(p.period_start,p.period_end,monthStart,monthEnd)).reduce((sum,p)=>sum+Number(p.amount||0),0);
+  const currentSalaryRemaining=Math.max(0,currentSalaryAccrued-currentSalaryPaid);
+  const paidByTask={};
+  cleaningPayments.forEach(p=>paidByTask[p.cleaning_task_id]=(paidByTask[p.cleaning_task_id]||0)+Number(p.amount||0));
+  let cleaningOutstanding=0,currentCleaningRemaining=0;
+  tasks.forEach(t=>{
+    const due=Math.max(0,Number(t.amount||0)-(paidByTask[t.id]||0));
+    cleaningOutstanding+=due;
+    if(String(t.task_date||"").slice(0,7)===currentMonth) currentCleaningRemaining+=due;
+  });
+  let openingDebt=0;
+  openingRows.forEach(o=>{
+    const period=String(o.balance_month||"").slice(0,7);
+    const periodEnd=period?new Date(Number(period.slice(0,4)),Number(period.slice(5,7)),0).toISOString().slice(0,10):"";
+    const paidAgainstPeriod=salaryRows.filter(p=>p.employee_id===o.employee_id&&p.period_start&&p.period_end&&period&&overlap(p.period_start,p.period_end,period+"-01",periodEnd)).reduce((sum,p)=>sum+Number(p.amount||0),0);
+    openingDebt+=Math.max(0,Number(o.amount||0)-paidAgainstPeriod);
+  });
+  const currentMonthPaid=salaryRows.filter(p=>String(p.payment_date||"").slice(0,7)===currentMonth).reduce((sum,p)=>sum+Number(p.amount||0),0)
+    +cleaningPayments.filter(p=>String(p.payment_date||"").slice(0,7)===currentMonth).reduce((sum,p)=>sum+Number(p.amount||0),0);
+  payrollSummary={
+    totalDebt:openingDebt+currentSalaryRemaining+cleaningOutstanding,
+    currentMonthRemaining:currentSalaryRemaining+currentCleaningRemaining,
+    currentMonthPaid
+  };
+}
 if (window.parent !== window) {
   window.parent.postMessage({
     type: "QTH_FINANCE_SUMMARY",
     income: currentIncome,
     expense: currentExpense,
     expenseBreakdown,
+    payrollSummary,
+    payrollError: payrollErrors.length ? payrollErrors.map(x=>x.error.message).join('; ') : null,
     month: currentMonth
   }, window.location.origin);
 }
