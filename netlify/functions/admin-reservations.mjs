@@ -216,7 +216,19 @@ export const handler = async (event) => {
           if (/DEPOSIT_PAYMENT_NOT_FOUND/i.test(message)) return json(404, { error: 'Seçilmiş avans ödənişi tapılmadı.' });
           if (/PAYMENTS_EXCEED_TOTAL/i.test(message)) return json(400, { error: 'Düzəldilmiş ödənişlərin cəmi rezervasiyanın ümumi məbləğini keçə bilməz.' });
           if (/RESERVATION_NOT_ACTIVE/i.test(message)) return json(409, { error: 'Ləğv edilmiş və ya vaxtı bitmiş rezervasiya üzrə avans dəyişdirilə bilməz.' });
-          if (/DEPOSIT_AMOUNT_UNCHANGED/i.test(message)) return json(400, { error: 'Yeni avans məbləği əvvəlki məbləğlə eynidir.' });
+          if (/DEPOSIT_AMOUNT_UNCHANGED/i.test(message)) {
+            const { data: existingPayment, error: existingPaymentError } = await client.from('reservation_payments')
+              .select('id,reservation_id,amount,payment_type,payment_method,payment_date,notes,created_at')
+              .eq('id', paymentId).single();
+            if (existingPaymentError) throw existingPaymentError;
+            const { data: existingReservation, error: existingReservationError } = await client.from('reservations')
+              .select('id,booking_code,unit_id,check_in,check_out,guest_name,phone,guest_count,note,total_amount,deposit_amount,remaining_amount,paid_amount,paid_at,status,payment_status,campaign_code,campaign_name,marriage_confirmed,created_at')
+              .eq('id', id).single();
+            if (existingReservationError) throw existingReservationError;
+            return json(200, { success: true, alreadyAdjusted: true,
+              adjustment: { old_amount: amount, new_amount: amount, paid_amount: existingReservation.paid_amount, remaining_amount: existingReservation.remaining_amount },
+              payment: existingPayment, reservation: existingReservation });
+          }
           throw error;
         }
         const adjusted = Array.isArray(rows) ? rows[0] : rows;
