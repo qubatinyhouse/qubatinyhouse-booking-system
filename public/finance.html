@@ -764,7 +764,7 @@ if (window.parent !== window) {
     expenseBreakdown,
     payrollSummary,
     payrollEmployees,
-    payrollError: payrollErrors.length ? payrollErrors.map(x=>x.error.message).join('; ') : null,
+    payrollError,
     month: currentMonth
   }, window.location.origin);
 }
