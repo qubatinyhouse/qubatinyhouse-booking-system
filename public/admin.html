@@ -1077,6 +1077,10 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
    }
  }
  async function runMfaFlow(session){
+   const verifiedUser=await authClient.auth.getUser(session.access_token);
+   if(verifiedUser.error||verifiedUser.data?.user?.app_metadata?.role!=="admin"){
+     throw new Error("Bu Supabase hesabına admin səlahiyyəti verilməyib.");
+   }
    const aalResult=await authClient.auth.mfa.getAuthenticatorAssuranceLevel();
    if(aalResult.error)throw aalResult.error;
    if(aalResult.data?.currentLevel==="aal2"){
