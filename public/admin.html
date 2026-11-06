@@ -1509,6 +1509,36 @@ window.showReservationDetails = function (id) {
   const defaultType = depositDue > 0 ? "deposit" : "remaining";
   const today = new Date().toLocaleDateString("en-CA", {timeZone:"Asia/Baku"});
   const disabledPayment = ["cancelled","expired","payment_failed","payment_review"].includes(r.status) || remaining <= 0;
+  const editable = !["cancelled","expired"].includes(String(r.status || "").toLowerCase());
+  const formInsert = editable ? `
+    <h4 style="margin:20px 0 8px;color:#294b37">Rezervasiyanı dəyiş / erkən çıxış</h4>
+    <form class="qth-payment-form" onsubmit="submitReservationModification(event,'${r.id}')">
+      <label>Dəyişiklik növü
+        <select name="changeMode">
+          <option value="modify">Ev / tarix / qonaq sayı / məbləğ dəyiş</option>
+          <option value="early_checkout">Vaxtından əvvəl çıxış</option>
+        </select>
+      </label>
+      <label>Ev
+        <select name="unitId">
+          <option value="scandi-large-1" ${r.unit_id==="scandi-large-1"?"selected":""}>Orange House</option>
+          <option value="scandi-large-2" ${r.unit_id==="scandi-large-2"?"selected":""}>White House</option>
+          <option value="scandi-small-1" ${r.unit_id==="scandi-small-1"?"selected":""}>Blue House</option>
+          <option value="scandi-small-2" ${r.unit_id==="scandi-small-2"?"selected":""}>Green House</option>
+          <option value="aframe-1" ${r.unit_id==="aframe-1"?"selected":""}>A-FRAME-1</option>
+          <option value="aframe-2" ${r.unit_id==="aframe-2"?"selected":""}>A-FRAME-2</option>
+        </select>
+      </label>
+      <label>Qonaq sayı<input name="guestCount" type="number" min="1" max="10" step="1" value="${Number(r.guest_count||1)}" required></label>
+      <label>Giriş tarixi<input name="checkIn" type="date" value="${escapeReservation(r.check_in||"")}" required></label>
+      <label>Çıxış tarixi<input name="checkOut" type="date" value="${escapeReservation(r.check_out||"")}" required></label>
+      <label>Yeni ümumi məbləğ (AZN)<input name="totalAmount" type="number" min="${paid.toFixed(2)}" step="0.01" value="${Number(r.total_amount||0).toFixed(2)}" required></label>
+      <label class="wide">Dəyişiklik səbəbi<input name="reason" maxlength="500" placeholder="Məsələn: müştəri başqa evə keçirildi"></label>
+      <div class="wide">
+        <button class="btn" type="submit">Dəyişiklikləri yadda saxla</button>
+        <p id="reservationChangeMessage" class="muted" aria-live="polite">Artıq qəbul edilmiş ödənişlər və ödəniş tarixçəsi qorunur. Ev və tarix dəyişikliyi yalnız boşluq və tutum yoxlamasından sonra qəbul edilir.</p>
+      </div>
+    </form>` : '<p class="notice">Ləğv edilmiş və vaxtı bitmiş rezervasiyanın məlumatları dəyişdirilə bilməz.</p>';
   document.getElementById("reservationDetailsTitle").textContent =
     "Rezervasiya — " + (r.booking_code || r.id);
   content.innerHTML = `
