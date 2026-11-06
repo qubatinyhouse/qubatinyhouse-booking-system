@@ -736,7 +736,7 @@ const expenseGroups = {
   if(/instagram|insta|meta ads|facebook ads/.test(text)) group="Instagram reklamları";
   else if(/seher yemeyi|breakfast|qida|erzaq/.test(text)) group="Səhər yeməyi";
   else if(/kommunal|qaz|azerigas|su techiz|isiq|elektrik|internet/.test(text)) group="Kommunal xərclər";
-  else if(/maas|temizlik haqqi|isci|emek haqqi|salary/.test(text)) group="İşçilərə ödənişlər";
+  else if(/maas|maaş|temizlik|isci|emek haqqi|salary/.test(text)) group="İşçilərə ödənişlər";
   expenseGroups[group]+=Math.max(0,Number(item.amount||0));
 });
 const expenseBreakdown=Object.entries(expenseGroups)
@@ -746,7 +746,7 @@ const expenseBreakdown=Object.entries(expenseGroups)
 
 // Əməkhaqqı borcu: aylıq maaş öhdəliyi və tamamlanmış təmizlik işləri.
 const monthStart=currentMonth+"-01";
-const monthEnd=new Date(Number(currentMonth.slice(0,4)),Number(currentMonth.slice(5,7)),0).toISOString().slice(0,10);
+const monthEnd=new Date(Date.UTC(Number(currentMonth.slice(0,4)),Number(currentMonth.slice(5,7)),0)).toISOString().slice(0,10);
 const [employeesRes,salaryRes,openingRes,cleaningRes,cleaningPaymentsRes]=await Promise.all([
   client.from("employees").select("id,salary_type,base_salary,active"),
   client.from("salary_payments").select("employee_id,amount,payment_date,period_start,period_end"),
@@ -774,7 +774,7 @@ if(!payrollErrors.length){
   let openingDebt=0;
   openingRows.forEach(o=>{
     const period=String(o.balance_month||"").slice(0,7);
-    const periodEnd=period?new Date(Number(period.slice(0,4)),Number(period.slice(5,7)),0).toISOString().slice(0,10):"";
+    const periodEnd=period?new Date(Date.UTC(Number(period.slice(0,4)),Number(period.slice(5,7)),0)).toISOString().slice(0,10):"";
     const paidAgainstPeriod=salaryRows.filter(p=>p.employee_id===o.employee_id&&p.period_start&&p.period_end&&period&&overlap(p.period_start,p.period_end,period+"-01",periodEnd)).reduce((sum,p)=>sum+Number(p.amount||0),0);
     openingDebt+=Math.max(0,Number(o.amount||0)-paidAgainstPeriod);
   });
