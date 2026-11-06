@@ -240,6 +240,8 @@ export const handler = async (event) => {
             return json(409, { error: 'Seçilmiş ev və tarixlərdə başqa rezervasiya və ya bağlı gün mövcuddur.' });
           if (/UNIT_CAPACITY/i.test(message))
             return json(400, { error: 'Qonaq sayı seçilmiş evin tutumundan çoxdur.' });
+          if (/PAID_AMOUNT_EXCEEDS_TOTAL/i.test(message))
+            return json(400, { error: 'Yeni ümumi məbləğ artıq qəbul edilmiş ödənişdən az ola bilməz. Ödəniş tarixçəsi qorunur.' });
           throw updateError;
         }
         const updated = Array.isArray(updatedRows) ? updatedRows[0] : updatedRows;
