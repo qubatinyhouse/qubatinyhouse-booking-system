@@ -729,14 +729,14 @@ const expenseGroups = {
 };
 (transactions || []).forEach(item => {
   if(item.transaction_type!=="expense" || !item.transaction_date || item.transaction_date.slice(0,7)!==currentMonth) return;
-  const category=String(item.category||"").toLocaleLowerCase("az");
-  const description=String(item.description||"").toLocaleLowerCase("az");
-  const text=category+" "+description;
+  const category=String(item.category||"");
+  const description=String(item.description||"");
+  const text=(category+" "+description).normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLocaleLowerCase("az");
   let group="Digər xərclər";
-  if(/instagram|meta ads|facebook ads|reklam/.test(text)) group="Instagram reklamları";
-  else if(/səhər yeməyi|seher yemeyi|breakfast|qida|ərzaq|erzaq/.test(text)) group="Səhər yeməyi";
-  else if(/kommunal|qaz|azəriqaz|azerigas|su təchiz|işıq|elektrik|internet/.test(text)) group="Kommunal xərclər";
-  else if(/maaş|maas|təmizlik haqqı|temizlik haqqi|işçi|isci|əmək haqqı|emek haqqi/.test(text)) group="İşçilərə ödənişlər";
+  if(/instagram|insta|meta ads|facebook ads/.test(text)) group="Instagram reklamları";
+  else if(/seher yemeyi|breakfast|qida|erzaq/.test(text)) group="Səhər yeməyi";
+  else if(/kommunal|qaz|azerigas|su techiz|isiq|elektrik|internet/.test(text)) group="Kommunal xərclər";
+  else if(/maas|temizlik haqqi|isci|emek haqqi|salary/.test(text)) group="İşçilərə ödənişlər";
   expenseGroups[group]+=Math.max(0,Number(item.amount||0));
 });
 const expenseBreakdown=Object.entries(expenseGroups)
