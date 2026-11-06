@@ -998,9 +998,40 @@ async function loadCleaningTasks(){
   if(!host)return;
   const {data,error}=await client.from("cleaning_tasks").select("id,house_type,house_name,task_date,employee_id,status,amount,notes").order("task_date",{ascending:false}).limit(100);
   if(error){host.textContent="Tapşırıqlar yüklənmədi: "+error.message;return;}
+  const {data:payments,error:paymentError}=await client.from("cleaning_task_payments").select("cleaning_task_id,amount,payment_date,payment_method");
+  if(paymentError){host.textContent="Təmizlik ödənişləri yüklənmədi: "+paymentError.message;return;}
+  const paidByTask={};
+  (payments||[]).forEach(p=>{paidByTask[p.cleaning_task_id]=(paidByTask[p.cleaning_task_id]||0)+Number(p.amount||0);});
   const names={}; (window.qthEmployees||[]).forEach(e=>names[e.id]=e.full_name);
-  host.innerHTML=(data||[]).length?'<div style="overflow-x:auto"><table><thead><tr><th>Tarix</th><th>Ev</th><th>İşçi</th><th>Məbləğ</th><th>Status</th><th>Əməliyyat</th></tr></thead><tbody>'+
-    data.map(t=>'<tr><td>'+escapeHTML(t.task_date)+'</td><td>'+escapeHTML(t.house_name||t.house_type)+'</td><td>'+escapeHTML(names[t.employee_id]||"—")+'</td><td>'+money(t.amount)+'</td><td>'+(t.status==="completed"?"Tamamlandı":"Gözləyir")+'</td><td>'+(t.status==="pending"?'<button type="button" onclick="completeCleaningTask(\''+t.id+'\')">Tamamla</button>':'—')+'</td></tr>').join("")+'</tbody></table></div>':'<p class="muted">Təmizlik tapşırığı yoxdur.</p>';
+  host.innerHTML=(data||[]).length?'<div style="overflow-x:auto"><table><thead><tr><th>Tarix</th><th>Ev</th><th>İşçi</th><th>Tapşırıq</th><th>Ödənilib</th><th>Qalıq</th><th>Status</th><th>Əməliyyat</th></tr></thead><tbody>'+
+    data.map(t=>{
+      const amount=Number(t.amount||0),paid=paidByTask[t.id]||0,remaining=Math.max(0,amount-paid);
+      const action=t.status!=="completed"?'<button type="button" onclick="completeCleaningTask(\''+t.id+'\')">Tamamla</button>':(remaining>0.001?'<button type="button" onclick="payCleaningTask(\''+t.id+'\','+remaining.toFixed(2)+')">Ödəniş et</button>':'Ödənilib');
+      return '<tr><td>'+escapeHTML(t.task_date)+'</td><td>'+escapeHTML(t.house_name||t.house_type)+'</td><td>'+escapeHTML(names[t.employee_id]||"—")+'</td><td>'+money(amount)+'</td><td class="green">'+money(paid)+'</td><td class="'+(remaining>0.001?'red':'green')+'">'+money(remaining)+'</td><td>'+(t.status==="completed"?"Tamamlandı":"Gözləyir")+'</td><td>'+action+'</td></tr>';
+    }).join("")+'</tbody></table></div>':'<p class="muted">Təmizlik tapşırığı yoxdur.</p>';
+}
+async function payCleaningTask(taskId,remaining){
+  const amountText=prompt("Ödənilən məbləğ (AZN). Qalıq: "+Number(remaining).toFixed(2),Number(remaining).toFixed(2));
+  if(amountText===null)return;
+  const amount=Number(amountText.replace(",","."));
+  if(!Number.isFinite(amount)||amount<=0||amount>Number(remaining)+0.001){alert("Məbləğ qalıq borcdan çox ola bilməz və sıfırdan böyük olmalıdır.");return;}
+  const methodText=prompt("Ödəniş üsulu: cash / bank / card","cash");
+  if(methodText===null)return;
+  const method=methodText.trim().toLowerCase();
+  if(!["cash","bank","card"].includes(method)){alert("Ödəniş üsulu cash, bank və ya card olmalıdır.");return;}
+  const paymentDate=prompt("Ödəniş tarixi (YYYY-MM-DD)",localDate);
+  if(paymentDate===null)return;
+  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(paymentDate)){alert("Tarix formatı YYYY-MM-DD olmalıdır.");return;}
+  const notes=prompt("Qeyd (istəyə bağlı)","")||null;
+  const requestKey=crypto.randomUUID();
+  const {error}=await client.rpc("record_cleaning_task_payment",{
+    p_cleaning_task_id:taskId,p_amount:amount,p_payment_date:paymentDate,
+    p_payment_method:method,p_notes:notes,p_request_key:requestKey
+  });
+  if(error){alert("Ödəniş qeydə alınmadı: "+error.message);return;}
+  alert("Təmizlik ödənişi qeydə alındı və Maliyyə jurnalına xərc kimi əlavə edildi.");
+  await loadData();
+  await loadCleaningTasks();
 }
 function setCleaningRate(){
   const type=document.getElementById("cleaningHouseType").value;
