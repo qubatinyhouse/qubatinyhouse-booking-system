@@ -20,6 +20,30 @@
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
     Strict-Transport-Security = "max-age=31536000"
 
+[[headers]]
+  for = "/admin.html"
+  [headers.values]
+    Cache-Control = "private, no-store, max-age=0"
+    Pragma = "no-cache"
+
+[[headers]]
+  for = "/finance.html"
+  [headers.values]
+    Cache-Control = "private, no-store, max-age=0"
+    Pragma = "no-cache"
+
+[[headers]]
+  for = "/utility-management.html"
+  [headers.values]
+    Cache-Control = "private, no-store, max-age=0"
+    Pragma = "no-cache"
+
+[[headers]]
+  for = "/employee-payments.html"
+  [headers.values]
+    Cache-Control = "private, no-store, max-age=0"
+    Pragma = "no-cache"
+
 [[redirects]]
   from = "/payment-success"
   to = "/payment-success.html"
