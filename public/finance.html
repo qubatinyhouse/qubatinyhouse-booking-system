@@ -1021,7 +1021,7 @@ async function payCleaningTask(taskId,remaining){
   if(!["cash","bank","card"].includes(method)){alert("Ödəniş üsulu cash, bank və ya card olmalıdır.");return;}
   const paymentDate=prompt("Ödəniş tarixi (YYYY-MM-DD)",localDate);
   if(paymentDate===null)return;
-  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(paymentDate)){alert("Tarix formatı YYYY-MM-DD olmalıdır.");return;}
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)){alert("Tarix formatı YYYY-MM-DD olmalıdır.");return;}
   const notes=prompt("Qeyd (istəyə bağlı)","")||null;
   const requestKey=crypto.randomUUID();
   const {error}=await client.rpc("record_cleaning_task_payment",{
