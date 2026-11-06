@@ -28,7 +28,7 @@ create or replace function public.qth_admin_update_reservation(
 )
 returns setof public.reservations
 language plpgsql
-security definer
+security invoker
 set search_path = public, pg_temp
 as $function$
 declare
