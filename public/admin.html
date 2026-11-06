@@ -1949,10 +1949,6 @@ window.submitReservationDepositAdjustment = async function(event,id) {
     message.textContent = "Seçilmiş avans ödənişi tapılmadı. Rezervasiyanı yenidən yükləyin.";
     return;
   }
-  if (Math.abs(Number(oldPayment.amount || 0) - amount) < 0.005) {
-    message.textContent = "Yeni məbləğ əvvəlki məbləğlə eynidir.";
-    return;
-  }
   if (!confirm("Avans " + money(oldPayment.amount) + " məbləğindən " + money(amount) +
     " məbləğinə dəyişdirilsin? Ümumi rezervasiya qiyməti dəyişməyəcək; qalıq borc yenidən hesablanacaq.")) return;
   submit.disabled = true;
