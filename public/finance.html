@@ -255,6 +255,14 @@ Salam, administrator!
             <div class="muted">Rezervasiyalardan daxilolma</div>
             <div class="metric green" id="monthlyBookingIncome">0 AZN</div>
         </div>
+        <div class="card">
+            <div class="muted">Şəxsi xərclər</div>
+            <div class="metric red" id="monthlyPersonalExpense">0 AZN</div>
+        </div>
+        <div class="card">
+            <div class="muted">Sahibkarın şəxsi götürməsi</div>
+            <div class="metric" id="monthlyOwnerDraw">0 AZN</div>
+        </div>
         </div>
   </div>       
   <div class="card" id="dailyYearlyReports">
@@ -377,7 +385,15 @@ Salam, administrator!
   </select>
 
   <label>Kateqoriya</label>
-  <input id="financeCategory" placeholder="Məsələn: Ev rezervasiyası">
+  <input id="financeCategory" placeholder="Məsələn: Ev rezervasiyası / Ərzaq / Yanacaq">
+
+  <label>Xərcin təyinatı</label>
+  <select id="financeScope">
+    <option value="business">Biznes xərci – QTH əməliyyatları</option>
+    <option value="personal">Şəxsi xərc – ailə, ev, alış-veriş və s.</option>
+    <option value="owner_draw">Sahibkarın şəxsi götürməsi – biznes kassasından çıxarış</option>
+  </select>
+  <p class="muted" id="financeScopeHint">Biznes xərcləri QTH-nin xalis mənfəətinə daxil edilir.</p>
 
   <label>Məbləğ (AZN)</label>
   <input id="financeAmount" type="number" min="0.01" step="0.01">
@@ -633,6 +649,8 @@ const selectedMonth = reportMonth.value;
 
 let monthlyIncome = 0;
 let monthlyExpense = 0;
+let monthlyPersonalExpense = 0;
+let monthlyOwnerDraw = 0;
 let monthlyBookingIncome = 0;
 
 (transactions || []).forEach(item => {
@@ -646,10 +664,15 @@ let monthlyBookingIncome = 0;
             monthlyBookingIncome += amount;
         }
     } else if (item.transaction_type === "expense") {
-        monthlyExpense += amount;
+        const scope = item.expense_scope || "business";
+        if (scope === "personal") monthlyPersonalExpense += amount;
+        else if (scope === "owner_draw") monthlyOwnerDraw += amount;
+        else monthlyExpense += amount;
     }
 });
 
+document.getElementById("monthlyPersonalExpense").textContent = money(monthlyPersonalExpense);
+document.getElementById("monthlyOwnerDraw").textContent = money(monthlyOwnerDraw);
 document.getElementById("monthlyIncome").textContent =
     money(monthlyIncome);
 
@@ -718,7 +741,7 @@ let currentIncome = 0, currentExpense = 0;
   if (!item.transaction_date || item.transaction_date.slice(0,7) !== currentMonth) return;
   const amount = Number(item.amount || 0);
   if (item.transaction_type === "income") currentIncome += amount;
-  else if (item.transaction_type === "expense") currentExpense += amount;
+  else if (item.transaction_type === "expense" && (item.expense_scope || "business") === "business") currentExpense += amount;
 });
 const expenseGroups = {
   "Instagram reklamları":0,
@@ -728,7 +751,7 @@ const expenseGroups = {
   "Digər xərclər":0
 };
 (transactions || []).forEach(item => {
-  if(item.transaction_type!=="expense" || !item.transaction_date || item.transaction_date.slice(0,7)!==currentMonth) return;
+  if(item.transaction_type!=="expense" || (item.expense_scope || "business")!=="business" || !item.transaction_date || item.transaction_date.slice(0,7)!==currentMonth) return;
   const category=String(item.category||"");
   const description=String(item.description||"");
   const text=(category+" "+description).toLocaleLowerCase("az").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[əı]/g,ch=>ch==="ə"?"e":"i");
@@ -775,8 +798,8 @@ if (history) {
   const rows = [...(transactions || [])].sort((a,b) =>
     String(b.transaction_date || "").localeCompare(String(a.transaction_date || ""))
   ).slice(0,50);
-  history.innerHTML = rows.length ? '<div style="overflow-x:auto"><table><thead><tr><th>Tarix</th><th>Növ</th><th>Kateqoriya</th><th>Ödəniş</th><th>Məbləğ</th></tr></thead><tbody>' +
-    rows.map(item => '<tr><td>'+escapeHTML(item.transaction_date || '')+'</td><td class="'+(item.transaction_type==='income'?'green':'red')+'">'+(item.transaction_type==='income'?'Gəlir':'Xərc')+'</td><td>'+escapeHTML(item.category || '')+'</td><td>'+escapeHTML(item.payment_method || '')+'</td><td>'+money(item.amount)+'</td></tr>').join('') +
+  history.innerHTML = rows.length ? '<div style="overflow-x:auto"><table><thead><tr><th>Tarix</th><th>Növ</th><th>Təyinat</th><th>Kateqoriya</th><th>Ödəniş</th><th>Məbləğ</th></tr></thead><tbody>' +
+    rows.map(item => '<tr><td>'+escapeHTML(item.transaction_date || '')+'</td><td class="'+(item.transaction_type==='income'?'green':'red')+'">'+(item.transaction_type==='income'?'Gəlir':'Xərc')+'</td><td>'+escapeHTML(item.transaction_type==='income'?'Gəlir':((item.expense_scope||'business')==='personal'?'Şəxsi xərc':((item.expense_scope||'business')==='owner_draw'?'Şəxsi götürmə':'Biznes xərci')) )+'</td><td>'+escapeHTML(item.category || '')+'</td><td>'+escapeHTML(item.payment_method || '')+'</td><td>'+money(item.amount)+'</td></tr>').join('') +
     '</tbody></table></div>' : '<p class="muted">Hələ maliyyə əməliyyatı yoxdur.</p>';
 }
   }
@@ -794,6 +817,9 @@ async function addFinanceTransaction() {
     const paymentMethod = document.getElementById("financeMethod").value;
     const transactionDate = document.getElementById("financeDate").value;
     const description = document.getElementById("financeDescription").value.trim();
+    const expenseScope = transactionType === "expense"
+      ? document.getElementById("financeScope").value
+      : "business";
 
     if (!category || !amount || amount <= 0 || !transactionDate) {
         msg.textContent = "Kateqoriya, məbləğ və tarix daxil edilməlidir.";
@@ -808,6 +834,7 @@ async function addFinanceTransaction() {
             .from("finance_transactions")
             .insert({
                 transaction_type: transactionType,
+                expense_scope: expenseScope,
                 category: category,
                 amount: amount,
                 payment_method: paymentMethod,
@@ -818,7 +845,11 @@ async function addFinanceTransaction() {
 
         if (error) throw error;
 
-        msg.textContent = "Əməliyyat uğurla yadda saxlanıldı.";
+        msg.textContent = transactionType === "expense" && expenseScope === "personal"
+          ? "Şəxsi xərc ayrıca qeydə alındı; QTH biznes mənfəətinə daxil edilmədi."
+          : (transactionType === "expense" && expenseScope === "owner_draw"
+            ? "Sahibkarın şəxsi götürməsi qeydə alındı; biznes xərci sayılmadı."
+            : "Əməliyyat uğurla yadda saxlanıldı.");
         msg.style.color = "green";
 
         document.getElementById("financeCategory").value = "";
