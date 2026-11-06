@@ -414,6 +414,16 @@ const localDate = new Date(
 ).toISOString().slice(0, 10);
 
 document.getElementById("financeDate").value = localDate;
+const financeScope = document.getElementById("financeScope");
+if (financeScope) financeScope.addEventListener("change", () => {
+  const hint = document.getElementById("financeScopeHint");
+  if (!hint) return;
+  hint.textContent = financeScope.value === "personal"
+    ? "Şəxsi xərc şəxsi büdcədə görünəcək, QTH xalis mənfəətini azaltmayacaq."
+    : financeScope.value === "owner_draw"
+      ? "Bu, biznes kassasından sahibkara çıxarılan puldur; mənfəət və zərər xərcinə daxil edilmir."
+      : "Biznes xərcləri QTH-nin xalis mənfəətinə daxil edilir.";
+});
 </script>
   <label>Qeyd</label>
   <input id="financeDescription" placeholder="Əlavə məlumat">
@@ -585,7 +595,7 @@ let financeError = null;
 for (let offset = 0; ; offset += 1000) {
   const page = await client
     .from("finance_transactions")
-    .select("id, transaction_type, category, amount, payment_method, description, transaction_date")
+    .select("id, transaction_type, expense_scope, category, amount, payment_method, description, transaction_date")
     .order("transaction_date", { ascending: false })
     .range(offset, offset + 999);
   if (page.error) { financeError = page.error; break; }
@@ -705,11 +715,11 @@ let dailyIncome = 0, dailyExpense = 0, yearlyIncome = 0, yearlyExpense = 0;
   const amount = Number(item.amount || 0);
   if (item.transaction_date === selectedDay) {
     if (item.transaction_type === "income") dailyIncome += amount;
-    else if (item.transaction_type === "expense") dailyExpense += amount;
+    else if (item.transaction_type === "expense" && (item.expense_scope || "business") === "business") dailyExpense += amount;
   }
   if (String(item.transaction_date || "").slice(0,4) === selectedYear) {
     if (item.transaction_type === "income") yearlyIncome += amount;
-    else if (item.transaction_type === "expense") yearlyExpense += amount;
+    else if (item.transaction_type === "expense" && (item.expense_scope || "business") === "business") yearlyExpense += amount;
   }
 });
 document.getElementById("dailyIncome").textContent = money(dailyIncome);
