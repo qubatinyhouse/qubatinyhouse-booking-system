@@ -720,11 +720,35 @@ let currentIncome = 0, currentExpense = 0;
   if (item.transaction_type === "income") currentIncome += amount;
   else if (item.transaction_type === "expense") currentExpense += amount;
 });
+const expenseGroups = {
+  "Instagram reklamları":0,
+  "Səhər yeməyi":0,
+  "Kommunal xərclər":0,
+  "İşçilərə ödənişlər":0,
+  "Digər xərclər":0
+};
+(transactions || []).forEach(item => {
+  if(item.transaction_type!=="expense" || !item.transaction_date || item.transaction_date.slice(0,7)!==currentMonth) return;
+  const category=String(item.category||"").toLocaleLowerCase("az");
+  const description=String(item.description||"").toLocaleLowerCase("az");
+  const text=category+" "+description;
+  let group="Digər xərclər";
+  if(/instagram|meta ads|facebook ads|reklam/.test(text)) group="Instagram reklamları";
+  else if(/səhər yeməyi|seher yemeyi|breakfast|qida|ərzaq|erzaq/.test(text)) group="Səhər yeməyi";
+  else if(/kommunal|qaz|azəriqaz|azerigas|su təchiz|işıq|elektrik|internet/.test(text)) group="Kommunal xərclər";
+  else if(/maaş|maas|təmizlik haqqı|temizlik haqqi|işçi|isci|əmək haqqı|emek haqqi/.test(text)) group="İşçilərə ödənişlər";
+  expenseGroups[group]+=Math.max(0,Number(item.amount||0));
+});
+const expenseBreakdown=Object.entries(expenseGroups)
+  .filter(([,amount])=>amount>0)
+  .map(([name,amount])=>({name,amount}))
+  .sort((a,b)=>a.amount-b.amount);
 if (window.parent !== window) {
   window.parent.postMessage({
     type: "QTH_FINANCE_SUMMARY",
     income: currentIncome,
     expense: currentExpense,
+    expenseBreakdown,
     month: currentMonth
   }, window.location.origin);
 }
