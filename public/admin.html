@@ -1047,6 +1047,7 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
    title.textContent=titleText;
    description.textContent=descriptionText;
    qr.style.display=qrCode?"block":"none";
+   codeLabel.style.display="block";code.style.display="";verifyButton.style.display="";
    if(qrCode){
      qr.src=qrCode.trim().startsWith("<svg")?
        "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(qrCode):qrCode;
