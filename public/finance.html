@@ -731,7 +731,7 @@ const expenseGroups = {
   if(item.transaction_type!=="expense" || !item.transaction_date || item.transaction_date.slice(0,7)!==currentMonth) return;
   const category=String(item.category||"");
   const description=String(item.description||"");
-  const text=(category+" "+description).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("az");
+  const text=(category+" "+description).toLocaleLowerCase("az").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[əı]/g,ch=>ch==="ə"?"e":"i");
   let group="Digər xərclər";
   if(/instagram|insta|meta ads|facebook ads/.test(text)) group="Instagram reklamları";
   else if(/seher yemeyi|breakfast|qida|erzaq/.test(text)) group="Səhər yeməyi";
