@@ -464,6 +464,31 @@ tbody tr:hover{background:#f8f8f2}
 @media(max-width:850px){.qth-house-winners{grid-template-columns:1fr 1fr}.qth-house-performance-stats{grid-template-columns:1fr 1fr}.qth-house-winner--weak{grid-column:1/-1}}
 @media(max-width:600px){.qth-house-winners{grid-template-columns:1fr}.qth-house-winner--weak{grid-column:auto}.qth-house-performance-stats{grid-template-columns:1fr 1fr}.qth-house-performance-heading{display:block}.qth-house-performance-heading label{margin-top:12px;max-width:180px}.qth-house-winner{min-height:130px}}
 
+
+/* Current-month expense donut — QTH premium dashboard */
+.qth-expense-panel{margin:0 0 20px;padding:22px 24px;background:linear-gradient(145deg,#fffefa,#f8f7f0);border:1px solid #e7e1d3;border-radius:18px;box-shadow:0 12px 30px rgba(43,55,43,.055)}
+.qth-expense-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}
+.qth-expense-head h3{margin:0 0 5px;color:#304a38;font-size:18px}
+.qth-expense-head p{margin:0;color:#7b837a;font-size:12px}
+.qth-expense-month{white-space:nowrap;border:1px solid #d9cba9;border-radius:30px;padding:7px 11px;color:#80683b;background:#fbf8ef;font-size:11px;font-weight:700}
+.qth-expense-layout{display:grid;grid-template-columns:minmax(210px, .9fr) minmax(250px,1.1fr);align-items:center;gap:26px}
+.qth-expense-donut-wrap{display:flex;align-items:center;justify-content:center;min-height:230px}
+.qth-expense-donut{width:218px;height:218px;border-radius:50%;position:relative;display:grid;place-items:center;box-shadow:0 12px 28px rgba(43,55,43,.12);transition:background .35s ease}
+.qth-expense-donut:after{content:"";position:absolute;inset:27px;border-radius:50%;background:#fffefa;box-shadow:inset 0 2px 9px rgba(30,45,35,.06)}
+.qth-expense-center{position:relative;z-index:1;text-align:center;padding:10px}
+.qth-expense-center small{display:block;color:#879087;font-size:10px;letter-spacing:1.3px;text-transform:uppercase;margin-bottom:7px}
+.qth-expense-center strong{display:block;color:#2d4937;font-size:22px;line-height:1.1;font-weight:800;letter-spacing:-.6px}
+.qth-expense-center span{display:block;color:#9a8354;font-size:10px;margin-top:6px}
+.qth-expense-legend{display:flex;flex-direction:column;gap:9px}
+.qth-expense-row{display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 11px;border:1px solid #efede5;border-radius:11px;background:#fff}
+.qth-expense-dot{width:9px;height:9px;border-radius:50%}
+.qth-expense-name{font-size:12px;color:#5d695f;min-width:0}
+.qth-expense-value{text-align:right;font-size:12px;font-weight:800;color:#344b3a;white-space:nowrap}
+.qth-expense-value small{display:block;color:#92998f;font-size:10px;font-weight:500;margin-top:2px}
+.qth-expense-empty{grid-column:1/-1;text-align:center;color:#7d887e;background:#f7f7f1;border:1px dashed #dcded2;border-radius:12px;padding:24px 15px;font-size:13px}
+.qth-expense-foot{margin-top:13px;padding-top:11px;border-top:1px solid #eeece4;color:#8b9288;font-size:10px;line-height:1.5}
+@media(max-width:700px){.qth-expense-panel{padding:17px 14px}.qth-expense-layout{grid-template-columns:1fr;gap:8px}.qth-expense-donut-wrap{min-height:210px}.qth-expense-donut{width:194px;height:194px}.qth-expense-donut:after{inset:24px}.qth-expense-legend{gap:7px}.qth-expense-head h3{font-size:16px}}
+
 </style>
 </head>
 <body>
@@ -544,6 +569,22 @@ tbody tr:hover{background:#f8f8f2}
 <div class="card-value" id="bookingCount">—</div>
 <div class="card-note" id="bookingCountNote">Rezervasiya bazası yoxlanılır...</div>
 </div>
+</div>
+
+<div class="qth-expense-panel" id="qthExpensePanel">
+ <div class="qth-expense-head">
+  <div><h3>Cari ayın xərcləri</h3><p>Xərclərin kateqoriyalar üzrə bölgüsü</p></div>
+  <span class="qth-expense-month" id="qthExpenseMonth">Cari ay</span>
+ </div>
+ <div class="qth-expense-layout">
+  <div class="qth-expense-donut-wrap">
+   <div class="qth-expense-donut" id="qthExpenseDonut" role="img" aria-label="Cari ayın xərclərinin dairəvi bölgüsü">
+    <div class="qth-expense-center"><small>Ümumi xərc</small><strong id="qthExpenseTotal">— AZN</strong><span id="qthExpenseCount">Məlumat gözlənilir</span></div>
+   </div>
+  </div>
+  <div class="qth-expense-legend" id="qthExpenseLegend"><div class="qth-expense-empty">Maliyyə məlumatları yüklənir...</div></div>
+ </div>
+ <div class="qth-expense-foot">Məbləğlər cari ayda maliyyə jurnalında qeydə alınmış faktiki xərclərdən hesablanır. Kateqoriyasız və digər xərclər “Digər xərclər” bölməsində göstərilir.</div>
 </div>
 
 <div class="panel">
@@ -1219,6 +1260,32 @@ window.addEventListener("message", (event) => {
   const data = event.data;
   if (!data || data.type !== "QTH_FINANCE_SUMMARY") return;
   const fmt = value => Number(value || 0).toLocaleString("az-AZ", {minimumFractionDigits:2,maximumFractionDigits:2}) + " AZN";
+  const expenseItems = Array.isArray(data.expenseBreakdown) ? data.expenseBreakdown : [];
+  const colors = {"Instagram reklamları":"#b89557","Səhər yeməyi":"#7d9b83","Kommunal xərclər":"#6f8fa6","İşçilərə ödənişlər":"#9a83b8","Digər xərclər":"#d18b72"};
+  const labels = ["Instagram reklamları","Səhər yeməyi","Kommunal xərclər","İşçilərə ödənişlər","Digər xərclər"];
+  const total = expenseItems.reduce((sum,item)=>sum+Math.max(0,Number(item.amount||0)),0);
+  document.getElementById("qthExpenseTotal").textContent = fmt(total);
+  document.getElementById("qthExpenseMonth").textContent = String(data.month || "Cari ay");
+  document.getElementById("qthExpenseCount").textContent = expenseItems.length ? expenseItems.length+" xərc kateqoriyası" : "Hələ xərc yoxdur";
+  const sorted = expenseItems.filter(item=>Number(item.amount||0)>0).sort((a,b)=>Number(a.amount)-Number(b.amount));
+  const legend = document.getElementById("qthExpenseLegend");
+  if(!sorted.length || total<=0){
+    document.getElementById("qthExpenseDonut").style.background="conic-gradient(#e9e8df 0deg 360deg)";
+    legend.innerHTML='<div class="qth-expense-empty">Cari ay üçün hələ xərc qeydə alınmayıb.</div>';
+  } else {
+    let cursor=0;
+    const slices=sorted.map(item=>{
+      const start=cursor;
+      cursor+=Number(item.amount)/total*360;
+      return (colors[item.name]||"#9a9a8e")+" "+start.toFixed(2)+"deg "+cursor.toFixed(2)+"deg";
+    });
+    document.getElementById("qthExpenseDonut").style.background="conic-gradient("+slices.join(",")+")";
+    legend.innerHTML=sorted.map(item=>{
+      const pct=(Number(item.amount)/total*100);
+      return '<div class="qth-expense-row"><span class="qth-expense-dot" style="background:'+(colors[item.name]||"#9a9a8e")+'"></span><span class="qth-expense-name">'+item.name+'</span><span class="qth-expense-value">'+fmt(item.amount)+'<small>'+pct.toFixed(1).replace(".",",")+'%</small></span></div>';
+    }).join("");
+  }
+
   document.getElementById("income").textContent = fmt(data.income);
   document.getElementById("expense").textContent = fmt(data.expense);
   document.getElementById("profit").textContent = fmt(Number(data.income || 0) - Number(data.expense || 0));
