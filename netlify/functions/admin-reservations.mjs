@@ -198,6 +198,39 @@ export const handler = async (event) => {
       }
 
 
+      if (action === 'adjust_deposit') {
+        const paymentId = String(body.paymentId || '');
+        const amount = Number(body.amount);
+        if (!paymentId || !Number.isFinite(amount) || amount <= 0 || amount > 10000000) {
+          return json(400, { error: 'Avans ödənişini və düzgün yeni məbləği seçin.' });
+        }
+        const { data: rows, error } = await client.rpc('qth_admin_adjust_reservation_deposit', {
+          p_reservation_id: id,
+          p_payment_id: paymentId,
+          p_new_amount: amount,
+          p_admin_id: admin.id,
+          p_reason: typeof body.reason === 'string' ? body.reason.slice(0,500) : ''
+        });
+        if (error) {
+          const message = error.message || '';
+          if (/DEPOSIT_PAYMENT_NOT_FOUND/i.test(message)) return json(404, { error: 'Seçilmiş avans ödənişi tapılmadı.' });
+          if (/PAYMENTS_EXCEED_TOTAL/i.test(message)) return json(400, { error: 'Düzəldilmiş ödənişlərin cəmi rezervasiyanın ümumi məbləğini keçə bilməz.' });
+          if (/RESERVATION_NOT_ACTIVE/i.test(message)) return json(409, { error: 'Ləğv edilmiş və ya vaxtı bitmiş rezervasiya üzrə avans dəyişdirilə bilməz.' });
+          if (/DEPOSIT_AMOUNT_UNCHANGED/i.test(message)) return json(400, { error: 'Yeni avans məbləği əvvəlki məbləğlə eynidir.' });
+          throw error;
+        }
+        const adjusted = Array.isArray(rows) ? rows[0] : rows;
+        const { data: payment, error: paymentError } = await client.from('reservation_payments')
+          .select('id,reservation_id,amount,payment_type,payment_method,payment_date,notes,created_at')
+          .eq('id', paymentId).single();
+        if (paymentError) throw paymentError;
+        const { data: reservation, error: reservationError } = await client.from('reservations')
+          .select('id,booking_code,unit_id,check_in,check_out,guest_name,phone,guest_count,note,total_amount,deposit_amount,remaining_amount,paid_amount,paid_at,status,payment_status,campaign_code,campaign_name,marriage_confirmed,created_at')
+          .eq('id', id).single();
+        if (reservationError) throw reservationError;
+        return json(200, { success: true, adjustment: adjusted, payment, reservation });
+      }
+
       if (action === 'reservation_update') {
         const { data: current, error: currentError } = await client.from('reservations')
           .select('id,unit_id,check_in,check_out,guest_count,total_amount,paid_amount,status')
