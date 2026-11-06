@@ -268,3 +268,14 @@ export const handler = async (event) => {
     return json(503, { error: 'Server xətası: ' + safeMessage, code: error?.code || null });
   }
 };
+
+ 
+// Netlify code-based protection: limit access attempts and excessive admin API traffic.
+export const config = {
+  path: "/.netlify/functions/admin-reservations",
+  rateLimit: {
+    windowLimit: 60,
+    windowSize: 60,
+    aggregateBy: ["ip", "domain"]
+  }
+};
