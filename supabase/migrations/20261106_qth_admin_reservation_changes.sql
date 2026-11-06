@@ -88,7 +88,7 @@ begin
          breakfast_amount = 0,
          total_amount = round(p_total_amount,2),
          deposit_amount = least(coalesce(deposit_amount,0),round(p_total_amount,2)),
-         remaining_amount = round(p_total_amount - coalesce(paid_amount,0),2)
+         remaining_amount = greatest(0,round(p_total_amount - coalesce(paid_amount,0),2))
    where id = p_reservation_id
    returning * into v_new;
 
