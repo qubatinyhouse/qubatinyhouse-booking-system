@@ -213,7 +213,7 @@ export const handler = async (event) => {
         if (!allowedUnits.includes(unitId) || !validDate(checkIn) || !validDate(checkOut) ||
             getNights(checkIn, checkOut) < 1 || getNights(checkIn, checkOut) > 30 ||
             !Number.isInteger(guestCount) || guestCount < 1 || guestCount > 10 ||
-            !Number.isFinite(totalAmount) || totalAmount < Number(current.paid_amount || 0) ||
+            !Number.isFinite(totalAmount) || totalAmount <= 0 ||
             !['modify','early_checkout'].includes(changeMode)) {
           return json(400, { error: 'Ev, tarix, qonaq sayı və yeni ümumi məbləği düzgün daxil edin. Məbləğ ödənilmiş məbləğdən az ola bilməz.' });
         }
