@@ -59,3 +59,14 @@ export const handler = async (event) => {
     return json(500, { error: e.message || 'Rezervasiyanı yaratmaq mümkün olmadı.' });
   }
 };
+
+ 
+// Netlify code-based protection: reduce automated booking spam and excess writes.
+export const config = {
+  path: "/.netlify/functions/create-booking",
+  rateLimit: {
+    windowLimit: 6,
+    windowSize: 60,
+    aggregateBy: ["ip", "domain"]
+  }
+};
