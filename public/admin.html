@@ -1322,7 +1322,18 @@ window.addEventListener("message", (event) => {
     document.getElementById("qthPayrollPaid").textContent="Yüklənmədi";
     document.getElementById("qthPayrollNote").textContent="İşçi borcu hesablanmadı: "+String(data.payrollError||"Maliyyə məlumatı mövcud deyil");
   }
-document.getElementById("income").textContent = fmt(data.income);
+  const payrollHost=document.getElementById("qthPayrollEmployees");
+  if(payrollHost){
+    const people=Array.isArray(data.payrollEmployees)?data.payrollEmployees:[];
+    const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+    const groups=[{title:"Təmizlik işçiləri",role:"Təmizlik işçisi"},{title:"Nəzarətçi",role:"Nəzarətçi"}];
+    payrollHost.innerHTML=groups.map(group=>{
+      const items=people.filter(person=>person.role===group.role);
+      const cards=items.length?items.map(person=>'<article style="background:#fff;border:1px solid #e8e3d8;border-radius:13px;padding:14px;margin-top:10px"><strong style="display:block;color:#294735;margin-bottom:10px">'+esc(person.name)+'</strong><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"><div style="background:#f7f7f2;padding:9px;border-radius:8px"><small>Əvvəlki qalıq borc</small><strong style="display:block">'+fmt(person.previousDebt)+'</strong></div><div style="background:#f7f7f2;padding:9px;border-radius:8px"><small>Cari ayın borcu</small><strong style="display:block">'+fmt(person.currentMonthDebt)+'</strong></div><div style="background:#f7f7f2;padding:9px;border-radius:8px"><small>Ümumi ödənilməli məbləğ</small><strong style="display:block">'+fmt(person.totalDue)+'</strong></div><div style="background:#f7f7f2;padding:9px;border-radius:8px"><small>Faktiki ödənilmiş (cari ay)</small><strong style="display:block">'+fmt(person.paidThisMonth)+'</strong></div></div></article>').join(""):'<p style="color:#899187;font-size:12px">Hazırda məlumat yoxdur.</p>';
+      return '<section style="background:#fbfaf6;border:1px solid #e8e3d8;border-radius:14px;padding:14px;margin-top:14px"><h4 style="margin:0;color:#294735">'+group.title+'</h4>'+cards+'</section>';
+    }).join("");
+  }
+  document.getElementById("income").textContent = fmt(data.income);
   document.getElementById("expense").textContent = fmt(data.expense);
   document.getElementById("profit").textContent = fmt(Number(data.income || 0) - Number(data.expense || 0));
   const note = document.querySelector("#dashboard .notice");
