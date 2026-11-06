@@ -1308,7 +1308,20 @@ window.addEventListener("message", (event) => {
     }).join("");
   }
 
-  document.getElementById("income").textContent = fmt(data.income);
+    const payroll=data.payrollSummary;
+  document.getElementById("qthPayrollMonth").textContent=String(data.month||"Cari ay");
+  if(payroll){
+    document.getElementById("qthPayrollTotalDebt").textContent=fmt(payroll.totalDebt);
+    document.getElementById("qthPayrollCurrentDue").textContent=fmt(payroll.currentMonthRemaining);
+    document.getElementById("qthPayrollPaid").textContent=fmt(payroll.currentMonthPaid);
+    document.getElementById("qthPayrollNote").textContent="Ümumi borc keçmiş açılış qalıqlarını, cari ayın ödənilməmiş aylıq maaşını və tamamlanmış təmizlik işlərinin qalıqlarını əhatə edir. Faktiki ödəniş cari ayda edilən maaş və təmizlik ödənişləridir.";
+  }else{
+    document.getElementById("qthPayrollTotalDebt").textContent="Yüklənmədi";
+    document.getElementById("qthPayrollCurrentDue").textContent="Yüklənmədi";
+    document.getElementById("qthPayrollPaid").textContent="Yüklənmədi";
+    document.getElementById("qthPayrollNote").textContent="İşçi borcu hesablanmadı: "+String(data.payrollError||"Maliyyə məlumatı mövcud deyil");
+  }
+document.getElementById("income").textContent = fmt(data.income);
   document.getElementById("expense").textContent = fmt(data.expense);
   document.getElementById("profit").textContent = fmt(Number(data.income || 0) - Number(data.expense || 0));
   const note = document.querySelector("#dashboard .notice");
