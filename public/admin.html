@@ -993,10 +993,160 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
  const gate=document.getElementById("adminAuthGate");
  const app=document.querySelector(".app");
  const message=document.getElementById("qthAdminAuthMessage");
- async function showSession(session){
-   if(session){document.body.classList.add("qth-authenticated");gate.style.display="none";app.style.display="flex";if(typeof window.loadHousePerformance==="function")window.loadHousePerformance();}
-   else{document.body.classList.remove("qth-authenticated");app.style.display="none";gate.style.display="flex";}
+ const email=document.getElementById("qthAdminEmail");
+ const password=document.getElementById("qthAdminPassword");
+ const loginButton=document.getElementById("qthAdminLogin");
+ const emailLabel=email.previousElementSibling;
+ const passwordLabel=password.previousElementSibling;
+
+ // MFA is verified before the admin application is made visible.
+ const panel=document.createElement("div");
+ panel.id="qthAdminMfaPanel";
+ panel.hidden=true;
+ panel.style.cssText="margin-top:16px;padding:16px;border:1px solid #d5bd82;border-radius:12px;background:#fffdf7;color:#24352d";
+ const title=document.createElement("h3");
+ title.style.cssText="margin:0 0 8px;font-size:17px;color:#24352d";
+ const description=document.createElement("p");
+ description.style.cssText="font-size:13px;line-height:1.5;color:#68756c;margin:0 0 12px";
+ const qr=document.createElement("img");
+ qr.alt="QTH admin authenticator QR";
+ qr.style.cssText="display:none;width:190px;height:190px;max-width:100%;margin:12px auto;padding:8px;background:white;border:1px solid #e5e0d4;border-radius:10px";
+ const secret=document.createElement("code");
+ secret.style.cssText="display:none;display:block;overflow-wrap:anywhere;padding:8px;margin:8px 0;background:#f2f0e8;border-radius:7px;font-size:12px";
+ const codeLabel=document.createElement("label");
+ codeLabel.textContent="Authenticator tətbiqindəki 6 rəqəmli kod";
+ codeLabel.style.cssText="display:block;margin:10px 0 5px;font-size:12px;font-weight:700";
+ const code=document.createElement("input");
+ code.type="text"; code.inputMode="numeric"; code.autocomplete="one-time-code";
+ code.maxLength=6; code.placeholder="000000";
+ code.style.cssText="width:100%;box-sizing:border-box;padding:12px;border:1px solid #d8d2c4;border-radius:8px;font-size:18px;letter-spacing:5px;text-align:center";
+ const verifyButton=document.createElement("button");
+ verifyButton.type="button"; verifyButton.textContent="Təsdiqlə və davam et";
+ verifyButton.style.cssText="width:100%;margin-top:12px;padding:12px;border:0;border-radius:8px;background:#b89557;color:#17271d;font-weight:800;cursor:pointer";
+ const status=document.createElement("p");
+ status.setAttribute("role","status");
+ status.style.cssText="font-size:12px;color:#a33c35;min-height:18px;margin:10px 0 0";
+ const cancelButton=document.createElement("button");
+ cancelButton.type="button"; cancelButton.textContent="Çıxış";
+ cancelButton.style.cssText="width:100%;margin-top:8px;padding:10px;border:1px solid #ded8c9;border-radius:8px;background:#f7f5ee;color:#39463d;cursor:pointer";
+ panel.append(title,description,qr,secret,codeLabel,code,verifyButton,status,cancelButton);
+ gate.querySelector("section").appendChild(panel);
+
+ let sessionToken="";
+ let sessionPromise=null;
+ let pendingFactorId="";
+ let pendingMode="challenge";
+
+ function setLoginControls(visible){
+   [emailLabel,email,passwordLabel,password,loginButton].forEach(el=>{if(el)el.style.display=visible?"":"none";});
+   const subtext=gate.querySelector("section>p");
+   if(subtext)subtext.style.display=visible?"":"none";
  }
+ function renderMfa(titleText,descriptionText,mode,qrCode,secretText,factorId){
+   pendingMode=mode; pendingFactorId=factorId;
+   title.textContent=titleText;
+   description.textContent=descriptionText;
+   qr.style.display=qrCode?"block":"none";
+   if(qrCode){
+     qr.src=qrCode.trim().startsWith("<svg")?
+       "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(qrCode):qrCode;
+   } else qr.removeAttribute("src");
+   secret.style.display=secretText?"block":"none";
+   secret.textContent=secretText||"";
+   code.value="";
+   status.textContent="";
+   verifyButton.disabled=false;
+   verifyButton.textContent="Təsdiqlə və davam et";
+   panel.hidden=false;
+   setLoginControls(false);
+   gate.style.display="flex";
+   app.style.display="none";
+   document.body.classList.remove("qth-authenticated");
+ }
+ async function displayAdmin(){
+   const wasVisible=document.body.classList.contains("qth-authenticated");
+   panel.hidden=true;
+   setLoginControls(false);
+   gate.style.display="none";
+   app.style.display="flex";
+   document.body.classList.add("qth-authenticated");
+   if(!wasVisible){
+     if(typeof window.loadHousePerformance==="function")window.loadHousePerformance();
+     if(typeof window.loadReservations==="function")window.loadReservations();
+   }
+ }
+ async function runMfaFlow(session){
+   const aalResult=await authClient.auth.mfa.getAuthenticatorAssuranceLevel();
+   if(aalResult.error)throw aalResult.error;
+   if(aalResult.data?.currentLevel==="aal2"){
+     await displayAdmin();
+     return;
+   }
+   const factorResult=await authClient.auth.mfa.listFactors();
+   if(factorResult.error)throw factorResult.error;
+   const verified=(factorResult.data?.totp||[]).find(f=>f.status==="verified");
+   if(verified){
+     renderMfa("İki mərhələli təsdiq","Admin panelə daxil olmaq üçün Authenticator tətbiqində yaranan kodu daxil edin.","challenge",null,null,verified.id);
+     code.focus();
+     return;
+   }
+   const unverified=(factorResult.data?.totp||[]).filter(f=>f.status!=="verified");
+   for(const item of unverified){
+     const removed=await authClient.auth.mfa.unenroll({factorId:item.id});
+     if(removed.error)throw removed.error;
+   }
+   const enrolled=await authClient.auth.mfa.enroll({factorType:"totp",friendlyName:"QTH Admin Authenticator"});
+   if(enrolled.error)throw enrolled.error;
+   const qrCode=enrolled.data?.totp?.qr_code||"";
+   const secretText=enrolled.data?.totp?.secret||"";
+   if(!qrCode)throw new Error("Supabase MFA QR kodunu qaytarmadı. Admin Auth layihəsində TOTP ayarını yoxlamaq lazımdır.");
+   renderMfa("Admin üçün iki mərhələli qorunma","1) QR kodu Google Authenticator, Microsoft Authenticator və ya 1Password ilə skan et. 2) Tətbiqdə yaranan 6 rəqəmli kodu daxil et. Bu addım yalnız ilk dəfə tələb olunur.","enroll",qrCode,secretText,enrolled.data.id);
+   code.focus();
+ }
+ async function showSession(session){
+   if(!session){
+     sessionToken="";sessionPromise=null;pendingFactorId="";panel.hidden=true;
+     setLoginControls(true);app.style.display="none";gate.style.display="flex";
+     document.body.classList.remove("qth-authenticated");
+     return;
+   }
+   if(session.access_token===sessionToken&&sessionPromise)return sessionPromise;
+   sessionToken=session.access_token;
+   sessionPromise=(async()=>{
+     try{await runMfaFlow(session);}
+     catch(error){
+       panel.hidden=false;setLoginControls(false);gate.style.display="flex";app.style.display="none";
+       document.body.classList.remove("qth-authenticated");
+       title.textContent="MFA təsdiqi tamamlanmadı";
+       description.textContent="Admin panel qorunmaq üçün bağlı saxlanılıb. Xəta: "+(error?.message||"MFA xətası");
+       qr.style.display="none";secret.style.display="none";codeLabel.style.display="none";code.style.display="none";verifyButton.style.display="none";
+       status.textContent="Supabase Admin layihəsinin TOTP ayarı və Auth sessiyası yoxlanmalıdır.";
+     }
+   })();
+   return sessionPromise;
+ }
+ verifyButton.addEventListener("click",async()=>{
+   if(!pendingFactorId)return;
+   const otp=code.value.replace(/\D/g,"");
+   if(!/^\d{6}$/.test(otp)){status.textContent="6 rəqəmli təsdiq kodunu daxil et.";return;}
+   verifyButton.disabled=true;status.textContent="Təsdiq edilir...";
+   try{
+     const challenge=await authClient.auth.mfa.challenge({factorId:pendingFactorId});
+     if(challenge.error)throw challenge.error;
+     const verified=await authClient.auth.mfa.verify({factorId:pendingFactorId,challengeId:challenge.data.id,code:otp});
+     if(verified.error)throw verified.error;
+     const current=await authClient.auth.getSession();
+     if(current.error)throw current.error;
+     sessionToken="";
+     await showSession(current.data.session);
+   }catch(error){
+     status.textContent="Kod təsdiqlənmədi: "+(error?.message||"Yenidən cəhd edin.");
+     verifyButton.disabled=false;
+   }
+ });
+ cancelButton.addEventListener("click",async()=>{
+   await authClient.auth.signOut({scope:"local"});
+ });
  document.getElementById("qthAdminLogout").addEventListener("click",async()=>{
    const btn=document.getElementById("qthAdminLogout");
    if(!confirm("Admin paneldən təhlükəsiz çıxış etmək istəyirsiniz?"))return;
@@ -1005,25 +1155,24 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
    btn.disabled=false;btn.textContent="↪ Çıxış";
    if(error){message.textContent="Çıxış alınmadı: "+error.message;return;}
    message.textContent="Sessiya bağlandı. Təhlükəsizlik üçün yenidən giriş tələb olunur.";
-   document.getElementById("qthAdminPassword").value="";
-   document.getElementById("qthAdminEmail").focus();
+   password.value="";email.focus();
  });
- document.getElementById("qthAdminLogin").addEventListener("click",async()=>{
-   const email=document.getElementById("qthAdminEmail").value.trim();
-   const password=document.getElementById("qthAdminPassword").value;
-   if(!email||!password){message.textContent="E-poçt və şifrəni daxil edin.";return;}
-   const btn=document.getElementById("qthAdminLogin");btn.disabled=true;message.textContent="Giriş yoxlanılır...";
-   const {data,error}=await authClient.auth.signInWithPassword({email,password});
-   btn.disabled=false;
+ loginButton.addEventListener("click",async()=>{
+   const emailValue=email.value.trim();
+   const passwordValue=password.value;
+   if(!emailValue||!passwordValue){message.textContent="E-poçt və şifrəni daxil edin.";return;}
+   loginButton.disabled=true;message.textContent="Giriş yoxlanılır...";
+   const {data,error}=await authClient.auth.signInWithPassword({email:emailValue,password:passwordValue});
+   loginButton.disabled=false;
    if(error){message.textContent="Giriş alınmadı: "+error.message;return;}
-   document.getElementById("qthAdminPassword").value="";
-   message.textContent="";await showSession(data.session);
-   if(typeof window.loadReservations==="function")window.loadReservations();
+   password.value="";
+   message.textContent="";
+   await showSession(data.session);
  });
- authClient.auth.getSession().then(({data})=>showSession(data.session));
- authClient.auth.onAuthStateChange((_event,session)=>showSession(session));
+ authClient.auth.getSession().then(({data})=>showSession(data.session)).catch(error=>{message.textContent="Sessiya yoxlanmadı: "+error.message;});
+ authClient.auth.onAuthStateChange((_event,session)=>{showSession(session).catch(error=>{message.textContent="Auth xətası: "+error.message;});});
  window.qthAdminAuthClient=authClient;
-})();
+})();;
 </script>
 <script>
 // Rezervasiya ödənişləri ayrıca payment ID ilə bir dəfə Maliyyəyə ötürülür.
