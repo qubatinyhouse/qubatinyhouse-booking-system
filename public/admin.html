@@ -1560,9 +1560,59 @@ window.showReservationDetails = function (id) {
         <p id="paymentFormMessage" class="muted" aria-live="polite">${disabledPayment ? "Bu rezervasiya üçün yeni ödəniş əlavə etmək mümkün deyil." : "Avans tamamlandıqda rezervasiya avtomatik təsdiqlənir."}</p>
       </div>
     </form>
+    ${formInsert}
   `;
   modal.hidden = false;
 };
+
+window.submitReservationModification = async function(event,id){
+  event.preventDefault();
+  const form=event.currentTarget;
+  const message=form.querySelector("#reservationChangeMessage");
+  const submit=form.querySelector('button[type="submit"]');
+  const payload={
+    id,
+    action:"reservation_update",
+    changeMode:form.elements.changeMode.value,
+    unitId:form.elements.unitId.value,
+    guestCount:Number(form.elements.guestCount.value),
+    checkIn:form.elements.checkIn.value,
+    checkOut:form.elements.checkOut.value,
+    totalAmount:Number(form.elements.totalAmount.value),
+    reason:form.elements.reason.value.trim()
+  };
+  if(!payload.checkIn||!payload.checkOut||payload.checkOut<=payload.checkIn){
+    message.textContent="Giriş və çıxış tarixlərini düzgün daxil edin.";return;
+  }
+  if(!Number.isInteger(payload.guestCount)||payload.guestCount<1||payload.guestCount>10){
+    message.textContent="Qonaq sayı 1–10 arasında olmalıdır.";return;
+  }
+  if(!Number.isFinite(payload.totalAmount)||payload.totalAmount<Number((allReservations.find(x=>x.id===id)||{}).paid_amount||0)){
+    message.textContent="Yeni məbləğ artıq ödənilmiş məbləğdən az ola bilməz.";return;
+  }
+  const original=allReservations.find(x=>x.id===id);
+  if(payload.changeMode==="early_checkout"&&payload.checkOut>=String(original?.check_out||"")){
+    message.textContent="Vaxtından əvvəl çıxış üçün faktiki çıxış tarixi əvvəlki çıxış tarixindən tez olmalıdır.";return;
+  }
+  const confirmText=payload.changeMode==="early_checkout"
+    ?"Faktiki çıxış tarixi və menecerin daxil etdiyi yeni məbləğ yadda saxlanılsın? Çıxışdan sonrakı tarixlər boşaldılacaq."
+    :"Ev, tarix, qonaq sayı və yeni ümumi məbləğ dəyişdirilsin?";
+  if(!confirm(confirmText))return;
+  submit.disabled=true;message.textContent="Mövcudluq yoxlanılır və dəyişiklik yadda saxlanılır...";
+  try{
+    const result=await adminRequest("PATCH",payload);
+    await loadReservations();
+    showReservationDetails(id);
+    const fresh=document.querySelector("#reservationDetailsContent #reservationChangeMessage");
+    if(fresh)fresh.textContent=payload.changeMode==="early_checkout"
+      ?"Vaxtından əvvəl çıxış qeydə alındı. Faktiki çıxışdan sonrakı tarixlər boşaldıldı. Maliyyə və ödəniş tarixçəsi qorunub."
+      :"Rezervasiya dəyişdirildi. Köhnə və yeni məlumatlar audit tarixçəsində saxlanıldı.";
+  }catch(error){
+    message.textContent="Dəyişiklik edilmədi: "+error.message;
+    submit.disabled=false;
+  }
+};
+
 window.submitReservationPayment = async function (event,id) {
   event.preventDefault();
   const form = event.currentTarget;

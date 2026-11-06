@@ -197,6 +197,55 @@ export const handler = async (event) => {
         return json(200, { reservation, payment, paymentResult: result });
       }
 
+
+      if (action === 'reservation_update') {
+        const { data: current, error: currentError } = await client.from('reservations')
+          .select('id,unit_id,check_in,check_out,guest_count,total_amount,paid_amount,status')
+          .eq('id', id).single();
+        if (currentError) throw currentError;
+        const unitId = String(body.unitId || '');
+        const checkIn = String(body.checkIn || '');
+        const checkOut = String(body.checkOut || '');
+        const guestCount = Number(body.guestCount);
+        const totalAmount = Number(body.totalAmount);
+        const changeMode = String(body.changeMode || 'modify');
+        const allowedUnits = ['scandi-large-1','scandi-large-2','scandi-small-1','scandi-small-2','aframe-1','aframe-2'];
+        if (!allowedUnits.includes(unitId) || !validDate(checkIn) || !validDate(checkOut) ||
+            getNights(checkIn, checkOut) < 1 || getNights(checkIn, checkOut) > 30 ||
+            !Number.isInteger(guestCount) || guestCount < 1 || guestCount > 10 ||
+            !Number.isFinite(totalAmount) || totalAmount <= 0 ||
+            !['modify','early_checkout'].includes(changeMode)) {
+          return json(400, { error: 'Ev, tarix, qonaq sayı və yeni ümumi məbləği düzgün daxil edin.' });
+        }
+        if (['cancelled','expired'].includes(current.status)) {
+          return json(409, { error: 'Ləğv edilmiş və ya vaxtı bitmiş rezervasiya dəyişdirilə bilməz.' });
+        }
+        if (changeMode === 'early_checkout' && checkOut >= current.check_out) {
+          return json(400, { error: 'Vaxtından əvvəl çıxış tarixi əvvəlki çıxış tarixindən tez olmalıdır.' });
+        }
+        const { data: updatedRows, error: updateError } = await client.rpc('qth_admin_update_reservation', {
+          p_reservation_id: id,
+          p_admin_id: admin.id,
+          p_unit_id: unitId,
+          p_check_in: checkIn,
+          p_check_out: checkOut,
+          p_guest_count: guestCount,
+          p_total_amount: totalAmount,
+          p_change_mode: changeMode,
+          p_reason: typeof body.reason === 'string' ? body.reason.slice(0,500) : ''
+        });
+        if (updateError) {
+          const message = updateError.message || '';
+          if (/DATES_ALREADY_BOOKED|overlap|conflict|BLOCKED_DATES/i.test(message))
+            return json(409, { error: 'Seçilmiş ev və tarixlərdə başqa rezervasiya və ya bağlı gün mövcuddur.' });
+          if (/UNIT_CAPACITY/i.test(message))
+            return json(400, { error: 'Qonaq sayı seçilmiş evin tutumundan çoxdur.' });
+          throw updateError;
+        }
+        const updated = Array.isArray(updatedRows) ? updatedRows[0] : updatedRows;
+        return json(200, { success: true, reservation: updated });
+      }
+
       if (!allowedStatuses.has(status) || status === 'confirmed') {
         return json(400, { error: 'Təsdiq yalnız faktiki ödəniş qeydə alındıqda mümkündür. Ödəniş əlavə edin.' });
       }
