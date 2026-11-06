@@ -17,6 +17,8 @@ create unique index if not exists salary_payments_finance_transaction_uidx
   on public.salary_payments(finance_transaction_id)
   where finance_transaction_id is not null;
 
+drop function if exists public.pay_employee_salary(uuid,numeric,date,text,date,date,text);
+
 create or replace function public.pay_employee_salary(
   p_employee_id uuid,
   p_amount numeric,
