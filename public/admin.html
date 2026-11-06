@@ -1768,8 +1768,8 @@ window.showReservationDetails = function (id) {
     <h4 style="margin:20px 0 8px;color:#294b37">Avans məbləğini düzəlt</h4>
     <form class="qth-payment-form" onsubmit="submitReservationDepositAdjustment(event,'${r.id}')">
       <label class="wide">Düzəldiləcək avans ödənişi
-        <select name="paymentId">
-          ${depositPayments.map(p => `<option value="${escapeReservation(p.id)}">${escapeReservation(p.payment_date || "-")} · ${money(p.amount)} · ${escapeReservation(p.payment_method || "Üsul göstərilməyib")}</option>`).join("")}
+        <select name="paymentId" onchange="this.form.elements.amount.value=this.selectedOptions[0].dataset.amount">
+          ${depositPayments.map(p => `<option value="${escapeReservation(p.id)}" data-amount="${Number(p.amount || 0).toFixed(2)}">${escapeReservation(p.payment_date || "-")} · ${money(p.amount)} · ${escapeReservation(p.payment_method || "Üsul göstərilməyib")}</option>`).join("")}
         </select>
       </label>
       <label>Yeni avans məbləği (AZN)
