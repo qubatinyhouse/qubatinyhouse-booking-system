@@ -466,6 +466,15 @@ tbody tr:hover{background:#f8f8f2}
 
 
 /* Current-month expense donut — QTH premium dashboard */
+.qth-payroll-panel{margin:0 0 20px;padding:22px 24px;background:linear-gradient(145deg,#fffefa,#f8f7f0);border:1px solid #e7e1d3;border-radius:18px;box-shadow:0 12px 30px rgba(43,55,43,.055)}
+.qth-payroll-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.qth-payroll-stat{background:#fff;border:1px solid #ece8dd;border-radius:13px;padding:16px;min-width:0}
+.qth-payroll-stat span{display:block;color:#68766b;font-size:12px;line-height:1.4;min-height:32px}
+.qth-payroll-stat strong{display:block;color:#294735;font-size:23px;letter-spacing:-.5px;margin:8px 0}
+.qth-payroll-stat:nth-child(2) strong{color:#9a6b36}
+.qth-payroll-stat:nth-child(3) strong{color:#527d61}
+.qth-payroll-stat small{display:block;color:#92998f;font-size:10px;line-height:1.4}
+@media(max-width:700px){.qth-payroll-panel{padding:17px 14px}.qth-payroll-grid{grid-template-columns:1fr}.qth-payroll-stat{padding:13px}.qth-payroll-stat span{min-height:0}.qth-payroll-stat strong{font-size:21px}}
 .qth-expense-panel{margin:0 0 20px;padding:22px 24px;background:linear-gradient(145deg,#fffefa,#f8f7f0);border:1px solid #e7e1d3;border-radius:18px;box-shadow:0 12px 30px rgba(43,55,43,.055)}
 .qth-expense-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}
 .qth-expense-head h3{margin:0 0 5px;color:#304a38;font-size:18px}
@@ -585,6 +594,19 @@ tbody tr:hover{background:#f8f8f2}
   <div class="qth-expense-legend" id="qthExpenseLegend"><div class="qth-expense-empty">Maliyyə məlumatları yüklənir...</div></div>
  </div>
  <div class="qth-expense-foot">Məbləğlər cari ayda maliyyə jurnalında qeydə alınmış faktiki xərclərdən hesablanır. Kateqoriyasız və digər xərclər “Digər xərclər” bölməsində göstərilir.</div>
+</div>
+
+<div class="qth-payroll-panel" id="qthPayrollPanel">
+ <div class="qth-expense-head">
+  <div><h3>İşçilər üzrə ödəniş vəziyyəti</h3><p>Maaş və tamamlanmış təmizlik işləri üzrə hesablaşma</p></div>
+  <span class="qth-expense-month" id="qthPayrollMonth">Cari ay</span>
+ </div>
+ <div class="qth-payroll-grid">
+  <div class="qth-payroll-stat"><span>Ümumi ödənilməli borc</span><strong id="qthPayrollTotalDebt">— AZN</strong><small>Keçmiş qalıqlar və cari öhdəliklər</small></div>
+  <div class="qth-payroll-stat"><span>Cari aydan qalan borc</span><strong id="qthPayrollCurrentDue">— AZN</strong><small>Cari ay üzrə hələ ödənilməyən</small></div>
+  <div class="qth-payroll-stat"><span>Faktiki ödənilmiş məbləğ</span><strong id="qthPayrollPaid">— AZN</strong><small>Cari ayda kassadan/bankdan çıxan</small></div>
+ </div>
+ <div class="qth-expense-foot" id="qthPayrollNote">Məlumatlar maliyyə və işçi ödəniş qeydlərindən hesablanır.</div>
 </div>
 
 <div class="panel">
