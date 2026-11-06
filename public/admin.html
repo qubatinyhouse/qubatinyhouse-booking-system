@@ -598,7 +598,7 @@ tbody tr:hover{background:#f8f8f2}
 
 <div class="qth-payroll-panel" id="qthPayrollPanel">
  <div class="qth-expense-head">
-  <div><h3>İşçilər üzrə ödəniş vəziyyəti</h3><p>Maaş və tamamlanmış təmizlik işləri üzrə hesablaşma</p></div>
+  <div><h3>İşçilər üzrə ödəniş vəziyyəti</h3><p>Nəzarətçi maaşı və yaradılmış təmizlik tapşırıqları üzrə hesablaşma</p></div>
   <span class="qth-expense-month" id="qthPayrollMonth">Cari ay</span>
  </div>
  <div class="qth-payroll-grid">
@@ -1315,7 +1315,7 @@ window.addEventListener("message", (event) => {
     document.getElementById("qthPayrollTotalDebt").textContent=fmt(payroll.totalDebt);
     document.getElementById("qthPayrollCurrentDue").textContent=fmt(payroll.currentMonthRemaining);
     document.getElementById("qthPayrollPaid").textContent=fmt(payroll.currentMonthPaid);
-    document.getElementById("qthPayrollNote").textContent="Təmizlik borcu yalnız tamamlanmış işlərdən hesablanır; gözləyən tapşırıqlar hələ borc sayılmır. Nəzarətçi üzrə cari maaş və əvvəlki qalıqlar, faktiki ödənişlər ayrıca nəzərə alınır.";
+    document.getElementById("qthPayrollNote").textContent="Təmizlik tapşırığı yaradıldıqda məbləğ cari ayın borcuna əlavə olunur; ləğv edilmiş tapşırıqlar hesablanmır. Ödəniş daxil olduqda qalıq borc avtomatik azalır.";
   }else{
     document.getElementById("qthPayrollTotalDebt").textContent="Yüklənmədi";
     document.getElementById("qthPayrollCurrentDue").textContent="Yüklənmədi";
