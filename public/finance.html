@@ -744,11 +744,11 @@ const expenseBreakdown=Object.entries(expenseGroups)
   .map(([name,amount])=>({name,amount}))
   .sort((a,b)=>a.amount-b.amount);
 
-// Əməkhaqqı borcu: aylıq maaş öhdəliyi və tamamlanmış təmizlik işləri.
+// İşçi üzrə borc: əvvəlki qalıq, cari ay öhdəliyi, ümumi borc və cari ay ödənişi.
 const monthStart=currentMonth+"-01";
 const monthEnd=new Date(Date.UTC(Number(currentMonth.slice(0,4)),Number(currentMonth.slice(5,7)),0)).toISOString().slice(0,10);
 const [employeesRes,salaryRes,openingRes,cleaningRes,cleaningPaymentsRes]=await Promise.all([
-  client.from("employees").select("id,salary_type,base_salary,active"),
+  client.from("employees").select("id,full_name,position,salary_type,base_salary,active"),
   client.from("salary_payments").select("employee_id,amount,payment_date,period_start,period_end"),
   client.from("employee_opening_balances").select("employee_id,balance_month,amount"),
   client.from("cleaning_tasks").select("id,task_date,employee_id,status,amount").eq("status","completed"),
@@ -756,34 +756,50 @@ const [employeesRes,salaryRes,openingRes,cleaningRes,cleaningPaymentsRes]=await 
 ]);
 const payrollErrors=[employeesRes,salaryRes,openingRes,cleaningRes,cleaningPaymentsRes].filter(x=>x.error);
 let payrollSummary=null;
+let payrollEmployees=[];
 if(!payrollErrors.length){
   const employees=employeesRes.data||[], salaryRows=salaryRes.data||[], openingRows=openingRes.data||[];
   const tasks=cleaningRes.data||[], cleaningPayments=cleaningPaymentsRes.data||[];
   const overlap=(aStart,aEnd,bStart,bEnd)=>aStart<=bEnd&&aEnd>=bStart;
-  const currentSalaryAccrued=employees.filter(e=>e.active&&e.salary_type==="monthly").reduce((sum,e)=>sum+Number(e.base_salary||0),0);
-  const currentSalaryPaid=salaryRows.filter(p=>p.period_start&&p.period_end&&overlap(p.period_start,p.period_end,monthStart,monthEnd)).reduce((sum,p)=>sum+Number(p.amount||0),0);
-  const currentSalaryRemaining=Math.max(0,currentSalaryAccrued-currentSalaryPaid);
+  const monthSalaryPayments=(employeeId,period)=>salaryRows.filter(p=>p.employee_id===employeeId&&p.period_start&&p.period_end&&overlap(p.period_start,p.period_end,period+"-01",new Date(Date.UTC(Number(period.slice(0,4)),Number(period.slice(5,7)),0)).toISOString().slice(0,10)));
   const paidByTask={};
   cleaningPayments.forEach(p=>paidByTask[p.cleaning_task_id]=(paidByTask[p.cleaning_task_id]||0)+Number(p.amount||0));
-  let cleaningOutstanding=0,currentCleaningRemaining=0;
-  tasks.forEach(t=>{
-    const due=Math.max(0,Number(t.amount||0)-(paidByTask[t.id]||0));
-    cleaningOutstanding+=due;
-    if(String(t.task_date||"").slice(0,7)===currentMonth) currentCleaningRemaining+=due;
-  });
-  let openingDebt=0;
-  openingRows.forEach(o=>{
-    const period=String(o.balance_month||"").slice(0,7);
-    const periodEnd=period?new Date(Date.UTC(Number(period.slice(0,4)),Number(period.slice(5,7)),0)).toISOString().slice(0,10):"";
-    const paidAgainstPeriod=salaryRows.filter(p=>p.employee_id===o.employee_id&&p.period_start&&p.period_end&&period&&overlap(p.period_start,p.period_end,period+"-01",periodEnd)).reduce((sum,p)=>sum+Number(p.amount||0),0);
-    openingDebt+=Math.max(0,Number(o.amount||0)-paidAgainstPeriod);
-  });
-  const currentMonthPaid=salaryRows.filter(p=>String(p.payment_date||"").slice(0,7)===currentMonth).reduce((sum,p)=>sum+Number(p.amount||0),0)
-    +cleaningPayments.filter(p=>String(p.payment_date||"").slice(0,7)===currentMonth).reduce((sum,p)=>sum+Number(p.amount||0),0);
+  payrollEmployees=employees.filter(e=>e.active).map(e=>{
+    const isCleaner=/təmizlik|temizlik|clean/i.test((e.position||"")+" "+(e.full_name||""));
+    const openings=openingRows.filter(o=>o.employee_id===e.id);
+    let previousDebt=0,currentMonthDebt=0,paidThisMonth=0;
+    if(isCleaner){
+      previousDebt=openings.reduce((sum,o)=>{
+        const period=String(o.balance_month||"").slice(0,7);
+        const paid=period?monthSalaryPayments(e.id,period).reduce((v,p)=>v+Number(p.amount||0),0):0;
+        return sum+Math.max(0,Number(o.amount||0)-paid);
+      },0);
+      tasks.filter(t=>t.employee_id===e.id).forEach(t=>{
+        const outstanding=Math.max(0,Number(t.amount||0)-(paidByTask[t.id]||0));
+        if(String(t.task_date||"").slice(0,7)===currentMonth) currentMonthDebt+=outstanding;
+        else if(String(t.task_date||"").slice(0,7)<currentMonth) previousDebt+=outstanding;
+      });
+      paidThisMonth=cleaningPayments.filter(p=>String(p.payment_date||"").slice(0,7)===currentMonth)
+        .filter(p=>tasks.some(t=>t.id===p.cleaning_task_id&&t.employee_id===e.id))
+        .reduce((sum,p)=>sum+Number(p.amount||0),0);
+    }else{
+      previousDebt=openings.reduce((sum,o)=>{
+        const period=String(o.balance_month||"").slice(0,7);
+        const paid=period?monthSalaryPayments(e.id,period).reduce((v,p)=>v+Number(p.amount||0),0):0;
+        return sum+Math.max(0,Number(o.amount||0)-paid);
+      },0);
+      const currentAccrued=e.salary_type==="monthly"?Number(e.base_salary||0):0;
+      const currentPaid=monthSalaryPayments(e.id,currentMonth).reduce((sum,p)=>sum+Number(p.amount||0),0);
+      currentMonthDebt=Math.max(0,currentAccrued-currentPaid);
+      paidThisMonth=salaryRows.filter(p=>p.employee_id===e.id&&String(p.payment_date||"").slice(0,7)===currentMonth)
+        .reduce((sum,p)=>sum+Number(p.amount||0),0);
+    }
+    return {id:e.id,name:e.full_name,position:e.position,role:isCleaner?"Təmizlik işçisi":"Nəzarətçi",previousDebt,currentMonthDebt,totalDue:previousDebt+currentMonthDebt,paidThisMonth};
+  }).filter(e=>e.totalDue>0||e.paidThisMonth>0||/təmizlik|temizlik|clean|nəzarət|nezaret/i.test((e.position||"")+" "+(e.name||"")));
   payrollSummary={
-    totalDebt:openingDebt+currentSalaryRemaining+cleaningOutstanding,
-    currentMonthRemaining:currentSalaryRemaining+currentCleaningRemaining,
-    currentMonthPaid
+    totalDebt:payrollEmployees.reduce((sum,e)=>sum+e.totalDue,0),
+    currentMonthRemaining:payrollEmployees.reduce((sum,e)=>sum+e.currentMonthDebt,0),
+    currentMonthPaid:payrollEmployees.reduce((sum,e)=>sum+e.paidThisMonth,0)
   };
 }
 if (window.parent !== window) {
@@ -793,6 +809,7 @@ if (window.parent !== window) {
     expense: currentExpense,
     expenseBreakdown,
     payrollSummary,
+    payrollEmployees,
     payrollError: payrollErrors.length ? payrollErrors.map(x=>x.error.message).join('; ') : null,
     month: currentMonth
   }, window.location.origin);
