@@ -39,10 +39,30 @@ export async function requireQthAdmin(event) {
     const authClient = createClient(QTH_ADMIN_AUTH_URL, QTH_ADMIN_AUTH_KEY, {
       auth: { persistSession: false, autoRefreshToken: false }
     });
-    const { data, error } = await authClient.auth.getUser(match[1]);
+    const token = match[1];
+    const { data, error } = await authClient.auth.getUser(token);
     const user = data?.user;
     if (error || !user || user.app_metadata?.role !== "admin") return null;
-    return { id: user.id, email: user.email || null };
+
+    // getUser validates the token with Supabase Auth; now require a verified AAL2 session.
+    let claims;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      claims = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+    } catch {
+      return null;
+    }
+    const expectedIssuer = `${QTH_ADMIN_AUTH_URL}/auth/v1`;
+    if (
+      claims.sub !== user.id ||
+      claims.iss !== expectedIssuer ||
+      !Number.isFinite(Number(claims.exp)) ||
+      Number(claims.exp) <= Math.floor(Date.now() / 1000) ||
+      claims.aal !== 'aal2'
+    ) return null;
+
+    return { id: user.id, email: user.email || null, aal: claims.aal };
   } catch (error) {
     console.error("QTH admin token verification failed", error?.message || error);
     return null;
