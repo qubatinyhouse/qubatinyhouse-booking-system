@@ -215,7 +215,7 @@ export const handler = async (event) => {
             !Number.isInteger(guestCount) || guestCount < 1 || guestCount > 10 ||
             !Number.isFinite(totalAmount) || totalAmount <= 0 ||
             !['modify','early_checkout'].includes(changeMode)) {
-          return json(400, { error: 'Ev, tarix, qonaq sayı və yeni ümumi məbləği düzgün daxil edin. Məbləğ ödənilmiş məbləğdən az ola bilməz.' });
+          return json(400, { error: 'Ev, tarix, qonaq sayı və yeni ümumi məbləği düzgün daxil edin.' });
         }
         if (['cancelled','expired'].includes(current.status)) {
           return json(409, { error: 'Ləğv edilmiş və ya vaxtı bitmiş rezervasiya dəyişdirilə bilməz.' });
@@ -240,8 +240,6 @@ export const handler = async (event) => {
             return json(409, { error: 'Seçilmiş ev və tarixlərdə başqa rezervasiya və ya bağlı gün mövcuddur.' });
           if (/UNIT_CAPACITY/i.test(message))
             return json(400, { error: 'Qonaq sayı seçilmiş evin tutumundan çoxdur.' });
-          if (/PAID_AMOUNT_EXCEEDS_TOTAL/i.test(message))
-            return json(400, { error: 'Yeni ümumi məbləğ artıq ödənilmiş məbləğdən az ola bilməz.' });
           throw updateError;
         }
         const updated = Array.isArray(updatedRows) ? updatedRows[0] : updatedRows;
