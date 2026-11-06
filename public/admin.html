@@ -1763,6 +1763,26 @@ window.showReservationDetails = function (id) {
   };
   const paymentTypeLabels = {deposit:"Avans",remaining:"Qalıq ödəniş",other:"Digər ödəniş"};
   const payments = r.payments || [];
+  const depositPayments = payments.filter(p => p.payment_type === "deposit");
+  const depositAdjustmentForm = depositPayments.length && !["cancelled","expired","payment_failed"].includes(String(r.status || "").toLowerCase()) ? `
+    <h4 style="margin:20px 0 8px;color:#294b37">Avans məbləğini düzəlt</h4>
+    <form class="qth-payment-form" onsubmit="submitReservationDepositAdjustment(event,'${r.id}')">
+      <label class="wide">Düzəldiləcək avans ödənişi
+        <select name="paymentId">
+          ${depositPayments.map(p => `<option value="${escapeReservation(p.id)}">${escapeReservation(p.payment_date || "-")} · ${money(p.amount)} · ${escapeReservation(p.payment_method || "Üsul göstərilməyib")}</option>`).join("")}
+        </select>
+      </label>
+      <label>Yeni avans məbləği (AZN)
+        <input name="amount" type="number" min="0.01" step="0.01" value="${Number(depositPayments[0].amount || 0).toFixed(2)}" required>
+      </label>
+      <label class="wide">Düzəliş səbəbi
+        <input name="reason" maxlength="500" placeholder="Məsələn: avans səhvən artıq daxil edilmişdi">
+      </label>
+      <div class="wide">
+        <button class="btn" type="submit">Avansı düzəlt və Maliyyəni yenilə</button>
+        <p id="depositAdjustmentMessage" class="muted" aria-live="polite">Bu əməliyyat seçilmiş avans ödənişini düzəldir, qalıq borcu yenidən hesablayır və Maliyyə jurnalındakı əlaqəli gəliri yeniləyir. Əvvəlki məbləğ audit tarixçəsində saxlanılır.</p>
+      </div>
+    </form>` : "";
   const paymentRows = payments.map(p => `
     <tr>
       <td>${escapeReservation(p.payment_date || "-")}</td>
@@ -1833,6 +1853,7 @@ window.showReservationDetails = function (id) {
         <tbody>${paymentRows || '<tr><td colspan="5">Hələ ayrıca ödəniş qeydə alınmayıb.</td></tr>'}</tbody>
       </table>
     </div>
+    ${depositAdjustmentForm}
     <h4 style="margin:18px 0 6px;color:#294b37">Yeni ödəniş əlavə et</h4>
     <form class="qth-payment-form" onsubmit="submitReservationPayment(event,'${r.id}')">
       <label>Ödəniş növü
@@ -1908,6 +1929,72 @@ window.submitReservationModification = async function(event,id){
   }catch(error){
     message.textContent="Dəyişiklik edilmədi: "+error.message;
     submit.disabled=false;
+  }
+};
+
+window.submitReservationDepositAdjustment = async function(event,id) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const message = form.querySelector("#depositAdjustmentMessage");
+  const submit = form.querySelector('button[type="submit"]');
+  const paymentId = form.elements.paymentId.value;
+  const amount = Number(form.elements.amount.value);
+  const reason = form.elements.reason.value.trim();
+  if (!paymentId || !Number.isFinite(amount) || amount <= 0) {
+    message.textContent = "Avans ödənişini seçin və 0-dan böyük düzgün məbləğ daxil edin.";
+    return;
+  }
+  const oldPayment = (allReservations.find(x => x.id === id)?.payments || []).find(p => p.id === paymentId);
+  if (!oldPayment) {
+    message.textContent = "Seçilmiş avans ödənişi tapılmadı. Rezervasiyanı yenidən yükləyin.";
+    return;
+  }
+  if (Math.abs(Number(oldPayment.amount || 0) - amount) < 0.005) {
+    message.textContent = "Yeni məbləğ əvvəlki məbləğlə eynidir.";
+    return;
+  }
+  if (!confirm("Avans " + money(oldPayment.amount) + " məbləğindən " + money(amount) +
+    " məbləğinə dəyişdirilsin? Ümumi rezervasiya qiyməti dəyişməyəcək; qalıq borc yenidən hesablanacaq.")) return;
+  submit.disabled = true;
+  message.textContent = "Avans bazada düzəldilir...";
+  try {
+    const result = await adminRequest("PATCH", {
+      id,
+      action: "adjust_deposit",
+      paymentId,
+      amount,
+      reason
+    });
+    message.textContent = "Avans düzəldildi. Maliyyə jurnalı yenilənir...";
+    const auth = window.qthAdminAuthClient;
+    if (!auth) throw new Error("Admin maliyyə sessiyası tapılmadı. Maliyyəyə sinxron üçün yenidən daxil olun.");
+    const { data: sessionData, error: sessionError } = await auth.auth.getSession();
+    if (sessionError || !sessionData?.session) throw new Error("Maliyyə sessiyası aktiv deyil. Avans bazada düzəldildi, Maliyyə sinxronu tamamlanmadı.");
+    const { data: syncData, error: syncError } = await auth.rpc("adjust_booking_payment_income", {
+      p_payment_id: result.payment.id,
+      p_new_amount: Number(result.payment.amount)
+    });
+    if (syncError) throw new Error("Avans bazada düzəldildi, lakin Maliyyə sinxronu alınmadı: " + syncError.message);
+    const syncResult = Array.isArray(syncData) ? syncData[0] : syncData;
+    if (syncResult?.result_status === "not_linked") {
+      await qthQueueBookingPayment(result.payment, result.reservation);
+    } else {
+      const frame = document.getElementById("financeFrame");
+      if (frame?.contentWindow) frame.contentWindow.postMessage({type:"QTH_REFRESH_FINANCE"},window.location.origin);
+    }
+    await loadReservations();
+    showReservationDetails(id);
+    const fresh = document.querySelector("#reservationDetailsContent #depositAdjustmentMessage");
+    if (fresh) fresh.textContent = "Avans uğurla düzəldildi: " + money(result.adjustment.old_amount) + " → " +
+      money(result.adjustment.new_amount) + ". Ödənilmiş cəm: " + money(result.adjustment.paid_amount) +
+      "; qalıq: " + money(result.adjustment.remaining_amount) + ". Maliyyə jurnalı da yeniləndi.";
+  } catch (error) {
+    message.textContent = error.message;
+    submit.disabled = false;
+    await loadReservations();
+    showReservationDetails(id);
+    const fresh = document.querySelector("#reservationDetailsContent #depositAdjustmentMessage");
+    if (fresh) fresh.textContent = error.message;
   }
 };
 
