@@ -1165,7 +1165,7 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
  }
  async function displayAdmin(){
    const wasVisible=document.body.classList.contains("qth-authenticated");
-   const idleStart=await qthStartSharedIdle();
+   const idleStart=await qthStartSharedIdle(window.qthPendingAdminSession||null);
    if(!idleStart)return;
    panel.hidden=true;
    setLoginControls(false);
@@ -1185,6 +1185,7 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
    const aalResult=await authClient.auth.mfa.getAuthenticatorAssuranceLevel();
    if(aalResult.error)throw aalResult.error;
    if(aalResult.data?.currentLevel==="aal2"){
+     window.qthPendingAdminSession=session;
      await displayAdmin();
      return;
    }
@@ -1269,6 +1270,7 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
  const QTH_IDLE_ACTIVITY_API="/.netlify/functions/admin-session-activity";
  let qthIdleLogoutInProgress=false;
  let qthLastActivitySent=0;
+ let qthIdleStartedSessionId="";
  let qthIdleStatusBusy=false;
  let qthIdlePollTimer=null;
  async function qthSharedIdleRequest(method="GET",action="status"){
@@ -1303,14 +1305,26 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
    }catch(error){
      message.textContent+=" Server çıxışı zamanı əlaqə xətası oldu; server qoruması admin əməliyyatlarını bloklayır.";
    }finally{
-     sessionToken="";sessionPromise=null;
+     sessionToken="";sessionPromise=null;window.qthPendingAdminSession=null;qthIdleStartedSessionId="";
      qthIdleLogoutInProgress=false;
    }
  }
- async function qthStartSharedIdle(){
+ function qthReadSessionId(session){
    try{
-     const result=await qthSharedIdleRequest("POST","start");
+     const part=session?.access_token?.split(".")?.[1];
+     if(!part)return "";
+     const normalized=part.replace(/-/g,"+").replace(/_/g,"/");
+     const payload=JSON.parse(atob(normalized));
+     return String(payload.session_id||"");
+   }catch{return "";}
+ }
+ async function qthStartSharedIdle(session){
+   try{
+     const sessionId=qthReadSessionId(session);
+     const sameSession=Boolean(sessionId&&sessionId===qthIdleStartedSessionId);
+     const result=await qthSharedIdleRequest(sameSession?"GET":"POST",sameSession?"status":"start");
      if(!result.active){await qthExpireEverywhere();return false;}
+     if(sessionId)qthIdleStartedSessionId=sessionId;
      qthLastActivitySent=Date.now();
      return true;
    }catch(error){
