@@ -27,15 +27,12 @@ export function db() {
 const QTH_ADMIN_AUTH_URL = "https://fynbzmyoleqcnqkhyfzd.supabase.co";
 const QTH_ADMIN_AUTH_KEY = "sb_publishable_WM8Bxho4Xrp2SJR_uCNb-Q_MaxQeE4N";
 
-// Verify the same Supabase Auth session used by the admin UI.
-// app_metadata is server-managed and cannot be changed by the user from the browser.
-const QTH_ADMIN_IDLE_TIMEOUT_MS = 25 * 60 * 1000;
-
-// Verify the same Supabase Auth session used by the admin UI.
-export async function requireQthAdmin(event, options = {}) {
+// Verify Supabase Auth token, server-managed admin role and MFA assurance.
+// Idle inactivity logout is intentionally disabled; JWT expiry and manual sign-out remain.
+export async function requireQthAdmin(event) {
   const headers = event?.headers || {};
   const authorization = headers.authorization || headers.Authorization || "";
-  const match = String(authorization).match(/^Bearer\s+(.+)$/i);
+  const match = String(authorization).match(/^Bearer\\s+(.+)$/i);
   if (!match) return null;
 
   try {
@@ -55,6 +52,7 @@ export async function requireQthAdmin(event, options = {}) {
     } catch {
       return null;
     }
+
     const expectedIssuer = `${QTH_ADMIN_AUTH_URL}/auth/v1`;
     if (
       claims.sub !== user.id ||
@@ -65,43 +63,13 @@ export async function requireQthAdmin(event, options = {}) {
       typeof claims.session_id !== 'string'
     ) return null;
 
-    const admin = {
+    return {
       id: user.id,
       email: user.email || null,
       aal: claims.aal,
       authTime: Number(claims.auth_time) || 0,
       sessionId: claims.session_id
     };
-
-    if (!options.skipIdleCheck) {
-      const activityClient = db();
-      const { data: activity, error: activityError } = await activityClient
-        .from('qth_admin_activity')
-        .select('last_activity,session_ids')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (activityError) {
-        console.error("QTH admin idle-session lookup failed", activityError.message);
-        return null;
-      }
-
-      const now = Date.now();
-      if (!activity) {
-        const stamp = new Date(now).toISOString();
-        const { error: insertError } = await activityClient.from('qth_admin_activity')
-          .upsert({ user_id: user.id, last_activity: stamp, updated_at: stamp, session_ids: [admin.sessionId] });
-        if (insertError) {
-          console.error("QTH admin idle-session initialization failed", insertError.message);
-          return null;
-        }
-      } else {
-        const lastActivity = Date.parse(activity.last_activity);
-        if (!Number.isFinite(lastActivity) || now - lastActivity >= QTH_ADMIN_IDLE_TIMEOUT_MS) return null;
-        if (!Array.isArray(activity.session_ids) || !activity.session_ids.includes(admin.sessionId)) return null;
-      }
-    }
-
-    return admin;
   } catch (error) {
     console.error("QTH admin token verification failed", error?.message || error);
     return null;
