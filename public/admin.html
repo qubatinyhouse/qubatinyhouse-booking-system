@@ -1352,7 +1352,7 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
    qthIdleStatusBusy=true;
    try{
      const result=await qthSharedIdleRequest("GET","status");
-     if(!result.active)await qthExpireEverywhere();
+     if(!result.active)await qthExpireEverywhere(result.reason);
    }catch(error){
      console.warn("QTH shared idle status check failed",error?.message||error);
    }finally{
