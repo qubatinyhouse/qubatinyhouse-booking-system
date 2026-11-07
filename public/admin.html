@@ -1170,6 +1170,7 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
    gate.style.display="none";
    app.style.display="flex";
    document.body.classList.add("qth-authenticated");
+   qthResetIdleTimer();
    if(!wasVisible){
      if(typeof window.loadHousePerformance==="function")window.loadHousePerformance();
      if(typeof window.loadReservations==="function")window.loadReservations();
@@ -1260,6 +1261,47 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
    if(error){message.textContent="Çıxış alınmadı: "+error.message;return;}
    message.textContent="Sessiya bağlandı. Təhlükəsizlik üçün yenidən giriş tələb olunur.";
    password.value="";email.focus();
+ });
+
+ // Automatic idle logout: after 25 minutes without deliberate user activity.
+ const QTH_IDLE_TIMEOUT_MS=25*60*1000;
+ let qthLastActivity=Date.now();
+ let qthIdleTimer=null;
+ let qthIdleLogoutInProgress=false;
+ function qthResetIdleTimer(){
+   if(!document.body.classList.contains("qth-authenticated"))return;
+   qthLastActivity=Date.now();
+   if(qthIdleTimer)window.clearTimeout(qthIdleTimer);
+   qthIdleTimer=window.setTimeout(qthCheckIdleTimeout,QTH_IDLE_TIMEOUT_MS);
+ }
+ async function qthCheckIdleTimeout(){
+   if(!document.body.classList.contains("qth-authenticated")||qthIdleLogoutInProgress)return;
+   const remaining=QTH_IDLE_TIMEOUT_MS-(Date.now()-qthLastActivity);
+   if(remaining>0){qthIdleTimer=window.setTimeout(qthCheckIdleTimeout,remaining);return;}
+   qthIdleLogoutInProgress=true;
+   if(qthIdleTimer)window.clearTimeout(qthIdleTimer);
+   try{
+     const {error}=await authClient.auth.signOut({scope:"local"});
+     if(error)throw error;
+     password.value="";
+     message.textContent="Təhlükəsizlik üçün 25 dəqiqə fəaliyyətsizlikdən sonra admin paneldən avtomatik çıxış edildi. Davam etmək üçün yenidən daxil olun.";
+   }catch(error){
+     // Fail closed: hide the admin interface even if remote/local sign-out reports an error.
+     document.body.classList.remove("qth-authenticated");
+     app.style.display="none";
+     gate.style.display="flex";
+     panel.hidden=true;
+     setLoginControls(true);
+     message.textContent="Sessiyanın avtomatik bağlanması zamanı xəta baş verdi. Təhlükəsizlik üçün yenidən daxil olun. "+(error?.message||"");
+   }finally{
+     qthIdleLogoutInProgress=false;
+   }
+ }
+ ["pointerdown","keydown","touchstart","scroll","click"].forEach(eventName=>{
+   document.addEventListener(eventName,qthResetIdleTimer,{passive:true,capture:true});
+ });
+ document.addEventListener("visibilitychange",()=>{
+   if(document.visibilityState==="visible"&&document.body.classList.contains("qth-authenticated"))qthCheckIdleTimeout();
  });
  loginButton.addEventListener("click",async()=>{
    const emailValue=email.value.trim();
