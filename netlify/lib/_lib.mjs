@@ -36,7 +36,7 @@ const QTH_ADMIN_IDLE_TIMEOUT_MS = 25 * 60 * 1000;
 export async function requireQthAdmin(event, options = {}) {
   const headers = event?.headers || {};
   const authorization = headers.authorization || headers.Authorization || "";
-  const match = String(authorization).match(/^Bearer\\s+(.+)$/i);
+  const match = String(authorization).match(/^Bearer\s+(.+)$/i);
   if (!match) return null;
 
   try {
