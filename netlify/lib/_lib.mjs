@@ -27,12 +27,49 @@ export function db() {
 const QTH_ADMIN_AUTH_URL = "https://fynbzmyoleqcnqkhyfzd.supabase.co";
 const QTH_ADMIN_AUTH_KEY = "sb_publishable_WM8Bxho4Xrp2SJR_uCNb-Q_MaxQeE4N";
 
-// Verify the same Supabase Auth session used by the admin UI.
-// app_metadata is server-managed and cannot be changed by the user from the browser.
-// Admin API access is enforced by a valid, unexpired Supabase JWT,
-// admin app_metadata role and aal2 MFA claim above. Idle timeout is disabled.
+// Verify Supabase Auth token, server-managed admin role and MFA assurance.
+// Idle inactivity logout is intentionally disabled; JWT expiry and manual sign-out remain.
+export async function requireQthAdmin(event) {
+  const headers = event?.headers || {};
+  const authorization = headers.authorization || headers.Authorization || "";
+  const match = String(authorization).match(/^Bearer\\s+(.+)$/i);
+  if (!match) return null;
 
-    return admin;
+  try {
+    const authClient = createClient(QTH_ADMIN_AUTH_URL, QTH_ADMIN_AUTH_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
+    const token = match[1];
+    const { data, error } = await authClient.auth.getUser(token);
+    const user = data?.user;
+    if (error || !user || user.app_metadata?.role !== "admin") return null;
+
+    let claims;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      claims = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+    } catch {
+      return null;
+    }
+
+    const expectedIssuer = `${QTH_ADMIN_AUTH_URL}/auth/v1`;
+    if (
+      claims.sub !== user.id ||
+      claims.iss !== expectedIssuer ||
+      !Number.isFinite(Number(claims.exp)) ||
+      Number(claims.exp) <= Math.floor(Date.now() / 1000) ||
+      claims.aal !== 'aal2' ||
+      typeof claims.session_id !== 'string'
+    ) return null;
+
+    return {
+      id: user.id,
+      email: user.email || null,
+      aal: claims.aal,
+      authTime: Number(claims.auth_time) || 0,
+      sessionId: claims.session_id
+    };
   } catch (error) {
     console.error("QTH admin token verification failed", error?.message || error);
     return null;
