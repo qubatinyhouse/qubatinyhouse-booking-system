@@ -1284,25 +1284,28 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
      cache:"no-store"
    });
    const result=await response.json().catch(()=>({}));
-   if(response.status===401||response.status===440)return {active:false,expired:true};
+   if(response.status===401||response.status===440)return {active:false,expired:true,reason:response.status===401?"auth_invalid":"idle_timeout"};
    if(!response.ok)throw new Error(result.error||"Sessiya statusu yoxlanmadı.");
    return result;
  }
- async function qthExpireEverywhere(){
+ async function qthExpireEverywhere(reason="idle_timeout"){
    if(qthIdleLogoutInProgress)return;
    qthIdleLogoutInProgress=true;
+   const localOnly=reason==="session_invalidated"||reason==="auth_invalid";
    document.body.classList.remove("qth-authenticated");
    app.style.display="none";
    gate.style.display="flex";
    panel.hidden=true;
    setLoginControls(true);
    password.value="";
-   message.textContent="Təhlükəsizlik üçün 25 dəqiqə ümumi fəaliyyətsizlikdən sonra bütün cihazlardakı admin sessiyaları bağlandı. Yenidən daxil olun.";
+   message.textContent=localOnly
+     ?"Bu cihazın admin sessiyası artıq etibarlı deyil. Təhlükəsizlik üçün çıxış edildi. Yenidən daxil olun."
+     :"25 dəqiqə ümumi fəaliyyətsizlikdən sonra bütün cihazlardakı admin sessiyaları bağlandı. Yenidən daxil olun.";
    try{
-     const {error}=await authClient.auth.signOut({scope:"global"});
-     if(error)message.textContent+=" Server çıxışı tamamlanmadı; lakin server qoruması admin əməliyyatlarını bloklayır.";
+     const {error}=await authClient.auth.signOut({scope:localOnly?"local":"global"});
+     if(error)message.textContent+=" Server çıxışı tamamlanmadı; qorunan admin API-ləri əməliyyatları bloklayır.";
    }catch(error){
-     message.textContent+=" Server çıxışı zamanı əlaqə xətası oldu; server qoruması admin əməliyyatlarını bloklayır.";
+     message.textContent+=" Server çıxışı zamanı əlaqə xətası oldu; qorunan admin API-ləri əməliyyatları bloklayır.";
    }finally{
      sessionToken="";sessionPromise=null;window.qthPendingAdminSession=null;qthIdleStartedSessionId="";
      qthIdleLogoutInProgress=false;
@@ -1322,7 +1325,7 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
      const sessionId=qthReadSessionId(session);
      const sameSession=Boolean(sessionId&&sessionId===qthIdleStartedSessionId);
      const result=await qthSharedIdleRequest(sameSession?"GET":"POST",sameSession?"status":"start");
-     if(!result.active){await qthExpireEverywhere();return false;}
+     if(!result.active){await qthExpireEverywhere(result.reason);return false;}
      if(sessionId)qthIdleStartedSessionId=sessionId;
      qthLastActivitySent=Date.now();
      return true;
@@ -1339,7 +1342,7 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
    qthLastActivitySent=Date.now();
    try{
      const result=await qthSharedIdleRequest("POST","activity");
-     if(!result.active)await qthExpireEverywhere();
+     if(!result.active)await qthExpireEverywhere(result.reason);
    }catch(error){
      console.warn("QTH shared activity update failed",error?.message||error);
    }
