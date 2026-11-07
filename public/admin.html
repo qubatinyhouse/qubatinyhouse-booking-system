@@ -1362,6 +1362,24 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
  ["pointerdown","keydown","touchstart","scroll","click"].forEach(eventName=>{
    document.addEventListener(eventName,()=>{void qthSendSharedActivity();},{passive:true,capture:true});
  });
+ // Activity inside same-origin admin iframes (for example Finance) also counts.
+ const qthBoundIframeDocuments=new WeakSet();
+ function qthBindIframeActivity(frame){
+   try{
+     const childDocument=frame.contentDocument;
+     if(!childDocument||qthBoundIframeDocuments.has(childDocument))return;
+     qthBoundIframeDocuments.add(childDocument);
+     ["pointerdown","keydown","touchstart","scroll","click"].forEach(eventName=>{
+       childDocument.addEventListener(eventName,()=>{void qthSendSharedActivity();},{passive:true,capture:true});
+     });
+   }catch(error){
+     // Cross-origin frames are intentionally not inspected.
+   }
+ }
+ document.querySelectorAll("iframe").forEach(frame=>{
+   frame.addEventListener("load",()=>qthBindIframeActivity(frame));
+   qthBindIframeActivity(frame);
+ });
  qthIdlePollTimer=window.setInterval(()=>{
    if(document.visibilityState==="visible")void qthCheckSharedIdleStatus();
  },15000);
