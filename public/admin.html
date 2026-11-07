@@ -1165,12 +1165,13 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
  }
  async function displayAdmin(){
    const wasVisible=document.body.classList.contains("qth-authenticated");
+   const idleStart=await qthStartSharedIdle();
+   if(!idleStart)return;
    panel.hidden=true;
    setLoginControls(false);
    gate.style.display="none";
    app.style.display="flex";
    document.body.classList.add("qth-authenticated");
-   qthResetIdleTimer();
    if(!wasVisible){
      if(typeof window.loadHousePerformance==="function")window.loadHousePerformance();
      if(typeof window.loadReservations==="function")window.loadReservations();
@@ -1263,45 +1264,93 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
    password.value="";email.focus();
  });
 
- // Automatic idle logout: after 25 minutes without deliberate user activity.
+ // Shared 25-minute inactivity policy across every admin device.
  const QTH_IDLE_TIMEOUT_MS=25*60*1000;
- let qthLastActivity=Date.now();
- let qthIdleTimer=null;
+ const QTH_IDLE_ACTIVITY_API="/.netlify/functions/admin-session-activity";
  let qthIdleLogoutInProgress=false;
- function qthResetIdleTimer(){
-   if(!document.body.classList.contains("qth-authenticated"))return;
-   qthLastActivity=Date.now();
-   if(qthIdleTimer)window.clearTimeout(qthIdleTimer);
-   qthIdleTimer=window.setTimeout(qthCheckIdleTimeout,QTH_IDLE_TIMEOUT_MS);
+ let qthLastActivitySent=0;
+ let qthIdleStatusBusy=false;
+ let qthIdlePollTimer=null;
+ async function qthSharedIdleRequest(method="GET",action="status"){
+   const current=await authClient.auth.getSession();
+   const token=current.data?.session?.access_token;
+   if(current.error||!token)throw new Error("Admin sessiyası tapılmadı.");
+   const response=await fetch(QTH_IDLE_ACTIVITY_API,{
+     method,
+     headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+     body:method==="POST"?JSON.stringify({action}):undefined,
+     cache:"no-store"
+   });
+   const result=await response.json().catch(()=>({}));
+   if(response.status===401||response.status===440)return {active:false,expired:true};
+   if(!response.ok)throw new Error(result.error||"Sessiya statusu yoxlanmadı.");
+   return result;
  }
- async function qthCheckIdleTimeout(){
-   if(!document.body.classList.contains("qth-authenticated")||qthIdleLogoutInProgress)return;
-   const remaining=QTH_IDLE_TIMEOUT_MS-(Date.now()-qthLastActivity);
-   if(remaining>0){qthIdleTimer=window.setTimeout(qthCheckIdleTimeout,remaining);return;}
+ async function qthExpireEverywhere(){
+   if(qthIdleLogoutInProgress)return;
    qthIdleLogoutInProgress=true;
-   if(qthIdleTimer)window.clearTimeout(qthIdleTimer);
+   if(qthIdlePollTimer)window.clearInterval(qthIdlePollTimer);
+   document.body.classList.remove("qth-authenticated");
+   app.style.display="none";
+   gate.style.display="flex";
+   panel.hidden=true;
+   setLoginControls(true);
+   password.value="";
+   message.textContent="Təhlükəsizlik üçün 25 dəqiqə ümumi fəaliyyətsizlikdən sonra bütün cihazlardakı admin sessiyaları bağlandı. Yenidən daxil olun.";
    try{
-     const {error}=await authClient.auth.signOut({scope:"local"});
-     if(error)throw error;
-     password.value="";
-     message.textContent="Təhlükəsizlik üçün 25 dəqiqə fəaliyyətsizlikdən sonra admin paneldən avtomatik çıxış edildi. Davam etmək üçün yenidən daxil olun.";
+     const {error}=await authClient.auth.signOut({scope:"global"});
+     if(error)message.textContent+=" Server çıxışı tamamlanmadı; lakin server qoruması admin əməliyyatlarını bloklayır.";
    }catch(error){
-     // Fail closed: hide the admin interface even if remote/local sign-out reports an error.
-     document.body.classList.remove("qth-authenticated");
-     app.style.display="none";
-     gate.style.display="flex";
-     panel.hidden=true;
-     setLoginControls(true);
-     message.textContent="Sessiyanın avtomatik bağlanması zamanı xəta baş verdi. Təhlükəsizlik üçün yenidən daxil olun. "+(error?.message||"");
+     message.textContent+=" Server çıxışı zamanı əlaqə xətası oldu; server qoruması admin əməliyyatlarını bloklayır.";
    }finally{
+     sessionToken="";sessionPromise=null;
      qthIdleLogoutInProgress=false;
    }
  }
+ async function qthStartSharedIdle(){
+   try{
+     const result=await qthSharedIdleRequest("POST","start");
+     if(!result.active){await qthExpireEverywhere();return false;}
+     qthLastActivitySent=Date.now();
+     return true;
+   }catch(error){
+     document.body.classList.remove("qth-authenticated");
+     app.style.display="none";gate.style.display="flex";panel.hidden=true;setLoginControls(true);
+     message.textContent="Təhlükəsiz sessiya başlatmaq mümkün olmadı. Şəbəkəni yoxlayıb yenidən daxil olun. "+(error?.message||"");
+     return false;
+   }
+ }
+ async function qthSendSharedActivity(){
+   if(!document.body.classList.contains("qth-authenticated")||document.visibilityState!=="visible")return;
+   if(Date.now()-qthLastActivitySent<4000)return;
+   qthLastActivitySent=Date.now();
+   try{
+     const result=await qthSharedIdleRequest("POST","activity");
+     if(!result.active)await qthExpireEverywhere();
+   }catch(error){
+     console.warn("QTH shared activity update failed",error?.message||error);
+   }
+ }
+ async function qthCheckSharedIdleStatus(){
+   if(qthIdleStatusBusy||!document.body.classList.contains("qth-authenticated"))return;
+   qthIdleStatusBusy=true;
+   try{
+     const result=await qthSharedIdleRequest("GET","status");
+     if(!result.active)await qthExpireEverywhere();
+   }catch(error){
+     console.warn("QTH shared idle status check failed",error?.message||error);
+   }finally{
+     qthIdleStatusBusy=false;
+   }
+ }
  ["pointerdown","keydown","touchstart","scroll","click"].forEach(eventName=>{
-   document.addEventListener(eventName,qthResetIdleTimer,{passive:true,capture:true});
+   document.addEventListener(eventName,()=>{void qthSendSharedActivity();},{passive:true,capture:true});
  });
+ qthIdlePollTimer=window.setInterval(()=>{
+   if(document.visibilityState==="visible")void qthCheckSharedIdleStatus();
+ },15000);
  document.addEventListener("visibilitychange",()=>{
-   if(document.visibilityState==="visible"&&document.body.classList.contains("qth-authenticated"))qthCheckIdleTimeout();
+   if(document.visibilityState==="visible"&&document.body.classList.contains("qth-authenticated"))void qthCheckSharedIdleStatus();
  });
  loginButton.addEventListener("click",async()=>{
    const emailValue=email.value.trim();
