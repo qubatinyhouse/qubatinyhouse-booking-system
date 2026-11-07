@@ -1291,7 +1291,6 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
  async function qthExpireEverywhere(){
    if(qthIdleLogoutInProgress)return;
    qthIdleLogoutInProgress=true;
-   if(qthIdlePollTimer)window.clearInterval(qthIdlePollTimer);
    document.body.classList.remove("qth-authenticated");
    app.style.display="none";
    gate.style.display="flex";
