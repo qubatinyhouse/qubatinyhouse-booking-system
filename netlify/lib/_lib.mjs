@@ -32,7 +32,6 @@ const QTH_ADMIN_AUTH_KEY = "sb_publishable_WM8Bxho4Xrp2SJR_uCNb-Q_MaxQeE4N";
 const QTH_ADMIN_IDLE_TIMEOUT_MS = 25 * 60 * 1000;
 
 // Verify the same Supabase Auth session used by the admin UI.
-// app_metadata is server-managed and cannot be changed by the user from the browser.
 export async function requireQthAdmin(event, options = {}) {
   const headers = event?.headers || {};
   const authorization = headers.authorization || headers.Authorization || "";
@@ -62,23 +61,23 @@ export async function requireQthAdmin(event, options = {}) {
       claims.iss !== expectedIssuer ||
       !Number.isFinite(Number(claims.exp)) ||
       Number(claims.exp) <= Math.floor(Date.now() / 1000) ||
-      claims.aal !== 'aal2'
+      claims.aal !== 'aal2' ||
+      typeof claims.session_id !== 'string'
     ) return null;
 
     const admin = {
       id: user.id,
       email: user.email || null,
       aal: claims.aal,
-      authTime: Number(claims.auth_time) || 0
+      authTime: Number(claims.auth_time) || 0,
+      sessionId: claims.session_id
     };
 
-    // All admin devices share one server-side activity timestamp. Every protected
-    // API checks it, so an expired browser cannot continue making admin changes.
     if (!options.skipIdleCheck) {
       const activityClient = db();
       const { data: activity, error: activityError } = await activityClient
         .from('qth_admin_activity')
-        .select('last_activity')
+        .select('last_activity,session_ids')
         .eq('user_id', user.id)
         .maybeSingle();
       if (activityError) {
@@ -90,23 +89,15 @@ export async function requireQthAdmin(event, options = {}) {
       if (!activity) {
         const stamp = new Date(now).toISOString();
         const { error: insertError } = await activityClient.from('qth_admin_activity')
-          .upsert({ user_id: user.id, last_activity: stamp, updated_at: stamp });
+          .upsert({ user_id: user.id, last_activity: stamp, updated_at: stamp, session_ids: [admin.sessionId] });
         if (insertError) {
           console.error("QTH admin idle-session initialization failed", insertError.message);
           return null;
         }
       } else {
         const lastActivity = Date.parse(activity.last_activity);
-        if (!Number.isFinite(lastActivity)) return null;
-        if (now - lastActivity >= QTH_ADMIN_IDLE_TIMEOUT_MS) {
-          // A genuinely new sign-in may start a fresh global idle window.
-          // A previously issued session cannot revive itself after timeout.
-          if (!admin.authTime || admin.authTime * 1000 <= lastActivity) return null;
-          const stamp = new Date(now).toISOString();
-          const { error: refreshError } = await activityClient.from('qth_admin_activity')
-            .upsert({ user_id: user.id, last_activity: stamp, updated_at: stamp });
-          if (refreshError) return null;
-        }
+        if (!Number.isFinite(lastActivity) || now - lastActivity >= QTH_ADMIN_IDLE_TIMEOUT_MS) return null;
+        if (!Array.isArray(activity.session_ids) || !activity.session_ids.includes(admin.sessionId)) return null;
       }
     }
 
