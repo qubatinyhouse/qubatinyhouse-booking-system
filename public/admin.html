@@ -1170,6 +1170,7 @@ new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).for
    gate.style.display="none";
    app.style.display="flex";
    document.body.classList.add("qth-authenticated");
+   qthResetIdleTimer();
    if(!wasVisible){
      if(typeof window.loadHousePerformance==="function")window.loadHousePerformance();
      if(typeof window.loadReservations==="function")window.loadReservations();
