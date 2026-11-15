@@ -1659,7 +1659,7 @@ function renderReservations(items) {
       <td>${money(r.paid_amount)}</td>
       <td><select onchange="changeReservationStatus('${r.id}',this.value)">
         ${statuses.map(([value,label]) => `<option value="${value}" ${r.status===value?"selected":""}>${label}</option>`).join("")}
-      </select><small>${escapeReservation(r.payment_status || "")}</small></td>
+      </select><small>${escapeReservation(({partially_refunded:"Ödəniş geri qaytarıldı",refunded:"Tam geri qaytarıldı",paid_full:"Tam ödənilib",paid:"Ödənilib",unpaid:"Ödənilməyib"})[r.payment_status] || r.payment_status || "")}</small></td>
       <td><button type="button" onclick="showReservationDetails('${r.id}')">Ətraflı</button> ${r.status !== "cancelled" && r.status !== "expired" ? `<button type="button" class="btn" style="background:#a33;margin-top:5px" onclick="cancelAdminReservation('${r.id}')">Ləğv et</button>` : ""}</td>
     </tr>`;
   }).join("");
@@ -1915,7 +1915,7 @@ window.showReservationDetails = function (id) {
       <div class="qth-detail-item"><small>Tələb olunan avans</small><strong>${money(r.deposit_amount)}</strong></div>
       <div class="qth-detail-item"><small>Faktiki ödənilib</small><strong>${money(paid)}</strong></div>
       <div class="qth-detail-item"><small>Qalıq</small><strong>${money(remaining)}</strong></div>
-      <div class="qth-detail-item"><small>Ödəniş statusu</small><strong>${escapeReservation(r.payment_status || "-")}</strong></div>
+      <div class="qth-detail-item"><small>Ödəniş statusu</small><strong>${escapeReservation(({partially_refunded:"Ödəniş geri qaytarıldı",refunded:"Tam geri qaytarıldı",paid_full:"Tam ödənilib",paid:"Ödənilib",unpaid:"Ödənilməyib"})[r.payment_status] || r.payment_status || "-")}</strong></div>
       <div class="qth-detail-item"><small>Bron tarixi</small><strong>${escapeReservation(String(r.created_at || "").slice(0,10) || "-")}</strong></div>
     </div>
     ${r.campaign_name ? '<p class="notice">Tarixçədə saxlanılan köhnə kampaniya: '+escapeReservation(r.campaign_name)+'</p>' : ""}
