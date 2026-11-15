@@ -1846,6 +1846,7 @@ window.showReservationDetails = function (id) {
   const grossPaid = payments.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const totalRefunded = refunds.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const refundable = Math.max(0, Math.round((grossPaid - totalRefunded) * 100) / 100);
+  const today = new Date().toLocaleDateString("en-CA", {timeZone:"Asia/Baku"});
   const refundForm = refundable > 0 ? `
     <h4 style="margin:20px 0 8px;color:#9b3d36">Ödəniş geri qaytar</h4>
     <form class="qth-payment-form" onsubmit="submitReservationRefund(event,'${r.id}')">
@@ -1869,7 +1870,6 @@ window.showReservationDetails = function (id) {
   const remaining = Math.max(0, Number(r.total_amount || 0) - paid);
   const depositDue = Math.max(0, Number(r.deposit_amount || 0) - paid);
   const defaultType = depositDue > 0 ? "deposit" : "remaining";
-  const today = new Date().toLocaleDateString("en-CA", {timeZone:"Asia/Baku"});
   const disabledPayment = ["cancelled","expired","payment_failed","payment_review"].includes(r.status) || remaining <= 0;
   const editable = !["cancelled","expired"].includes(String(r.status || "").toLowerCase());
   const formInsert = editable ? `
