@@ -5,6 +5,7 @@ const allowedStatuses = new Set([
 ]);
 const allowedPaymentMethods = new Set(['cash','bank','card','transfer']);
 const allowedPaymentTypes = new Set(['deposit','remaining','other']);
+const allowedRefundMethods = new Set(['card','bank','cash','transfer']);
 
 export const handler = async (event) => {
   const admin = await requireQthAdmin(event);
@@ -119,7 +120,7 @@ export const handler = async (event) => {
       if (error) throw error;
 
       const reservationIds = (reservations || []).map((item) => item.id);
-      const [paymentsResult, couponsResult, unitsResult] = await Promise.all([
+      const [paymentsResult, refundsResult, couponsResult, unitsResult] = await Promise.all([
         reservationIds.length
           ? client.from('reservation_payments')
               .select('id,reservation_id,amount,payment_type,payment_method,payment_date,notes,created_at')
@@ -127,11 +128,18 @@ export const handler = async (event) => {
               .order('payment_date', { ascending: false })
           : Promise.resolve({ data: [], error: null }),
         reservationIds.length
+          ? client.from('reservation_refunds')
+              .select('id,reservation_id,amount,refund_method,refund_date,notes,created_at')
+              .in('reservation_id', reservationIds)
+              .order('refund_date', { ascending: false })
+          : Promise.resolve({ data: [], error: null }),
+        reservationIds.length
           ? client.from('promo_coupons').select('reservation_id,coupon_code,status').in('reservation_id', reservationIds)
           : Promise.resolve({ data: [], error: null }),
         client.from('units').select('id,name')
       ]);
       if (paymentsResult.error) throw paymentsResult.error;
+      if (refundsResult.error) throw refundsResult.error;
       if (couponsResult.error) throw couponsResult.error;
       if (unitsResult.error) throw unitsResult.error;
 
@@ -141,6 +149,12 @@ export const handler = async (event) => {
         list.push(payment);
         paymentsByReservation.set(payment.reservation_id, list);
       }
+      const refundsByReservation = new Map();
+      for (const refund of refundsResult.data || []) {
+        const list = refundsByReservation.get(refund.reservation_id) || [];
+        list.push(refund);
+        refundsByReservation.set(refund.reservation_id, list);
+      }
       const couponByReservation = new Map((couponsResult.data || []).map((item) => [item.reservation_id, item]));
       const unitNames = new Map((unitsResult.data || []).map((unit) => [unit.id, unit.name]));
 
@@ -149,6 +163,7 @@ export const handler = async (event) => {
         reservations: (reservations || []).map((item) => ({
           ...item,
           payments: paymentsByReservation.get(item.id) || [],
+          refunds: refundsByReservation.get(item.id) || [],
           coupon_code: couponByReservation.get(item.id)?.coupon_code || null,
           coupon_status: couponByReservation.get(item.id)?.status || null,
           unit_name: unitNames.get(item.unit_id) || item.unit_id
@@ -197,6 +212,50 @@ export const handler = async (event) => {
         return json(200, { reservation, payment, paymentResult: result });
       }
 
+
+      if (action === 'refund') {
+        const amount = Number(body.amount);
+        const refundMethod = String(body.refundMethod || '');
+        const refundDate = validDate(body.refundDate) ? body.refundDate : new Date().toISOString().slice(0,10);
+        if (!Number.isFinite(amount) || amount <= 0 || !allowedRefundMethods.has(refundMethod)) {
+          return json(400, { error: 'Geri qaytarılma məbləği və üsulu düzgün daxil edilməlidir.' });
+        }
+        const { data: reservation, error: reservationError } = await client.from('reservations')
+          .select('id,guest_name,booking_code,total_amount,paid_amount,payment_status,note')
+          .eq('id', id).single();
+        if (reservationError) throw reservationError;
+        const [paymentsResult, refundsResult] = await Promise.all([
+          client.from('reservation_payments').select('amount').eq('reservation_id', id),
+          client.from('reservation_refunds').select('amount').eq('reservation_id', id)
+        ]);
+        if (paymentsResult.error) throw paymentsResult.error;
+        if (refundsResult.error) throw refundsResult.error;
+        const grossPaid = (paymentsResult.data || []).reduce((sum, row) => sum + Number(row.amount || 0), 0);
+        const alreadyRefunded = (refundsResult.data || []).reduce((sum, row) => sum + Number(row.amount || 0), 0);
+        const refundable = Math.max(0, Math.round((grossPaid - alreadyRefunded) * 100) / 100);
+        if (amount > refundable) return json(400, { error: 'Geri qaytarılma məbləği qalan geri qaytarıla bilən məbləğdən çoxdur: ' + refundable.toFixed(2) + ' AZN.' });
+        const { data: refund, error: refundError } = await client.from('reservation_refunds')
+          .insert({
+            reservation_id: id,
+            amount,
+            refund_method: refundMethod,
+            refund_date: refundDate,
+            notes: typeof body.notes === 'string' ? body.notes.slice(0,500) : null
+          })
+          .select('id,reservation_id,amount,refund_method,refund_date,notes,created_at')
+          .single();
+        if (refundError) throw refundError;
+        const totalRefunded = Math.round((alreadyRefunded + amount) * 100) / 100;
+        const netPaid = Math.max(0, Math.round((grossPaid - totalRefunded) * 100) / 100);
+        const paymentStatus = totalRefunded >= grossPaid ? 'refunded' : 'partially_refunded';
+        const noteLine = 'Geri qaytarılma: ' + amount.toFixed(2) + ' AZN (' + refundMethod + '), tarix: ' + refundDate + '.';
+        const nextNote = [reservation.note, noteLine].filter(Boolean).join('\n').slice(0,1300);
+        const { error: updateError } = await client.from('reservations')
+          .update({ paid_amount: netPaid, payment_status: paymentStatus, note: nextNote })
+          .eq('id', id);
+        if (updateError) throw updateError;
+        return json(200, { success: true, refund, refundable_after: Math.max(0, grossPaid - totalRefunded), net_paid: netPaid });
+      }
 
       if (action === 'adjust_deposit') {
         const paymentId = String(body.paymentId || '');

@@ -1659,7 +1659,7 @@ function renderReservations(items) {
       <td>${money(r.paid_amount)}</td>
       <td><select onchange="changeReservationStatus('${r.id}',this.value)">
         ${statuses.map(([value,label]) => `<option value="${value}" ${r.status===value?"selected":""}>${label}</option>`).join("")}
-      </select><small>${escapeReservation(r.payment_status || "")}</small></td>
+      </select><small>${escapeReservation(({partially_refunded:"Ödəniş geri qaytarıldı",refunded:"Tam geri qaytarıldı",paid_full:"Tam ödənilib",paid:"Ödənilib",unpaid:"Ödənilməyib"})[r.payment_status] || r.payment_status || "")}</small></td>
       <td><button type="button" onclick="showReservationDetails('${r.id}')">Ətraflı</button> ${r.status !== "cancelled" && r.status !== "expired" ? `<button type="button" class="btn" style="background:#a33;margin-top:5px" onclick="cancelAdminReservation('${r.id}')">Ləğv et</button>` : ""}</td>
     </tr>`;
   }).join("");
@@ -1834,11 +1834,42 @@ window.showReservationDetails = function (id) {
       <td>${escapeReservation(p.payment_method || "Qeyd edilməyib")}</td>
       <td>${escapeReservation(p.notes || "-")}</td>
     </tr>`).join("");
+  const refunds = r.refunds || [];
+  const refundMethodLabels = {card:"Kart",bank:"Bank köçürməsi",cash:"Nağd",transfer:"Köçürmə"};
+  const refundRows = refunds.map(item => `
+    <tr>
+      <td>${escapeReservation(item.refund_date || "-")}</td>
+      <td>${money(item.amount)}</td>
+      <td>${escapeReservation(refundMethodLabels[item.refund_method] || item.refund_method || "-")}</td>
+      <td>${escapeReservation(item.notes || "Ödəniş geri qaytarıldı")}</td>
+    </tr>`).join("");
+  const grossPaid = payments.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const totalRefunded = refunds.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const refundable = Math.max(0, Math.round((grossPaid - totalRefunded) * 100) / 100);
+  const today = new Date().toLocaleDateString("en-CA", {timeZone:"Asia/Baku"});
+  const refundForm = refundable > 0 ? `
+    <h4 style="margin:20px 0 8px;color:#9b3d36">Ödəniş geri qaytar</h4>
+    <form class="qth-payment-form" onsubmit="submitReservationRefund(event,'${r.id}')">
+      <label>Geri qaytarılacaq məbləğ (AZN)
+        <input name="amount" type="number" min="0.01" max="${refundable.toFixed(2)}" step="0.01" required>
+      </label>
+      <label>Geri qaytarılma üsulu
+        <select name="refundMethod" required>
+          <option value="card">Kart</option>
+          <option value="bank">Bank köçürməsi</option>
+          <option value="cash">Nağd</option>
+          <option value="transfer">Köçürmə</option>
+        </select>
+      </label>
+      <label>Qaytarılma tarixi<input name="refundDate" type="date" value="${today}" required></label>
+      <label class="wide">Qeyd<input name="notes" maxlength="500" placeholder="Qəbz və ya əlavə məlumat"></label>
+      <div class="wide"><button class="btn" type="submit" style="background:#9b3d36">Geri qaytarılmanı qeydə al</button>
+      <p id="refundFormMessage" class="muted" aria-live="polite">Geri qaytarılma ayrıca tarixçəyə və rezervasiyanın ödəniş statusuna yazılacaq. Maksimum: ${money(refundable)}.</p></div>
+    </form>` : "";
   const paid = Number(r.paid_amount || 0);
   const remaining = Math.max(0, Number(r.total_amount || 0) - paid);
   const depositDue = Math.max(0, Number(r.deposit_amount || 0) - paid);
   const defaultType = depositDue > 0 ? "deposit" : "remaining";
-  const today = new Date().toLocaleDateString("en-CA", {timeZone:"Asia/Baku"});
   const disabledPayment = ["cancelled","expired","payment_failed","payment_review"].includes(r.status) || remaining <= 0;
   const editable = !["cancelled","expired"].includes(String(r.status || "").toLowerCase());
   const formInsert = editable ? `
@@ -1884,7 +1915,7 @@ window.showReservationDetails = function (id) {
       <div class="qth-detail-item"><small>Tələb olunan avans</small><strong>${money(r.deposit_amount)}</strong></div>
       <div class="qth-detail-item"><small>Faktiki ödənilib</small><strong>${money(paid)}</strong></div>
       <div class="qth-detail-item"><small>Qalıq</small><strong>${money(remaining)}</strong></div>
-      <div class="qth-detail-item"><small>Ödəniş statusu</small><strong>${escapeReservation(r.payment_status || "-")}</strong></div>
+      <div class="qth-detail-item"><small>Ödəniş statusu</small><strong>${escapeReservation(({partially_refunded:"Ödəniş geri qaytarıldı",refunded:"Tam geri qaytarıldı",paid_full:"Tam ödənilib",paid:"Ödənilib",unpaid:"Ödənilməyib"})[r.payment_status] || r.payment_status || "-")}</strong></div>
       <div class="qth-detail-item"><small>Bron tarixi</small><strong>${escapeReservation(String(r.created_at || "").slice(0,10) || "-")}</strong></div>
     </div>
     ${r.campaign_name ? '<p class="notice">Tarixçədə saxlanılan köhnə kampaniya: '+escapeReservation(r.campaign_name)+'</p>' : ""}
@@ -1896,6 +1927,14 @@ window.showReservationDetails = function (id) {
         <tbody>${paymentRows || '<tr><td colspan="5">Hələ ayrıca ödəniş qeydə alınmayıb.</td></tr>'}</tbody>
       </table>
     </div>
+    <h4 style="margin:18px 0 6px;color:#9b3d36">Geri qaytarılma tarixçəsi</h4>
+    <div style="overflow-x:auto">
+      <table class="qth-payment-history">
+        <thead><tr><th>Tarix</th><th>Məbləğ</th><th>Qaytarılma üsulu</th><th>Qeyd</th></tr></thead>
+        <tbody>${refundRows || '<tr><td colspan="4">Ödəniş geri qaytarılmayıb.</td></tr>'}</tbody>
+      </table>
+    </div>
+    ${refundForm}
     ${depositAdjustmentForm}
     <h4 style="margin:18px 0 6px;color:#294b37">Yeni ödəniş əlavə et</h4>
     <form class="qth-payment-form" onsubmit="submitReservationPayment(event,'${r.id}')">
@@ -1925,6 +1964,37 @@ window.showReservationDetails = function (id) {
     ${formInsert}
   `;
   modal.hidden = false;
+};
+
+window.submitReservationRefund = async function(event,id){
+  event.preventDefault();
+  const form=event.currentTarget;
+  const message=form.querySelector("#refundFormMessage");
+  const submit=form.querySelector('button[type="submit"]');
+  const payload={
+    id,
+    action:"refund",
+    amount:Number(form.elements.amount.value),
+    refundMethod:form.elements.refundMethod.value,
+    refundDate:form.elements.refundDate.value,
+    notes:form.elements.notes.value.trim()
+  };
+  if(!Number.isFinite(payload.amount)||payload.amount<=0){
+    message.textContent="Geri qaytarılma məbləğini düzgün daxil edin.";return;
+  }
+  const methodLabels={card:"Kart",bank:"Bank köçürməsi",cash:"Nağd",transfer:"Köçürmə"};
+  if(!confirm(payload.amount.toFixed(2)+" AZN məbləğ "+methodLabels[payload.refundMethod]+" üsulu ilə geri qaytarılmış kimi qeydə alınsın?"))return;
+  submit.disabled=true;message.textContent="Geri qaytarılma qeydə alınır...";
+  try{
+    const result=await adminRequest("PATCH",payload);
+    await loadReservations();
+    showReservationDetails(id);
+    const fresh=document.querySelector("#reservationDetailsContent #refundFormMessage");
+    if(fresh)fresh.textContent="Geri qaytarılma qeydə alındı. Xalis ödəniş: "+money(result.net_paid)+". Maliyyə jurnalında ayrıca geri qaytarılma xərcinin də qeydə alınmasını yoxlayın.";
+  }catch(error){
+    message.textContent="Geri qaytarılma qeydə alınmadı: "+error.message;
+    submit.disabled=false;
+  }
 };
 
 window.submitReservationModification = async function(event,id){
