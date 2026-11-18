@@ -674,10 +674,11 @@ let monthlyBookingIncome = 0;
             monthlyBookingIncome += amount;
         }
     } else if (item.transaction_type === "expense") {
+        // Ümumi pul çıxışı: biznes, şəxsi xərc və sahibkarın götürməsi hamısı xərc/çıxış sayılır.
+        monthlyExpense += amount;
         const scope = item.expense_scope || "business";
         if (scope === "personal") monthlyPersonalExpense += amount;
         else if (scope === "owner_draw") monthlyOwnerDraw += amount;
-        else monthlyExpense += amount;
     }
 });
 
@@ -715,11 +716,11 @@ let dailyIncome = 0, dailyExpense = 0, yearlyIncome = 0, yearlyExpense = 0;
   const amount = Number(item.amount || 0);
   if (item.transaction_date === selectedDay) {
     if (item.transaction_type === "income") dailyIncome += amount;
-    else if (item.transaction_type === "expense" && (item.expense_scope || "business") === "business") dailyExpense += amount;
+    else if (item.transaction_type === "expense") dailyExpense += amount;
   }
   if (String(item.transaction_date || "").slice(0,4) === selectedYear) {
     if (item.transaction_type === "income") yearlyIncome += amount;
-    else if (item.transaction_type === "expense" && (item.expense_scope || "business") === "business") yearlyExpense += amount;
+    else if (item.transaction_type === "expense") yearlyExpense += amount;
   }
 });
 document.getElementById("dailyIncome").textContent = money(dailyIncome);
@@ -751,7 +752,7 @@ let currentIncome = 0, currentExpense = 0;
   if (!item.transaction_date || item.transaction_date.slice(0,7) !== currentMonth) return;
   const amount = Number(item.amount || 0);
   if (item.transaction_type === "income") currentIncome += amount;
-  else if (item.transaction_type === "expense" && (item.expense_scope || "business") === "business") currentExpense += amount;
+  else if (item.transaction_type === "expense") currentExpense += amount;
 });
 const expenseGroups = {
   "Instagram reklamları":0,
@@ -761,7 +762,7 @@ const expenseGroups = {
   "Digər xərclər":0
 };
 (transactions || []).forEach(item => {
-  if(item.transaction_type!=="expense" || (item.expense_scope || "business")!=="business" || !item.transaction_date || item.transaction_date.slice(0,7)!==currentMonth) return;
+  if(item.transaction_type!=="expense" || !item.transaction_date || item.transaction_date.slice(0,7)!==currentMonth) return;
   const category=String(item.category||"");
   const description=String(item.description||"");
   const text=(category+" "+description).toLocaleLowerCase("az").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[əı]/g,ch=>ch==="ə"?"e":"i");
