@@ -573,6 +573,87 @@ tbody tr:hover{background:#f8f8f2}
 @media(max-width:950px){#dashboard>.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){#dashboard>.cards{gap:9px;margin-bottom:14px}#dashboard>.cards>.card{min-height:120px;padding:14px 12px 13px 15px;border-radius:14px}#dashboard>.cards>.card .card-label{font-size:9px;letter-spacing:.45px}#dashboard>.cards>.card .card-value{font-size:clamp(17px,5vw,22px);margin-top:12px}#dashboard>.cards>.card .card-note{font-size:9px;margin-top:7px}#dashboard>.cards>.card:after{width:76px;height:76px;right:-31px;top:-33px}}
 
+
+/* QTH DASHBOARD REFINEMENT — presentation only; finance and booking logic untouched */
+#dashboard>.cards{
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:15px;
+  align-items:stretch;
+}
+#dashboard>.cards>.card{
+  grid-column:span 3;
+  min-height:148px;
+  padding:23px 25px 20px 27px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+#dashboard>.cards>.card:nth-child(n+5){
+  grid-column:span 2;
+  min-height:122px;
+  padding:19px 20px 17px 23px;
+  background:linear-gradient(145deg,#fffefa,#f7f6ef);
+}
+#dashboard>.cards>.card:nth-child(n+5) .card-value{
+  font-size:clamp(21px,1.8vw,25px);
+  margin-top:12px;
+}
+#dashboard>.cards>.card:nth-child(n+5) .card-note{font-size:10px}
+#dashboard>.cards>.card .card-label{
+  max-width:100%;
+  font-size:11px;
+  line-height:1.5;
+  letter-spacing:.55px;
+}
+#dashboard>.cards>.card:nth-child(4){
+  background:linear-gradient(135deg,#eff5ed,#e5efe3);
+  border-color:#d6e4d2;
+}
+#dashboard>.cards>.card:nth-child(4):before{background:#2f7049}
+#dashboard>.cards>.card:nth-child(4) .card-value{color:#28633e}
+#dashboard>.cards>.card:nth-child(7){
+  background:linear-gradient(145deg,#f8f6ee,#f0eee4);
+  border-color:#e6e0cf;
+}
+#dashboard>.cards>.card:nth-child(7) .card-value{color:#344f3d}
+#dashboard>.dashboard-hero.qth-photo-hero{
+  min-height:205px;
+  margin-bottom:22px;
+  border-radius:19px;
+  box-shadow:0 15px 34px rgba(28,48,35,.10);
+}
+#dashboard>.qth-expense-panel,
+#dashboard>.qth-payroll-panel,
+#dashboard>.panel{
+  border-radius:18px;
+  box-shadow:0 10px 28px rgba(35,55,40,.055);
+}
+#dashboard>.qth-expense-panel{margin-top:4px}
+#dashboard>.qth-customer-stats-panel{background:linear-gradient(145deg,#fffefa,#f6f7f0)}
+#dashboard>.qth-dashboard-reservations .panel,
+#dashboard>.qth-dashboard-reservations{overflow:hidden}
+#dashboard .qth-dashboard-reservations>div:first-child h3,
+#dashboard .qth-customer-stats-panel h3,
+#dashboard .qth-payroll-panel h3,
+#dashboard .qth-house-performance-panel h3{
+  font-family:Georgia,serif;
+  font-size:17px;
+  letter-spacing:.1px;
+}
+@media(max-width:950px){
+  #dashboard>.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+  #dashboard>.cards>.card,
+  #dashboard>.cards>.card:nth-child(n+5){grid-column:span 1;min-height:126px}
+}
+@media(max-width:620px){
+  #dashboard>.dashboard-hero.qth-photo-hero{min-height:112px;margin-bottom:14px}
+  #dashboard>.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  #dashboard>.cards>.card,
+  #dashboard>.cards>.card:nth-child(n+5){grid-column:span 1;min-height:116px;padding:14px 12px 13px 15px}
+  #dashboard>.cards>.card .card-value,
+  #dashboard>.cards>.card:nth-child(n+5) .card-value{font-size:clamp(17px,4.7vw,22px);margin-top:11px}
+}
+
 </style>
 </head>
 <body>
