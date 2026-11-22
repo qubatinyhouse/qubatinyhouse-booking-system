@@ -817,19 +817,19 @@ tbody tr:hover{background:#f8f8f2}
 <div class="card-note">Müştərilərə qaytarılmış ödənişlər</div>
 </div>
 <div class="card">
-<div class="card-label">Daxilolma − biznes xərci − qaytarılma</div>
-<div class="card-value" id="profit">— AZN</div>
-<div class="card-note">Pul axını göstəricisi; behlər daxilolma tarixində hesablanır</div>
+<div class="card-label">Sahibkarın kassadan götürməsi</div>
+<div class="card-value" id="ownerDraw">— AZN</div>
+<div class="card-note">Biznes kassasından sahibkarın şəxsi götürdüyü məbləğ</div>
 </div>
 <div class="card">
-<div class="card-label">Şəxsi çıxışlar</div>
+<div class="card-label">Şəxsi xərclər</div>
 <div class="card-value" id="personalExpense">— AZN</div>
-<div class="card-note" id="personalExpenseNote">Şəxsi xərclər və sahibkarın şəxsi götürməsi</div>
+<div class="card-note" id="personalExpenseNote">Biznes əməliyyatlarına aid olmayan şəxsi xərclər</div>
 </div>
 <div class="card">
-<div class="card-label">Bütün çıxışlardan sonra qalıq</div>
+<div class="card-label">Yekun qalıq — bütün çıxışlardan sonra</div>
 <div class="card-value" id="remainingAfterExpenses">— AZN</div>
-<div class="card-note" id="remainingAfterExpensesNote">Daxilolmalar − biznes xərcləri − şəxsi çıxışlar</div>
+<div class="card-note" id="remainingAfterExpensesNote">Daxilolmalar − biznes xərcləri − qaytarılma − şəxsi çıxışlar − sahibkarın götürməsi</div>
 </div>
 <div class="card">
 <div class="card-label">Ümumi rezervasiyalar</div>
@@ -1726,18 +1726,21 @@ window.addEventListener("message", (event) => {
   }
   document.getElementById("income").textContent = fmt(data.income);
   document.getElementById("expense").textContent = fmt(data.expense);
-  document.getElementById("profit").textContent = fmt(Number(data.income || 0) - Number(data.expense || 0) - Number(data.refunds || 0));
   const refundsNode = document.getElementById("refunds");
   if (refundsNode) refundsNode.textContent = fmt(data.refunds || 0);
-  document.getElementById("personalExpense").textContent = fmt(data.personalExpense);
-  const personalBreakdown = data.personalExpenseBreakdown || {};
-  document.getElementById("personalExpenseNote").textContent =
-    "Şəxsi: " + fmt(personalBreakdown.personal) + " · Şəxsi götürmə: " + fmt(personalBreakdown.ownerDraw);
-  const remainingAfterExpenses = Number(data.income || 0) - Number(data.expense || 0) - Number(data.refunds || 0) - Number(data.personalExpense || 0);
+  const ownerDraw = Number(data.ownerDraw ?? data.personalExpenseBreakdown?.ownerDraw ?? 0);
+  const personalExpense = Number(data.personalExpense ?? data.personalExpenseBreakdown?.personal ?? 0);
+  const ownerDrawNode = document.getElementById("ownerDraw");
+  if (ownerDrawNode) ownerDrawNode.textContent = fmt(ownerDraw);
+  const personalExpenseNode = document.getElementById("personalExpense");
+  if (personalExpenseNode) personalExpenseNode.textContent = fmt(personalExpense);
+  const personalExpenseNote = document.getElementById("personalExpenseNote");
+  if (personalExpenseNote) personalExpenseNote.textContent = "Ayrıca uçota alınmış şəxsi xərclər";
+  const remainingAfterExpenses = Number(data.income || 0) - Number(data.expense || 0) - Number(data.refunds || 0) - personalExpense - ownerDraw;
   const remainingNode = document.getElementById("remainingAfterExpenses");
   if (remainingNode) remainingNode.textContent = fmt(remainingAfterExpenses);
   const remainingNote = document.getElementById("remainingAfterExpensesNote");
-  if (remainingNote) remainingNote.textContent = "Daxilolmalar " + fmt(data.income) + " − biznes xərci " + fmt(data.expense) + " − qaytarılma " + fmt(data.refunds || 0) + " − şəxsi çıxış " + fmt(data.personalExpense);
+  if (remainingNote) remainingNote.textContent = "Daxilolmalar " + fmt(data.income) + " − biznes xərcləri " + fmt(data.expense) + " − qaytarılma " + fmt(data.refunds || 0) + " − şəxsi xərclər " + fmt(personalExpense) + " − sahibkarın götürməsi " + fmt(ownerDraw);
   const note = document.querySelector("#dashboard .notice");
   if (note) note.textContent = "Maliyyə göstəriciləri təsdiqlənmiş maliyyə sessiyasından yeniləndi (" + String(data.month || "") + ").";
   document.querySelectorAll("#dashboard .card-note").forEach((el, i) => {
