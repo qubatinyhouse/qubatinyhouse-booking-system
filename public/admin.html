@@ -2162,7 +2162,7 @@ window.submitReservationRefund = async function(event,id) {
  if(!current||!Number.isFinite(amount)||amount<=0||amount>Number(current.paid_amount||0)||!["cash","card"].includes(paymentMethod)||!refundDate||!reason){message.textContent="Məbləğ, üsul, tarix və səbəbi düzgün daxil edin. Məbləğ ödənilmiş qalıqdan çox ola bilməz.";return;}
  if(!confirm(money(amount)+" geri qaytarılsın? Bu məbləğ rezervasiyanın xalis ödənişindən və maliyyə nəticəsindən çıxılacaq."))return;
  submit.disabled=true;message.textContent="Geri qaytarılma qeydə alınır...";
- const requestKey=crypto.randomUUID();
+ const requestKey=form.dataset.refundRequestKey||(form.dataset.refundRequestKey=crypto.randomUUID());
  try{
   const result=await adminRequest("PATCH",{id,action:"refund",amount,paymentMethod,refundDate,reason,requestKey});
   const auth=window.qthAdminAuthClient;
@@ -2183,7 +2183,7 @@ window.submitReservationRefund = async function(event,id) {
   await loadReservations();showReservationDetails(id);
   const fresh=document.querySelector("#reservationDetailsContent #refundFormMessage");
   if(fresh)fresh.textContent="Uğurlu: "+money(amount)+" geri qaytarıldı. Maliyyə jurnalına da xərc kimi yazıldı.";
- }catch(error){message.textContent=error.message;submit.disabled=false;await loadReservations();showReservationDetails(id);}
+ }catch(error){message.textContent=error.message;submit.disabled=false;}
 };
 
 window.submitReservationPayment = async function (event,id) {
