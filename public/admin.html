@@ -710,6 +710,7 @@ tbody tr:hover{background:#f8f8f2}
 <div class="nav-title">ƏSAS İDARƏETMƏ</div>
 <nav>
 <button class="nav active" data-page="dashboard">▦ Dashboard</button>
+<button class="nav" data-page="customers">♙ Müştərilər</button>
 <button class="nav" data-page="reservations">▣ Rezervasiyalar</button>
 <button class="nav" data-page="calendar">▦ Təqvim və dolu günlər</button>
 <button class="nav" data-page="tariffs">₼ Tariflər</button>
@@ -1004,6 +1005,60 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
 </div>
 </section>
 
+
+<section class="section" id="customers">
+ <div class="customer-kpis">
+  <div class="card"><div class="card-label">Ümumi müştərilər</div><div class="card-value" id="customerTotal">—</div><div class="card-note">Telefon nömrəsinə görə unikal müştərilər</div></div>
+  <div class="card"><div class="card-label">Daimi müştərilər</div><div class="card-value" id="customerRepeat">—</div><div class="card-note">2 və daha çox tamamlanmış gəliş</div></div>
+  <div class="card"><div class="card-label">VIP müştərilər</div><div class="card-value" id="customerVip">—</div><div class="card-note">4+ gəliş və ya 1 500 AZN+ ödəniş</div></div>
+  <div class="card"><div class="card-label">Müştərilərdən daxilolma</div><div class="card-value" id="customerRevenue">—</div><div class="card-note">Rezervasiyalarda qeydə alınmış ödənişlər</div></div>
+ </div>
+ <div class="panel">
+  <div class="customer-toolbar">
+   <div><h3>Müştəri bazası</h3><p class="sub">Rezervasiyalardan avtomatik formalaşır. Əlavə anket məlumatları ayrıca saxlanılır.</p></div>
+   <button class="btn" type="button" disabled title="Test bazası qoşulana qədər yazma əməliyyatı bağlıdır">＋ Yeni müştəri · test bazası gözlənilir</button>
+  </div>
+  <div class="customer-search"><input id="customerSearch" type="search" placeholder="Ad, telefon və ya müştəri növü üzrə axtar..." oninput="renderCustomers()"><button class="btn" type="button" onclick="loadCustomers(true)">Yenilə</button></div>
+  <p class="notice" id="customerMessage" aria-live="polite">Müştəri məlumatları yüklənir...</p>
+  <div class="table-wrap">
+   <table class="customer-table">
+    <thead><tr><th>Müştəri</th><th>Əlaqə</th><th>Gəliş sayı</th><th>Ümumi ödəniş</th><th>Son gəliş</th><th>Kateqoriya</th><th>Anket</th></tr></thead>
+    <tbody id="customerTable"><tr><td colspan="7" class="empty">Məlumat yüklənir...</td></tr></tbody>
+   </table>
+  </div>
+ </div>
+ <div class="panel">
+  <h3>Müştəri kateqoriyaları</h3>
+  <div class="customer-category-grid">
+   <div><strong>Yeni</strong><span>İlk dəfə müraciət edən və ya tamamlanmış gəlişi olmayan müştəri</span></div>
+   <div><strong>Daimi</strong><span>2–3 tamamlanmış gəlişi olan müştəri</span></div>
+   <div><strong>VIP</strong><span>4 və daha çox gəlişi və ya ən azı 1 500 AZN ödənişi olan müştəri</span></div>
+   <div><strong>Fərdi qeyd</strong><span>Xüsusi istək, xidmət qeydi və digər müşahidələr yalnız admin tərəfindən yazılır</span></div>
+  </div>
+ </div>
+ <div id="customerProfileModal" class="qth-modal" hidden role="dialog" aria-modal="true" aria-labelledby="customerProfileTitle">
+  <div class="qth-modal-backdrop" onclick="closeCustomerProfile()"></div>
+  <div class="qth-modal-card customer-modal-card">
+   <div class="qth-modal-header"><h3 id="customerProfileTitle">Müştəri anketi</h3><button class="qth-modal-close" type="button" onclick="closeCustomerProfile()">Bağla ✕</button></div>
+   <form id="customerProfileForm">
+    <div class="customer-form-grid">
+     <label>Ad və soyad<input id="customerFullName" required maxlength="120" autocomplete="name"></label>
+     <label>Telefon<input id="customerPhone" maxlength="30" autocomplete="tel" placeholder="+994..."></label>
+     <label>Şəxsiyyət sənədi / FIN (istəyə bağlı)<input id="customerIdDocument" maxlength="80" autocomplete="off"></label>
+     <label>Müştəri növü<select id="customerGuestType"><option value="">Seçilməyib</option><option value="Ailə">Ailə</option><option value="Cütlük">Cütlük</option><option value="Qadın qrupu">Qadın qrupu</option><option value="Dost qrupu">Dost qrupu</option><option value="Korporativ">Korporativ</option><option value="Digər">Digər</option></select></label>
+     <label class="customer-notes-label">Xüsusi qeydlər / xidmət üstünlükləri<textarea id="customerNotes" rows="3" maxlength="1500" placeholder="Müştərinin xüsusi istəkləri, üstünlükləri və admin qeydləri..."></textarea></label>
+    </div>
+    <div class="customer-history">
+     <h4>Rezervasiya tarixçəsi</h4>
+     <div id="customerHistoryList" class="notice">Tarixçə yüklənir...</div>
+    </div>
+    <div class="customer-modal-actions"><button type="button" class="customer-cancel" onclick="closeCustomerProfile()">Ləğv et</button><button type="submit" class="btn" id="customerSaveButton" disabled>Yadda saxlama test bazası qoşulduqdan sonra aktiv olacaq</button></div>
+    <p id="customerFormMessage" class="sub" aria-live="polite"></p>
+   </form>
+  </div>
+ </div>
+</section>
+
 <section class="section" id="calendar">
 <div class="panel qth-reservation-calendar-panel">
  <div class="qth-calendar-heading">
@@ -1213,6 +1268,7 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
    <button class="nav mobile-more-item" type="button" data-page="utilities"><span>⚡</span><strong>Kommunal</strong></button>
    <button class="nav mobile-more-item" type="button" data-page="reports"><span>▤</span><strong>Hesabatlar</strong></button>
    <button class="nav mobile-more-item" type="button" data-page="settings"><span>⚙</span><strong>Parametrlər</strong></button>
+   <button class="nav mobile-more-item" type="button" data-page="customers"><span>♙</span><strong>Müştərilər</strong></button>
   </div>
   <p class="mobile-more-footnote">Bütün bölmələr eyni administrator sessiyası ilə işləyir.</p>
  </section>
@@ -1230,6 +1286,7 @@ cleaning:"Təmizlik işləri",
 utilities:"Kommunal borclar",
 reports:"Hesabatlar",
 settings:"Parametrlər",
+customers:"Müştərilər",
 tariffs:"Tariflər"
 };
 
@@ -1240,7 +1297,7 @@ function openPage(page){
  if(section)section.classList.add("active");
  document.querySelectorAll(".nav").forEach(b=>{if(b.dataset.page===page)b.classList.add("active");});
  const moreButton=document.getElementById("mobileMoreButton");
- if(moreButton)moreButton.classList.toggle("active",["tariffs","finance","employees","cleaning","utilities","reports","settings"].includes(page));
+ if(moreButton)moreButton.classList.toggle("active",["tariffs","finance","employees","cleaning","utilities","reports","settings","customers"].includes(page));
  toggleMobileMore(false);
  document.getElementById("pageTitle").textContent=titles[page]||"Dashboard";
  if(page==="dashboard" && typeof window.loadHousePerformance==="function"){window.loadHousePerformance();}
@@ -1250,6 +1307,7 @@ function openPage(page){
   if(typeof window.loadDateBlocks==="function")window.loadDateBlocks();
  }
  if(page==="tariffs" && typeof window.loadTariffs==="function"){window.loadTariffs();}
+ if(page==="customers" && typeof window.loadCustomers==="function"){window.loadCustomers(true);}
  if(window.matchMedia && window.matchMedia("(max-width:700px)").matches)window.scrollTo({top:0,behavior:"smooth"});
 }
 function toggleMobileMore(force){
@@ -2660,6 +2718,185 @@ if(!qthHousePerformanceTimer){
 
 // Rezervasiyalar yalnız vahid administrator sessiyası açıldıqdan sonra yüklənir.
 </script>
+
+<style>
+.customer-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.customer-toolbar,.customer-search{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.customer-search{margin:16px 0}
+.customer-search input{flex:1;min-width:180px}
+.customer-table{min-width:820px}
+.customer-category-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.customer-category-grid>div{padding:15px;border:1px solid var(--border);border-radius:12px;background:#fbfaf6}
+.customer-category-grid strong,.customer-category-grid span{display:block}
+.customer-category-grid strong{color:#294536;margin-bottom:7px}
+.customer-category-grid span{font-size:12px;line-height:1.5;color:var(--muted)}
+.customer-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:14px 0}
+.customer-notes-label{grid-column:1/-1}
+.customer-history{margin-top:18px}
+.customer-history h4{margin:0 0 10px;color:#263b30}
+.customer-history-list{display:grid;gap:8px}
+.customer-history-item{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:#fbfaf7;font-size:12px}
+.customer-modal-card{width:min(100%,760px);max-height:90vh;overflow:auto}
+.customer-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+.customer-cancel{background:#f3f1eb;color:#4c5a51;border:1px solid var(--border);padding:11px 16px}
+.customer-pill{display:inline-block;padding:5px 9px;border-radius:999px;background:#f1eee5;color:#76613b;font-size:11px;font-weight:700}
+.customer-pill.vip{background:#f4ead4;color:#88652c}
+.customer-pill.repeat{background:#e9f1eb;color:#356347}
+.customer-open{border:0;background:transparent;color:#8c7040;text-decoration:underline;padding:4px;font-weight:700}
+@media(max-width:950px){.customer-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.customer-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.customer-toolbar{align-items:flex-start;flex-direction:column}.customer-toolbar .btn{width:100%}.customer-search{align-items:stretch;flex-direction:column}.customer-search .btn{width:100%}.customer-form-grid{grid-template-columns:1fr}.customer-notes-label{grid-column:auto}.customer-category-grid{grid-template-columns:1fr 1fr}.customer-modal-card{padding:14px}.customer-modal-actions{flex-direction:column-reverse}.customer-modal-actions button{width:100%}}
+</style>
+
+
+<script>
+(function(){
+ const $ = id => document.getElementById(id);
+ let customerProfiles = [];
+ let customerRows = [];
+ let customerHistoryTruncated = false;
+ let editingCustomerKey = null;
+ let editingCustomerId = null;
+
+ const digits = value => String(value || "").replace(/\\D/g,"");
+ const normName = value => String(value || "").trim().toLocaleLowerCase("az-AZ").replace(/\\s+/g," ");
+ const customerKey = (phone,name) => digits(phone) ? "p:"+digits(phone) : "n:"+normName(name);
+ const safe = value => typeof escapeReservation === "function" ? escapeReservation(value) : String(value || "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+ const dateLabel = value => value ? new Date(value+"T12:00:00").toLocaleDateString("az-AZ",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+
+ function buildCustomerRows(){
+  const map = new Map();
+  const today = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Baku",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+  (allReservations || []).forEach(r=>{
+   const key=customerKey(r.phone,r.guest_name);
+   if(!key || key==="n:")return;
+   if(!map.has(key))map.set(key,{key,name:r.guest_name||"Adsız müştəri",phone:r.phone||"",reservations:[],visits:0,upcoming:0,paid:0,lastVisit:""});
+   const row=map.get(key);row.reservations.push(r);
+   const status=String(r.status||"").toLowerCase();
+   const confirmed=status==="confirmed";
+   const completed=confirmed && String(r.check_out||"")<=today;
+   if(completed){row.visits+=1;if(!row.lastVisit||String(r.check_out)>row.lastVisit)row.lastVisit=String(r.check_out);}
+   if(confirmed && String(r.check_in||"")>today)row.upcoming+=1;
+   if(!["cancelled","expired","payment_failed"].includes(status))row.paid+=Math.max(0,Number(r.paid_amount||0)-Number(r.refunded_amount||0));
+  });
+  const profilesByKey=new Map();
+  customerProfiles.forEach(p=>profilesByKey.set(customerKey(p.phone,p.full_name),p));
+  customerRows=Array.from(map.values()).map(row=>{
+   const profile=profilesByKey.get(row.key)||null;
+   return {...row,profile,name:profile?.full_name||row.name,phone:profile?.phone||row.phone,guestType:profile?.guest_type||"",notes:profile?.notes||""};
+  });
+  customerProfiles.forEach(p=>{
+   const key=customerKey(p.phone,p.full_name);
+   if(!map.has(key))customerRows.push({key,name:p.full_name,phone:p.phone||"",reservations:[],visits:0,upcoming:0,paid:0,lastVisit:"",profile:p,guestType:p.guest_type||"",notes:p.notes||""});
+  });
+  customerRows.sort((a,b)=>b.visits-a.visits||b.paid-a.paid||a.name.localeCompare(b.name,"az"));
+ }
+
+ function tier(row){
+  if(row.visits>=4||row.paid>=1500)return {label:"VIP",cls:"vip"};
+  if(row.visits>=2)return {label:"Daimi",cls:"repeat"};
+  return {label:"Yeni",cls:""};
+ }
+
+ window.renderCustomers=function(){
+  const body=$("customerTable"),search=$("customerSearch");
+  if(!body)return;
+  const term=normName(search?.value||"");
+  const filtered=customerRows.filter(row=>!term||normName([row.name,row.phone,row.guestType].join(" ")).includes(term));
+  body.innerHTML=filtered.length?filtered.map(row=>{
+   const t=tier(row);
+   return '<tr><td><strong>'+safe(row.name)+'</strong><br><small>'+safe(row.guestType||"Müştəri profili")+'</small></td>'+
+    '<td>'+safe(row.phone||"—")+'</td><td>'+row.visits+' tamamlanmış gəliş'+(row.upcoming?' <small>· '+row.upcoming+' gələcək bron</small>':'')+'</td>'+
+    '<td><strong>'+money(row.paid)+'</strong></td><td>'+dateLabel(row.lastVisit)+'</td>'+
+    '<td><span class="customer-pill '+t.cls+'">'+t.label+'</span></td>'+
+    '<td><button class="customer-open" type="button" data-customer-key="'+safe(row.key)+'">'+(row.profile?"Anketə bax":"Anket yarat")+'</button></td></tr>';
+  }).join(""):'<tr><td colspan="7" class="empty">Axtarışa uyğun müştəri tapılmadı.</td></tr>';
+  body.querySelectorAll("[data-customer-key]").forEach(button=>button.addEventListener("click",()=>window.openCustomerProfile(button.dataset.customerKey)));
+ };
+
+ window.loadCustomers=async function(refreshReservations){
+  const message=$("customerMessage"),body=$("customerTable");
+  if(!message||!body)return;
+  message.textContent="Müştəri məlumatları yüklənir...";
+  try{
+   if(refreshReservations){
+    const reservationResult=await adminRequest("GET");
+    if(!Array.isArray(reservationResult.reservations))throw new Error("Rezervasiya tarixçəsi düzgün formatda qaytarılmadı.");
+    allReservations=reservationResult.reservations;
+    customerHistoryTruncated=Number(reservationResult.totalCount||0)>allReservations.length;
+   }
+   const auth=window.qthAdminAuthClient;
+   if(!auth)throw new Error("Admin sessiyası tapılmadı. Yenidən daxil olun.");
+   const {data,error}=await auth.from("customers").select("id,full_name,phone,id_document,guest_type,notes,created_at").order("full_name",{ascending:true}).limit(2000);
+   if(error)throw error;
+   customerProfiles=data||[];
+   buildCustomerRows();
+   $("customerTotal").textContent=String(customerRows.length);
+   $("customerRepeat").textContent=String(customerRows.filter(r=>r.visits>=2).length);
+   $("customerVip").textContent=String(customerRows.filter(r=>tier(r).label==="VIP").length);
+   $("customerRevenue").textContent=money(customerRows.reduce((sum,r)=>sum+r.paid,0));
+   window.renderCustomers();
+   message.textContent="Müştəri bazası yeniləndi · "+customerRows.length+" unikal profil. Gəliş sayı yalnız tamamlanmış rezervasiyalara əsaslanır."+(customerHistoryTruncated?" Qeyd: rezervasiya API-si son 500 bronu qaytardığı üçün tarixçə statistikası qisməndir.":"");
+  }catch(error){
+   message.textContent="Müştəri məlumatları yüklənmədi: "+error.message;
+   body.innerHTML='<tr><td colspan="7" class="empty">Məlumat əldə edilmədi.</td></tr>';
+  }
+ };
+
+ window.openCustomerProfile=function(key){
+  const row=key?customerRows.find(r=>r.key===key):null;
+  const profile=row?.profile||null;
+  editingCustomerKey=row?.key||null;
+  editingCustomerId=profile?.id||null;
+  $("customerProfileTitle").textContent=row?"Müştəri anketi":"Yeni müştəri anketi";
+  $("customerFullName").value=profile?.full_name||row?.name||"";
+  $("customerPhone").value=profile?.phone||row?.phone||"";
+  $("customerIdDocument").value=profile?.id_document||"";
+  $("customerGuestType").value=profile?.guest_type||"";
+  $("customerNotes").value=profile?.notes||"";
+  const history=$("customerHistoryList");
+  if(row?.reservations?.length){
+   const sorted=[...row.reservations].sort((a,b)=>String(b.check_in||"").localeCompare(String(a.check_in||"")));
+   history.innerHTML='<div class="customer-history-list">'+sorted.map(r=>'<div class="customer-history-item"><span><strong>'+safe(r.unit_name||r.unit_id||"Ev")+'</strong><br>'+dateLabel(r.check_in)+' – '+dateLabel(r.check_out)+'<br><small>'+safe(r.booking_code||"")+' · '+safe(r.status||"")+'</small></span><span><strong>'+money(r.paid_amount)+'</strong><br><small>Ödənilib / '+money(r.total_amount)+'</small></span></div>').join("")+'</div>';
+  }else history.textContent="Bu profilə uyğun rezervasiya tarixçəsi yoxdur.";
+  $("customerFormMessage").textContent="";
+  $("customerProfileModal").hidden=false;
+ };
+ window.closeCustomerProfile=function(){$("customerProfileModal").hidden=true;};
+
+ $("customerProfileForm")?.addEventListener("submit",async event=>{
+  event.preventDefault();
+  const button=$("customerSaveButton"),message=$("customerFormMessage");
+  const fullName=$("customerFullName").value.trim(),phone=$("customerPhone").value.trim();
+  if(fullName.length<2){message.textContent="Ad və soyadı düzgün daxil edin.";return;}
+  message.textContent="Təhlükəsizlik üçün test versiyasında müştəri məlumatlarının yazılması bağlıdır. Ayrı test bazası qoşulduqdan sonra aktiv ediləcək.";return;
+  button.disabled=true;message.textContent="Anket yadda saxlanılır...";
+  try{
+   const auth=window.qthAdminAuthClient;
+   if(!auth)throw new Error("Admin sessiyası tapılmadı.");
+   const payload={full_name:fullName,phone:phone||null,id_document:$("customerIdDocument").value.trim()||null,guest_type:$("customerGuestType").value||null,notes:$("customerNotes").value.trim()||null};
+   let result;
+   if(editingCustomerId){
+    result=await auth.from("customers").update(payload).eq("id",editingCustomerId).select("id").single();
+   }else{
+    const existing=customerProfiles.find(p=>customerKey(p.phone,p.full_name)===customerKey(phone,fullName));
+    if(existing)result=await auth.from("customers").update(payload).eq("id",existing.id).select("id").single();
+    else result=await auth.from("customers").insert(payload).select("id").single();
+   }
+   if(result.error)throw result.error;
+   await window.loadCustomers(false);
+   const savedId=result.data?.id;
+   const saved=customerRows.find(r=>r.profile?.id===savedId)||customerRows.find(r=>customerKey(r.phone,r.name)===customerKey(phone,fullName));
+   message.textContent="Müştəri anketi uğurla yadda saxlanıldı.";
+   editingCustomerId=saved?.profile?.id||savedId||null;
+   editingCustomerKey=saved?.key||editingCustomerKey;
+   window.openCustomerProfile(editingCustomerKey);
+   $("customerFormMessage").textContent="Anket yadda saxlanıldı.";
+  }catch(error){message.textContent="Yadda saxlamaq mümkün olmadı: "+error.message;}
+  finally{button.disabled=false;}
+ });
+})();
+</script>
+
 </body>
 </html>
 <style>
