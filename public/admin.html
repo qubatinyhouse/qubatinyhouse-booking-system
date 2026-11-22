@@ -2753,6 +2753,7 @@ if(!qthHousePerformanceTimer){
  const $ = id => document.getElementById(id);
  let customerProfiles = [];
  let customerRows = [];
+ let customerHistoryTruncated = false;
  let editingCustomerKey = null;
  let editingCustomerId = null;
 
@@ -2775,7 +2776,7 @@ if(!qthHousePerformanceTimer){
    const completed=confirmed && String(r.check_out||"")<=today;
    if(completed){row.visits+=1;if(!row.lastVisit||String(r.check_out)>row.lastVisit)row.lastVisit=String(r.check_out);}
    if(confirmed && String(r.check_in||"")>today)row.upcoming+=1;
-   if(!["cancelled","expired","payment_failed"].includes(status))row.paid+=Math.max(0,Number(r.paid_amount||0));
+   if(!["cancelled","expired","payment_failed"].includes(status))row.paid+=Math.max(0,Number(r.paid_amount||0)-Number(r.refunded_amount||0));
   });
   const profilesByKey=new Map();
   customerProfiles.forEach(p=>profilesByKey.set(customerKey(p.phone,p.full_name),p));
@@ -2817,7 +2818,12 @@ if(!qthHousePerformanceTimer){
   if(!message||!body)return;
   message.textContent="Müştəri məlumatları yüklənir...";
   try{
-   if(refreshReservations && typeof window.loadReservations==="function")await window.loadReservations();
+   if(refreshReservations){
+    const reservationResult=await adminRequest("GET");
+    if(!Array.isArray(reservationResult.reservations))throw new Error("Rezervasiya tarixçəsi düzgün formatda qaytarılmadı.");
+    allReservations=reservationResult.reservations;
+    customerHistoryTruncated=Number(reservationResult.totalCount||0)>allReservations.length;
+   }
    const auth=window.qthAdminAuthClient;
    if(!auth)throw new Error("Admin sessiyası tapılmadı. Yenidən daxil olun.");
    const {data,error}=await auth.from("customers").select("id,full_name,phone,id_document,guest_type,notes,created_at").order("full_name",{ascending:true}).limit(2000);
@@ -2829,7 +2835,7 @@ if(!qthHousePerformanceTimer){
    $("customerVip").textContent=String(customerRows.filter(r=>tier(r).label==="VIP").length);
    $("customerRevenue").textContent=money(customerRows.reduce((sum,r)=>sum+r.paid,0));
    window.renderCustomers();
-   message.textContent="Müştəri bazası yeniləndi · "+customerRows.length+" unikal profil. Gəliş sayı yalnız tamamlanmış rezervasiyalara əsaslanır.";
+   message.textContent="Müştəri bazası yeniləndi · "+customerRows.length+" unikal profil. Gəliş sayı yalnız tamamlanmış rezervasiyalara əsaslanır."+(customerHistoryTruncated?" Qeyd: rezervasiya API-si son 500 bronu qaytardığı üçün tarixçə statistikası qisməndir.":"");
   }catch(error){
    message.textContent="Müştəri məlumatları yüklənmədi: "+error.message;
    body.innerHTML='<tr><td colspan="7" class="empty">Məlumat əldə edilmədi.</td></tr>';
