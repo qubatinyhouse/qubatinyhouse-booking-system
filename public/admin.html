@@ -718,18 +718,12 @@ tbody tr:hover{background:#f8f8f2}
   box-shadow:0 8px 22px rgba(4,36,24,.10)!important;
 }
 .header h1#pageTitle{
-  font-size:0!important;line-height:1.2!important;
-  color:#fff8e8!important;margin:0!important;
+  display:block!important;font:700 24px/1.3 Arial,Helvetica,sans-serif!important;
+  letter-spacing:.1px;color:#fff8e8!important;margin:0!important;
 }
-.header h1#pageTitle::after{
-  content:"İdarəetmə Paneli";font:700 24px/1.2 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
-  letter-spacing:.1px;color:#fff8e8;
-}
+.header h1#pageTitle::after{content:none!important;display:none!important}
 .header .sub{display:none!important}
-.header .date{
-  color:#f2e7cf!important;background:rgba(255,255,255,.09)!important;
-  border:1px solid rgba(232,211,164,.35)!important;
-}
+.header .date{display:none!important}
 #qthAdminLogout{
   color:#fff8e8!important;background:rgba(255,255,255,.10)!important;
   border:1px solid rgba(232,211,164,.45)!important;
@@ -1384,7 +1378,7 @@ function openPage(page){
  const moreButton=document.getElementById("mobileMoreButton");
  if(moreButton)moreButton.classList.toggle("active",["tariffs","finance","employees","cleaning","utilities","reports","settings","customers"].includes(page));
  toggleMobileMore(false);
- document.getElementById("pageTitle").textContent=titles[page]||"Dashboard";
+ document.getElementById("pageTitle").textContent=qthBakuDateLabel();
  if(page==="dashboard" && typeof window.loadHousePerformance==="function"){window.loadHousePerformance();}
   if(page==="reservations" && typeof window.loadReservations==="function"){window.loadReservations();}
  if(page==="calendar"){
@@ -1416,8 +1410,18 @@ document.getElementById("mobileQuickCreate")?.addEventListener("click",()=>{
 });
 document.addEventListener("keydown",event=>{if(event.key==="Escape")toggleMobileMore(false);});
 
-document.getElementById("today").textContent=
-new Intl.DateTimeFormat("az-AZ",{day:"2-digit",month:"long",year:"numeric"}).format(new Date());
+function qthBakuDateLabel(){
+ return new Intl.DateTimeFormat("az-AZ",{weekday:"long",day:"2-digit",month:"long",year:"numeric",timeZone:"Asia/Baku"}).format(new Date());
+}
+function qthRefreshHeaderDate(){
+ const label=qthBakuDateLabel();
+ const title=document.getElementById("pageTitle");
+ const today=document.getElementById("today");
+ if(title)title.textContent=label;
+ if(today)today.textContent=label;
+}
+qthRefreshHeaderDate();
+window.setInterval(qthRefreshHeaderDate,60000);
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
