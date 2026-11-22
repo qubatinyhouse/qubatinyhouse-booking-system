@@ -2169,13 +2169,13 @@ window.submitReservationRefund = async function(event,id) {
   if(!auth)throw new Error("Geri qaytarılma qeydə alındı, lakin maliyyə sessiyası tapılmadı. Maliyyə sinxronu ayrıca yoxlanmalıdır.");
   const {data:sessionData,error:sessionError}=await auth.auth.getSession();
   if(sessionError||!sessionData?.session)throw new Error("Geri qaytarılma qeydə alındı, lakin maliyyə sessiyası aktiv deyil. Maliyyə sinxronu ayrıca yoxlanmalıdır.");
-  const refundDescription="Rezervasiya geri qaytarılması — "+(current.guest_name||"Müştəri")+" | "+(current.booking_code||id)+" | "+String(result.refund?.refund_id||"") ;
+  const refundDescription="Rezervasiya geri qaytarılması — "+(current.guest_name||"Müştəri")+" | "+(current.booking_code||id)+" | "+String(result.refund?.refund_id||"")+" | "+reason;
   const {data:existingFinance,error:lookupError}=await auth.from("finance_transactions").select("id").eq("description",refundDescription).maybeSingle();
   if(lookupError)throw new Error("Geri qaytarılma qeydə alındı, lakin maliyyə sinxronu yoxlanmadı: "+lookupError.message);
   if(!existingFinance){
    const {error:financeError}=await auth.from("finance_transactions").insert({
     transaction_type:"expense",expense_scope:"business",category:"Rezervasiya üzrə geri qaytarılma",
-    amount,payment_method:paymentMethod,description:refundDescription+" | "+reason,transaction_date:refundDate
+    amount,payment_method:paymentMethod,description:refundDescription,transaction_date:refundDate
    });
    if(financeError)throw new Error("Geri qaytarılma rezervasiya tarixçəsində qeydə alındı, lakin Maliyyə jurnalına yazılmadı: "+financeError.message);
   }
