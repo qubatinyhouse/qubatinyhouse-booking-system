@@ -821,9 +821,9 @@ tbody tr:hover{background:#f8f8f2}
    <small>Avans ödənişi qeydə alınmış təsdiqli bronlar</small>
   </article>
   <article class="qth-booking-chart-item qth-booking-chart-item--pending">
-   <div class="qth-booking-chart-meta"><span>Gözləyən rezervasiyalar</span><strong id="qthChartPending">—</strong></div>
-   <div class="qth-booking-chart-track"><span id="qthChartPendingBar"></span></div>
-   <small>Avans gözləyən və ödənişi yoxlanılan bronlar</small>
+   <div class="qth-booking-chart-meta"><span>Avans ödəmiş gələcək qonaqlar</span><strong id="qthChartFutureGuests">—</strong></div>
+   <div class="qth-booking-chart-track"><span id="qthChartFutureGuestsBar"></span></div>
+   <small>Gələcək giriş tarixi olan, təsdiqlənmiş və avans ödəmiş rezervasiyalardakı qonaqlar</small>
   </article>
   <article class="qth-booking-chart-item qth-booking-chart-item--checkout">
    <div class="qth-booking-chart-meta"><span>Çıxış edən qonaqlar</span><strong id="qthChartCheckout">—</strong></div>
@@ -1844,7 +1844,9 @@ function renderDashboardReservationOverview() {
  const confirmed = items.filter(r => String(r.status || "").toLowerCase() === "confirmed");
  const total = items.length;
  const depositBookings = confirmed.filter(r => Number(r.paid_amount || 0) > 0).length;
- const pendingBookings = items.filter(r => ["pending_payment","payment_review"].includes(String(r.status || "").toLowerCase())).length;
+ const futurePaidGuests = confirmed
+   .filter(r => Number(r.paid_amount || 0) > 0 && String(r.check_in || "") > today)
+   .reduce((sum,r) => sum + Math.max(0,Number(r.guest_count || 0)),0);
  const checkedInGuests = confirmed
    .filter(r => String(r.check_in || "") <= today)
    .reduce((sum,r) => sum + Math.max(0,Number(r.guest_count || 0)),0);
@@ -1854,7 +1856,7 @@ function renderDashboardReservationOverview() {
  const values = [
    ["Total",total],
    ["Deposit",depositBookings],
-   ["Pending",pendingBookings],
+   ["FutureGuests",futurePaidGuests],
    ["Checkout",checkedOutGuests],
    ["Checkin",checkedInGuests]
  ];
@@ -1862,7 +1864,7 @@ function renderDashboardReservationOverview() {
  const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=Number(value).toLocaleString("az-AZ");};
  set("qthChartTotal",total);
  set("qthChartDeposit",depositBookings);
- set("qthChartPending",pendingBookings);
+ set("qthChartFutureGuests",futurePaidGuests);
  set("qthChartCheckout",checkedOutGuests);
  set("qthChartCheckin",checkedInGuests);
  values.forEach(([key,value])=>{
