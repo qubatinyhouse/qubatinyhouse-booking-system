@@ -1016,7 +1016,7 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
  <div class="panel">
   <div class="customer-toolbar">
    <div><h3>Müştəri bazası</h3><p class="sub">Rezervasiyalardan avtomatik formalaşır. Əlavə anket məlumatları ayrıca saxlanılır.</p></div>
-   <button class="btn" type="button" disabled title="Test bazası qoşulana qədər yazma əməliyyatı bağlıdır">＋ Yeni müştəri · test bazası gözlənilir</button>
+   <button class="btn" type="button" onclick="openCustomerProfile(null)">＋ Yeni müştəri</button>
   </div>
   <div class="customer-search"><input id="customerSearch" type="search" placeholder="Ad, telefon və ya müştəri növü üzrə axtar..." oninput="renderCustomers()"><button class="btn" type="button" onclick="loadCustomers(true)">Yenilə</button></div>
   <p class="notice" id="customerMessage" aria-live="polite">Müştəri məlumatları yüklənir...</p>
@@ -1046,7 +1046,25 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
      <label>Telefon<input id="customerPhone" maxlength="30" autocomplete="tel" placeholder="+994..."></label>
      <label>Şəxsiyyət sənədi / FIN (istəyə bağlı)<input id="customerIdDocument" maxlength="80" autocomplete="off"></label>
      <label>Müştəri növü<select id="customerGuestType"><option value="">Seçilməyib</option><option value="Ailə">Ailə</option><option value="Cütlük">Cütlük</option><option value="Qadın qrupu">Qadın qrupu</option><option value="Dost qrupu">Dost qrupu</option><option value="Korporativ">Korporativ</option><option value="Digər">Digər</option></select></label>
-     <label class="customer-notes-label">Xüsusi qeydlər / xidmət üstünlükləri<textarea id="customerNotes" rows="3" maxlength="1500" placeholder="Müştərinin xüsusi istəkləri, üstünlükləri və admin qeydləri..."></textarea></label>
+     <label>E-mail<input id="customerEmail" type="email" maxlength="160" autocomplete="email"></label>
+     <label>Doğum tarixi<input id="customerBirthday" type="date"></label>
+     <label>Şəhər / rayon<input id="customerCity" maxlength="100" placeholder="Bakı"></label>
+     <label>Ən çox seçdiyi ev<select id="customerPreferredHouse"><option value="">Seçilməyib</option><option>A-FRAME-1</option><option>A-FRAME-2</option><option>Orange House</option><option>Green House</option><option>Blue House</option><option>White House</option></select></label>
+     <label>Adətən qonaq sayı<input id="customerUsualGuests" type="number" min="1" max="30"></label>
+     <label>Adətən qalma müddəti<select id="customerUsualNights"><option value="">Seçilməyib</option><option value="1">1 gecə</option><option value="2">2 gecə</option><option value="3">3 gecə</option><option value="4+">4+ gecə</option></select></label>
+     <label>Sevimli mövsüm<select id="customerSeason"><option value="">Seçilməyib</option><option>Yaz</option><option>Yay</option><option>Payız</option><option>Qış</option><option>Bütün mövsümlər</option></select></label>
+     <label>Müştəri mənbəyi<select id="customerSource"><option value="">Seçilməyib</option><option>Instagram</option><option>TikTok</option><option>Google</option><option>Dost tövsiyəsi</option><option>Təkrar müştəri</option><option>Digər</option></select></label>
+     <div class="customer-notes-label"><strong>Xidmət üstünlükləri</strong><div class="customer-preferences">
+      <label><input type="checkbox" name="customerAmenity" value="İsti hovuz"> İsti hovuz</label>
+      <label><input type="checkbox" name="customerAmenity" value="Cakuzi"> Cakuzi</label>
+      <label><input type="checkbox" name="customerAmenity" value="Sauna"> Sauna</label>
+      <label><input type="checkbox" name="customerAmenity" value="Səhər yeməyi"> Səhər yeməyi</label>
+      <label><input type="checkbox" name="customerAmenity" value="BBQ"> BBQ</label>
+      <label><input type="checkbox" name="customerAmenity" value="Samovar çayı"> Samovar çayı</label>
+     </div></div>
+     <label>Yaddaqalan gün / xüsusi tarix<input id="customerSpecialDate" type="date"></label>
+     <label>Növbəti əlaqə tarixi<input id="customerFollowupDate" type="date"></label>
+     <label class="customer-notes-label">Xüsusi qeydlər / xidmət üstünlükləri<textarea id="customerNotes" rows="3" maxlength="1500" placeholder="Müştərinin istəkləri, xidmət qeydləri və admin müşahidələri..."></textarea></label>
     </div>
     <div class="customer-history">
      <h4>Rezervasiya tarixçəsi</h4>
@@ -2730,7 +2748,7 @@ if(!qthHousePerformanceTimer){
 .customer-category-grid strong,.customer-category-grid span{display:block}
 .customer-category-grid strong{color:#294536;margin-bottom:7px}
 .customer-category-grid span{font-size:12px;line-height:1.5;color:var(--muted)}
-.customer-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:14px 0}
+.customer-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:14px 0}.customer-preferences{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:10px}.customer-preferences label{display:flex;align-items:center;gap:7px;font-size:12px}.customer-preferences input{width:auto}
 .customer-notes-label{grid-column:1/-1}
 .customer-history{margin-top:18px}
 .customer-history h4{margin:0 0 10px;color:#263b30}
@@ -2826,7 +2844,7 @@ if(!qthHousePerformanceTimer){
    }
    const auth=window.qthAdminAuthClient;
    if(!auth)throw new Error("Admin sessiyası tapılmadı. Yenidən daxil olun.");
-   const {data,error}=await auth.from("customers").select("id,full_name,phone,id_document,guest_type,notes,created_at").order("full_name",{ascending:true}).limit(2000);
+   const {data,error}=await auth.from("customers").select("id,full_name,phone,id_document,guest_type,notes,profile_data,created_at").order("full_name",{ascending:true}).limit(2000);
    if(error)throw error;
    customerProfiles=data||[];
    buildCustomerRows();
@@ -2853,6 +2871,18 @@ if(!qthHousePerformanceTimer){
   $("customerIdDocument").value=profile?.id_document||"";
   $("customerGuestType").value=profile?.guest_type||"";
   $("customerNotes").value=profile?.notes||"";
+  const extra=profile?.profile_data||{};
+  $("customerEmail").value=extra.email||"";
+  $("customerBirthday").value=extra.birthday||"";
+  $("customerCity").value=extra.city||"";
+  $("customerPreferredHouse").value=extra.preferred_house||"";
+  $("customerUsualGuests").value=extra.usual_guests||"";
+  $("customerUsualNights").value=extra.usual_nights||"";
+  $("customerSeason").value=extra.season||"";
+  $("customerSource").value=extra.source||"";
+  $("customerSpecialDate").value=extra.special_date||"";
+  $("customerFollowupDate").value=extra.followup_date||"";
+  document.querySelectorAll('input[name="customerAmenity"]').forEach(el=>{el.checked=Array.isArray(extra.amenities)&&extra.amenities.includes(el.value);});
   const history=$("customerHistoryList");
   if(row?.reservations?.length){
    const sorted=[...row.reservations].sort((a,b)=>String(b.check_in||"").localeCompare(String(a.check_in||"")));
@@ -2872,7 +2902,19 @@ if(!qthHousePerformanceTimer){
   try{
    const auth=window.qthAdminAuthClient;
    if(!auth)throw new Error("Admin sessiyası tapılmadı.");
-   const payload={full_name:fullName,phone:phone||null,id_document:$("customerIdDocument").value.trim()||null,guest_type:$("customerGuestType").value||null,notes:$("customerNotes").value.trim()||null};
+   const payload={full_name:fullName,phone:phone||null,id_document:$("customerIdDocument").value.trim()||null,guest_type:$("customerGuestType").value||null,notes:$("customerNotes").value.trim()||null,profile_data:{
+    email:$("customerEmail").value.trim()||null,
+    birthday:$("customerBirthday").value||null,
+    city:$("customerCity").value.trim()||null,
+    preferred_house:$("customerPreferredHouse").value||null,
+    usual_guests:$("customerUsualGuests").value?Number($("customerUsualGuests").value):null,
+    usual_nights:$("customerUsualNights").value||null,
+    season:$("customerSeason").value||null,
+    source:$("customerSource").value||null,
+    amenities:Array.from(document.querySelectorAll('input[name="customerAmenity"]:checked')).map(el=>el.value),
+    special_date:$("customerSpecialDate").value||null,
+    followup_date:$("customerFollowupDate").value||null
+   }};
    let result;
    if(editingCustomerId){
     result=await auth.from("customers").update(payload).eq("id",editingCustomerId).select("id").single();
