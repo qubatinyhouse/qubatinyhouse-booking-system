@@ -685,6 +685,61 @@ tbody tr:hover{background:#f8f8f2}
  .qth-booking-chart-meta strong{font-size:23px}
 }
 
+
+/* QTH LIVE ADMIN — sidebar and header appearance only */
+.sidebar{
+  width:250px!important;flex:0 0 250px!important;
+  background:linear-gradient(180deg,#063b29 0%,#052f22 58%,#03271d 100%)!important;
+  color:#fff!important;border-right:1px solid rgba(221,190,119,.48)!important;
+  box-shadow:8px 0 28px rgba(4,36,24,.13)!important;
+}
+.sidebar .logo{
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  text-align:center!important;padding:12px 8px 24px!important;
+  color:#fff8e8!important;
+}
+.sidebar .qth-sidebar-logo{
+  display:block!important;width:min(174px,88%)!important;height:auto!important;
+  margin:0 auto 12px!important;
+}
+.sidebar .logo small{color:#e4ca8c!important;letter-spacing:3px!important}
+.sidebar .nav-title{color:#d5bb7c!important}
+.sidebar .nav{color:#e7eee8!important}
+.sidebar .nav.active{
+  background:linear-gradient(100deg,#267a46,#155d35)!important;
+  border-color:#d6b66d!important;color:#fff!important;
+  box-shadow:inset 4px 0 #e2c77f,0 5px 16px rgba(0,0,0,.13)!important;
+}
+.header{
+  background:linear-gradient(105deg,#063b29 0%,#0c4934 68%,#173d2e 100%)!important;
+  border:1px solid rgba(199,168,107,.55)!important;
+  border-radius:0 0 16px 16px!important;
+  padding:17px 22px!important;margin:0 0 24px!important;
+  box-shadow:0 8px 22px rgba(4,36,24,.10)!important;
+}
+.header h1#pageTitle{
+  font-size:0!important;line-height:1.2!important;
+  color:#fff8e8!important;margin:0!important;
+}
+.header h1#pageTitle::after{
+  content:"İdarəetmə Paneli";font:700 24px/1.2 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  letter-spacing:.1px;color:#fff8e8;
+}
+.header .sub{display:none!important}
+.header .date{
+  color:#f2e7cf!important;background:rgba(255,255,255,.09)!important;
+  border:1px solid rgba(232,211,164,.35)!important;
+}
+#qthAdminLogout{
+  color:#fff8e8!important;background:rgba(255,255,255,.10)!important;
+  border:1px solid rgba(232,211,164,.45)!important;
+}
+@media(max-width:620px){
+  .sidebar{width:100%!important;flex:0 0 auto!important}
+  .header{padding:13px 14px!important;border-radius:12px!important}
+  .header h1#pageTitle::after{font-size:19px}
+}
+
 </style>
 </head>
 <body>
