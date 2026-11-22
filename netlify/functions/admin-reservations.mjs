@@ -127,7 +127,7 @@ export const handler = async (event) => {
               .order('payment_date', { ascending: false })
           : Promise.resolve({ data: [], error: null }),
         reservationIds.length
-          ? client.from('reservation_refunds').select('id,reservation_id,amount,payment_method,refund_date,reason,created_at').in('reservation_id',reservationIds).order('refund_date',{ascending:false})
+          ? client.from('reservation_refunds').select('id,reservation_id,amount,payment_method:refund_method,refund_date,reason:notes,created_at').in('reservation_id',reservationIds).order('refund_date',{ascending:false})
           : Promise.resolve({ data: [], error: null }),
         reservationIds.length
           ? client.from('promo_coupons').select('reservation_id,coupon_code,status').in('reservation_id', reservationIds)
