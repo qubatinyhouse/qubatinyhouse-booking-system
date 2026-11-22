@@ -692,6 +692,27 @@ tbody tr:hover{background:#f8f8f2}
  <div class="qth-expense-foot" id="qthPayrollNote">Məlumatlar maliyyə və işçi ödəniş qeydlərindən hesablanır.</div>
 </div>
 
+<div class="panel qth-customer-stats-panel">
+ <h3>Müştərilərin statistik uçotu</h3>
+ <div class="qth-house-performance-stats">
+  <div><small>Unikal müştərilər</small><strong id="qthCustomerUnique">—</strong></div>
+  <div><small>Təkrar gələn müştərilər</small><strong id="qthCustomerRepeat">—</strong></div>
+  <div><small>Aktiv müştərilər</small><strong id="qthCustomerActive">—</strong></div>
+  <div><small>Geri qaytarılmış məbləğ</small><strong id="qthCustomerRefunds">—</strong></div>
+ </div>
+ <p class="sub">Müştərilər telefon nömrəsinə görə fərqləndirilir; statistikaya yüklənmiş rezervasiyalar daxildir.</p>
+</div>
+<div class="panel qth-dashboard-reservations">
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+  <div><h3>Son rezervasiyalar</h3><p class="sub">Ən son yaradılmış 10 rezervasiya</p></div>
+  <button type="button" onclick="showAllReservations()">Bütün rezervasiyalara keç</button>
+ </div>
+ <div class="table-wrap"><table class="qth-house-performance-table">
+  <thead><tr><th>Müştəri</th><th>Ev</th><th>Giriş – çıxış</th><th>Məbləğ</th><th>Ödənilib</th><th>Geri qaytarılıb</th><th>Status</th><th></th></tr></thead>
+  <tbody id="qthDashboardReservationRows"><tr><td colspan="8">Rezervasiyalar yüklənir...</td></tr></tbody>
+ </table></div>
+ <p class="notice" id="qthDashboardReservationMessage" aria-live="polite">Rezervasiya məlumatları yüklənir...</p>
+</div>
 <div class="panel">
 <h3>Sürətli idarəetmə</h3>
 <div class="quick">
@@ -771,7 +792,7 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
 <label>Ümumi ödəniləcək məbləğ (AZN)<input id="adminTotalAmount" type="number" min="0.01" step="0.01" placeholder="Qiyməti özünüz daxil edin" oninput="updateAdminManualBalance()" required></label>
 <label>Alınacaq avans (AZN)<input id="adminPaidAmount" type="number" min="0" step="0.01" value="0" oninput="updateAdminManualBalance()" required></label>
 <label>Qalıq məbləğ (AZN)<input id="adminRemainingAmount" type="text" value="0.00 AZN" readonly></label>
-<label>Ödəniş üsulu<select id="adminPaymentMethod"><option value="bank">Bank</option><option value="cash">Nağd</option><option value="card">Kart</option><option value="transfer">Köçürmə</option></select></label>
+<label>Ödəniş üsulu<select id="adminPaymentMethod"><option value="cash">Nağd</option><option value="card">Kart</option></select></label>
 <label>Ödəniş tarixi<input id="adminPaymentDate" type="date"></label>
 <label>Qeyd<input id="adminBookingNote" type="text" maxlength="1500" placeholder="Əlavə qeyd"></label></div>
 <p class="notice">Bu bölmədə qiyməti siz təyin edirsiniz: ümumi məbləği və faktiki aldığınız avansı daxil edin. Qalıq avtomatik hesablanır. Daxil edilən avans ödəniş tarixçəsinə və maliyyə jurnalına yazılır.</p>
@@ -1349,7 +1370,7 @@ async function qthQueueBookingPayment(payment, reservation) {
     p_reservation_id: reservation.id,
     p_amount: Number(payment.amount),
     p_payment_type: payment.payment_type || "other",
-    p_payment_method: payment.payment_method || "bank",
+    p_payment_method: payment.payment_method || "cash",
     p_description: "Rezervasiya ödənişi — " + (reservation.guest_name || "Müştəri") +
       " | " + (reservation.booking_code || reservation.id) + " | " +
       (reservation.unit_id || "") + " | " + (reservation.check_in || "") + " – " + (reservation.check_out || ""),
@@ -1653,6 +1674,7 @@ window.loadReservations = async function () {
   try {
     const result = await adminRequest("GET");
     allReservations = result.reservations || [];
+    renderDashboardReservationOverview();
     if (typeof window.filterReservations === "function") window.filterReservations();
     else renderReservations(allReservations);
     qthInitAdminMonthSelectors();
@@ -1690,6 +1712,28 @@ document.addEventListener("visibilitychange", () => {
     window.loadReservations();
   }
 });
+
+function renderDashboardReservationOverview() {
+ const items = Array.isArray(allReservations) ? allReservations : [];
+ const phoneKey = r => String(r.phone || "").replace(/\D/g,"");
+ const byPhone = new Map();
+ items.forEach(r => { const key=phoneKey(r); if(key){const list=byPhone.get(key)||[];list.push(r);byPhone.set(key,list);} });
+ const unique=byPhone.size;
+ const repeat=[...byPhone.values()].filter(list=>list.length>1).length;
+ const active=items.filter(r=>["confirmed","pending_payment","payment_review"].includes(String(r.status||"").toLowerCase())).length;
+ const refunds=items.reduce((sum,r)=>sum+Number(r.refunded_amount||0),0);
+ const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
+ set("qthCustomerUnique",unique.toLocaleString("az-AZ"));
+ set("qthCustomerRepeat",repeat.toLocaleString("az-AZ"));
+ set("qthCustomerActive",active.toLocaleString("az-AZ"));
+ set("qthCustomerRefunds",money(refunds));
+ const body=document.getElementById("qthDashboardReservationRows");
+ if(!body)return;
+ const statusLabels={confirmed:"Təsdiqlənib",pending_payment:"Avans gözlənilir",cancelled:"Ləğv edilib",expired:"Vaxtı bitib",payment_failed:"Ödəniş alınmadı",payment_review:"Yoxlama tələb olunur"};
+ const recent=items.slice(0,10);
+ body.innerHTML=recent.length?recent.map(r=>'<tr><td>'+escapeReservation(r.guest_name||"-")+'<br><small>'+escapeReservation(r.phone||"")+'</small></td><td>'+escapeReservation(r.unit_name||r.unit_id||"-")+'</td><td>'+escapeReservation(r.check_in||"-")+' – '+escapeReservation(r.check_out||"-")+'</td><td>'+money(r.total_amount)+'</td><td>'+money(r.paid_amount)+'</td><td>'+money(r.refunded_amount||0)+'</td><td>'+escapeReservation(statusLabels[r.status]||r.status||"-")+'</td><td><button type="button" onclick="showReservationDetails(\''+escapeReservation(r.id)+'\')">Ətraflı</button></td></tr>').join(""):'<tr><td colspan="8">Rezervasiya yoxdur.</td></tr>';
+ set("qthDashboardReservationMessage",recent.length?recent.length+" son rezervasiya göstərilir.": "Rezervasiya tapılmadı.");
+}
 
 function renderReservations(items) {
   const table = document.getElementById("reservationTable");
@@ -1884,6 +1928,19 @@ window.showReservationDetails = function (id) {
         <p id="depositAdjustmentMessage" class="muted" aria-live="polite">Bu əməliyyat seçilmiş avans ödənişini düzəldir, qalıq borcu yenidən hesablayır və Maliyyə jurnalındakı əlaqəli gəliri yeniləyir. Əvvəlki məbləğ audit tarixçəsində saxlanılır.</p>
       </div>
     </form>` : "";
+  const refunds = r.refunds || [];
+  const refundedTotal = Number(r.refunded_amount || 0);
+  const refundRows = refunds.map(item => '<tr><td>'+escapeReservation(item.refund_date||"-")+'</td><td>'+money(item.amount)+'</td><td>'+escapeReservation(item.payment_method||"-")+'</td><td>'+escapeReservation(item.reason||"-")+'</td></tr>').join("");
+  const refundForm = Number(r.paid_amount||0)>0 ? `
+    <h4 style="margin:20px 0 8px;color:#9b4038">Ödənişi geri qaytar</h4>
+    <form class="qth-payment-form" onsubmit="submitReservationRefund(event,'${r.id}')">
+      <label>Geri qaytarılacaq məbləğ (AZN)<input name="amount" type="number" min="0.01" max="${Number(r.paid_amount||0).toFixed(2)}" step="0.01" required></label>
+      <label>Geri qaytarma üsulu<select name="paymentMethod"><option value="cash">Nağd</option><option value="card">Kart</option></select></label>
+      <label>Tarix<input name="refundDate" type="date" value="${new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Baku"})}" required></label>
+      <label class="wide">Səbəb<input name="reason" maxlength="500" placeholder="Geri qaytarılma səbəbi" required></label>
+      <div class="wide"><button class="btn" style="background:#9b4038" type="submit">Geri qaytarılmanı qeydə al</button>
+      <p id="refundFormMessage" class="muted" aria-live="polite">Qismən və ya tam məbləğ qaytarıla bilər. Mövcud ödəniş tarixçəsi qorunur.</p></div>
+    </form>` : "";
   const paymentRows = payments.map(p => `
     <tr>
       <td>${escapeReservation(p.payment_date || "-")}</td>
@@ -1955,6 +2012,9 @@ window.showReservationDetails = function (id) {
       </table>
     </div>
     ${depositAdjustmentForm}
+    <h4 style="margin:18px 0 6px;color:#9b4038">Geri qaytarılma tarixçəsi — cəmi ${money(refundedTotal)}</h4>
+    <div style="overflow-x:auto"><table class="qth-payment-history"><thead><tr><th>Tarix</th><th>Məbləğ</th><th>Üsul</th><th>Səbəb</th></tr></thead><tbody>${refundRows||'<tr><td colspan="4">Geri qaytarılma yoxdur.</td></tr>'}</tbody></table></div>
+    ${refundForm}
     <h4 style="margin:18px 0 6px;color:#294b37">Yeni ödəniş əlavə et</h4>
     <form class="qth-payment-form" onsubmit="submitReservationPayment(event,'${r.id}')">
       <label>Ödəniş növü
@@ -1969,8 +2029,7 @@ window.showReservationDetails = function (id) {
       </label>
       <label>Ödəniş üsulu
         <select name="paymentMethod">
-          <option value="bank">Bank</option><option value="cash">Nağd</option>
-          <option value="card">Kart</option><option value="transfer">Köçürmə</option>
+          <option value="cash">Nağd</option><option value="card">Kart</option>
         </select>
       </label>
       <label>Ödəniş tarixi<input name="paymentDate" type="date" value="${today}" required></label>
@@ -2093,6 +2152,38 @@ window.submitReservationDepositAdjustment = async function(event,id) {
     const fresh = document.querySelector("#reservationDetailsContent #depositAdjustmentMessage");
     if (fresh) fresh.textContent = error.message;
   }
+};
+
+window.submitReservationRefund = async function(event,id) {
+ event.preventDefault();
+ const form=event.currentTarget, message=form.querySelector("#refundFormMessage"), submit=form.querySelector('button[type="submit"]');
+ const amount=Number(form.elements.amount.value), paymentMethod=form.elements.paymentMethod.value, refundDate=form.elements.refundDate.value, reason=form.elements.reason.value.trim();
+ const current=allReservations.find(item=>item.id===id);
+ if(!current||!Number.isFinite(amount)||amount<=0||amount>Number(current.paid_amount||0)||!["cash","card"].includes(paymentMethod)||!refundDate||!reason){message.textContent="Məbləğ, üsul, tarix və səbəbi düzgün daxil edin. Məbləğ ödənilmiş qalıqdan çox ola bilməz.";return;}
+ if(!confirm(money(amount)+" geri qaytarılsın? Bu məbləğ rezervasiyanın xalis ödənişindən və maliyyə nəticəsindən çıxılacaq."))return;
+ submit.disabled=true;message.textContent="Geri qaytarılma qeydə alınır...";
+ const requestKey=form.dataset.refundRequestKey||(form.dataset.refundRequestKey=crypto.randomUUID());
+ try{
+  const result=await adminRequest("PATCH",{id,action:"refund",amount,paymentMethod,refundDate,reason,requestKey});
+  const auth=window.qthAdminAuthClient;
+  if(!auth)throw new Error("Geri qaytarılma qeydə alındı, lakin maliyyə sessiyası tapılmadı. Maliyyə sinxronu ayrıca yoxlanmalıdır.");
+  const {data:sessionData,error:sessionError}=await auth.auth.getSession();
+  if(sessionError||!sessionData?.session)throw new Error("Geri qaytarılma qeydə alındı, lakin maliyyə sessiyası aktiv deyil. Maliyyə sinxronu ayrıca yoxlanmalıdır.");
+  const refundDescription="Rezervasiya geri qaytarılması — "+(current.guest_name||"Müştəri")+" | "+(current.booking_code||id)+" | "+String(result.refund?.refund_id||"")+" | "+reason;
+  const {data:existingFinance,error:lookupError}=await auth.from("finance_transactions").select("id").eq("description",refundDescription).maybeSingle();
+  if(lookupError)throw new Error("Geri qaytarılma qeydə alındı, lakin maliyyə sinxronu yoxlanmadı: "+lookupError.message);
+  if(!existingFinance){
+   const {error:financeError}=await auth.from("finance_transactions").insert({
+    transaction_type:"expense",expense_scope:"business",category:"Rezervasiya üzrə geri qaytarılma",
+    amount,payment_method:paymentMethod,description:refundDescription,transaction_date:refundDate
+   });
+   if(financeError)throw new Error("Geri qaytarılma rezervasiya tarixçəsində qeydə alındı, lakin Maliyyə jurnalına yazılmadı: "+financeError.message);
+  }
+  const frame=document.getElementById("financeFrame");if(frame?.contentWindow)frame.contentWindow.postMessage({type:"QTH_REFRESH_FINANCE"},window.location.origin);
+  await loadReservations();showReservationDetails(id);
+  const fresh=document.querySelector("#reservationDetailsContent #refundFormMessage");
+  if(fresh)fresh.textContent="Uğurlu: "+money(amount)+" geri qaytarıldı. Maliyyə jurnalına da xərc kimi yazıldı.";
+ }catch(error){message.textContent=error.message;submit.disabled=false;}
 };
 
 window.submitReservationPayment = async function (event,id) {

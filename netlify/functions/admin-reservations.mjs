@@ -119,7 +119,7 @@ export const handler = async (event) => {
       if (error) throw error;
 
       const reservationIds = (reservations || []).map((item) => item.id);
-      const [paymentsResult, couponsResult, unitsResult] = await Promise.all([
+      const [paymentsResult, refundsResult, couponsResult, unitsResult] = await Promise.all([
         reservationIds.length
           ? client.from('reservation_payments')
               .select('id,reservation_id,amount,payment_type,payment_method,payment_date,notes,created_at')
@@ -127,11 +127,15 @@ export const handler = async (event) => {
               .order('payment_date', { ascending: false })
           : Promise.resolve({ data: [], error: null }),
         reservationIds.length
+          ? client.from('reservation_refunds').select('id,reservation_id,amount,payment_method,refund_date,reason,created_at').in('reservation_id',reservationIds).order('refund_date',{ascending:false})
+          : Promise.resolve({ data: [], error: null }),
+        reservationIds.length
           ? client.from('promo_coupons').select('reservation_id,coupon_code,status').in('reservation_id', reservationIds)
           : Promise.resolve({ data: [], error: null }),
         client.from('units').select('id,name')
       ]);
       if (paymentsResult.error) throw paymentsResult.error;
+      if (refundsResult.error) throw refundsResult.error;
       if (couponsResult.error) throw couponsResult.error;
       if (unitsResult.error) throw unitsResult.error;
 
@@ -141,6 +145,8 @@ export const handler = async (event) => {
         list.push(payment);
         paymentsByReservation.set(payment.reservation_id, list);
       }
+      const refundsByReservation = new Map();
+      for (const refund of refundsResult.data || []) { const list=refundsByReservation.get(refund.reservation_id)||[]; list.push(refund); refundsByReservation.set(refund.reservation_id,list); }
       const couponByReservation = new Map((couponsResult.data || []).map((item) => [item.reservation_id, item]));
       const unitNames = new Map((unitsResult.data || []).map((unit) => [unit.id, unit.name]));
 
@@ -149,6 +155,8 @@ export const handler = async (event) => {
         reservations: (reservations || []).map((item) => ({
           ...item,
           payments: paymentsByReservation.get(item.id) || [],
+          refunds: refundsByReservation.get(item.id) || [],
+          refunded_amount: (refundsByReservation.get(item.id) || []).reduce((sum,refund)=>sum+Number(refund.amount||0),0),
           coupon_code: couponByReservation.get(item.id)?.coupon_code || null,
           coupon_status: couponByReservation.get(item.id)?.status || null,
           unit_name: unitNames.get(item.unit_id) || item.unit_id
@@ -163,6 +171,17 @@ export const handler = async (event) => {
 
       const { id, status, action } = body;
       if (!id) return json(400, { error: 'Rezervasiya ID-si tələb olunur.' });
+
+      if (action === 'refund') {
+        const amount=Number(body.amount), method=String(body.paymentMethod||''), date=validDate(body.refundDate)?body.refundDate:new Date().toISOString().slice(0,10), reason=String(body.reason||'').trim(), key=String(body.requestKey||'');
+        if(!Number.isFinite(amount)||amount<=0||amount>10000000||!['cash','card'].includes(method)||!reason||reason.length>500||!key) return json(400,{error:'Məbləğ, Nağd/Kart üsulu, tarix, səbəb və sorğu açarı düzgün daxil edilməlidir.'});
+        const {data:rows,error}=await client.rpc('qth_admin_record_reservation_refund',{p_reservation_id:id,p_amount:amount,p_payment_method:method,p_refund_date:date,p_reason:reason,p_admin_id:admin.id,p_request_key:key});
+        if(error){if(/REFUND_EXCEEDS_PAID_AMOUNT/i.test(error.message||''))return json(400,{error:'Geri qaytarılacaq məbləğ qalan ödənilmiş məbləğdən çox ola bilməz.'});if(/RESERVATION_NOT_FOUND/i.test(error.message||''))return json(404,{error:'Rezervasiya tapılmadı.'});throw error;}
+        const refund=Array.isArray(rows)?rows[0]:rows;
+        const {data:reservation,error:reservationError}=await client.from('reservations').select('id,booking_code,unit_id,check_in,check_out,guest_name,phone,guest_count,total_amount,deposit_amount,remaining_amount,paid_amount,paid_at,status,payment_status,campaign_code,campaign_name,marriage_confirmed,created_at').eq('id',id).single();
+        if(reservationError)throw reservationError;
+        return json(200,{success:true,refund,reservation});
+      }
 
       if (action === 'payment') {
         const amount = Number(body.amount);
