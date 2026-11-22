@@ -1,0 +1,63 @@
+name: QTH encrypted Supabase backups
+
+on:
+  schedule:
+    # 06:17 in Baku (UTC+4)
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qth-supabase-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Back up both Supabase projects to private R2
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out backup script
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Install pinned Supabase CLI
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 3.0.0
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+
+      - name: Create, encrypt, upload and verify backup
+        env:
+          SUPABASE_MAIN_DB_URL: ${{ secrets.SUPABASE_MAIN_DB_URL }}
+          SUPABASE_ADMIN_DB_URL: ${{ secrets.SUPABASE_ADMIN_DB_URL }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+        run: bash scripts/backup-qth-supabase.sh
+
+      - name: Send optional failure alert
+        if: ${{ failure() }}
+        env:
+          BACKUP_ALERT_WEBHOOK: ${{ secrets.BACKUP_ALERT_WEBHOOK }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [[ -z "${BACKUP_ALERT_WEBHOOK:-}" ]]; then
+            echo "No external webhook configured. Check GitHub Actions failure notifications."
+            exit 0
+          fi
+
+          payload="$(jq -n --arg text "QTH backup FAILED. Run: $RUN_URL" --arg content "QTH backup FAILED. Run: $RUN_URL" '{text:$text,content:$content}')"
+          curl --fail --silent --show-error --max-time 20 \
+            -H "Content-Type: application/json" \
+            --data "$payload" \
+            "$BACKUP_ALERT_WEBHOOK"
