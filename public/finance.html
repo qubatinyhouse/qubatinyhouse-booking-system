@@ -858,6 +858,19 @@ if(payrollResult.error){
   payrollSummary=payrollResult.data?.summary||null;
   payrollEmployees=Array.isArray(payrollResult.data?.employees)?payrollResult.data.employees:[];
 }
+const reserveResult = await client.from("qth_reserve_fund_transactions")
+  .select("id,transaction_type,amount,reason,transaction_date,created_at")
+  .order("transaction_date",{ascending:false}).order("created_at",{ascending:false}).limit(100);
+let reserveBalance = 0;
+let reserveHistory = [];
+let reserveError = null;
+if(reserveResult.error){
+  reserveError = reserveResult.error.message;
+  console.error("Ehtiyat fondu yüklənmədi:",reserveError);
+}else{
+  reserveHistory = reserveResult.data || [];
+  reserveBalance = reserveHistory.reduce((sum,item)=>sum+(item.transaction_type==="deposit"?1:-1)*Number(item.amount||0),0);
+}
 if (window.parent !== window) {
   window.parent.postMessage({
     type: "QTH_FINANCE_SUMMARY",
@@ -871,6 +884,10 @@ if (window.parent !== window) {
     payrollSummary,
     payrollEmployees,
     payrollError,
+    reserveBalance,
+    reserveGoal: 16350,
+    reserveHistory: reserveHistory.slice(0,10),
+    reserveError,
     month: currentMonth
   }, window.location.origin);
 }
@@ -1267,10 +1284,29 @@ async function connectSharedSession(){
  await checkSession();
  client.auth.onAuthStateChange((_event,session)=>{if(!session)document.getElementById("dashboard").innerHTML="<div class=card>Sessiya bağlandı. Əsas Admin panelə yenidən daxil olun.</div>";});
  window.addEventListener("message", async (event) => {
-   if (event.origin === window.location.origin &&
-       event.source === window.parent &&
-       event.data?.type === "QTH_REFRESH_FINANCE") {
+   if (event.origin !== window.location.origin || event.source !== window.parent) return;
+   if (event.data?.type === "QTH_REFRESH_FINANCE") {
      await loadData();
+     return;
+   }
+   if (event.data?.type === "QTH_RESERVE_ACTION") {
+     const {transactionType,amount,reason}=event.data;
+     const validType=["deposit","withdrawal"].includes(transactionType);
+     const value=Number(amount);
+     if(!validType||!Number.isFinite(value)||value<=0||typeof reason!=="string"||reason.trim().length<2||reason.length>300){
+       window.parent.postMessage({type:"QTH_RESERVE_RESULT",error:"Məbləğ və səbəb düzgün deyil.",transactionType},window.location.origin);
+       return;
+     }
+     try{
+       const result=await client.from("qth_reserve_fund_transactions").insert({
+         transaction_type:transactionType,amount:Math.round(value*100)/100,reason:reason.trim()
+       });
+       if(result.error)throw result.error;
+       window.parent.postMessage({type:"QTH_RESERVE_RESULT",transactionType},window.location.origin);
+       await loadData();
+     }catch(error){
+       window.parent.postMessage({type:"QTH_RESERVE_RESULT",error:error.message||"Əməliyyat yadda saxlanılmadı.",transactionType},window.location.origin);
+     }
    }
  });
 }
