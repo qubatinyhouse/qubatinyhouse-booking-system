@@ -154,6 +154,42 @@ body.reports-only,body.cleaning-only,body.settings-only,body.salary-only{backgro
 }
 @media(max-width:390px){main{padding:9px 6px!important}.grid{grid-template-columns:1fr!important}.card{padding:11px!important}}
 
+
+/* QTH PREMIUM FINANCE REPORT CARDS */
+#monthlyFinanceReport{padding:25px!important;border-radius:20px!important;background:linear-gradient(145deg,#fffefa,#f6f7f0)!important;border:1px solid #e4e2d6!important;box-shadow:0 14px 34px rgba(43,55,43,.07)!important}
+#monthlyFinanceReport>h3{font:600 21px Georgia,serif!important;color:#294536!important;margin-bottom:16px!important}
+#monthlyFinanceReport>#reportMonth{max-width:230px;background:#fffefa;border:1px solid #ded8c8;border-radius:11px}
+#monthlyFinanceReport>#reportPeriodLabel{display:inline-block;margin:8px 0 15px;padding:7px 11px;border-radius:20px;background:#f1f2e9;color:#6e7a6d;font-size:11px}
+#monthlyFinanceReport>.grid{gap:13px}
+#monthlyFinanceReport>.grid>.card{position:relative;overflow:hidden;min-height:126px;margin:0!important;padding:19px 17px 16px!important;border-radius:15px!important;background:linear-gradient(145deg,#fff,#f7f8f3)!important;border:1px solid #e6e7dd!important;box-shadow:0 7px 20px rgba(40,55,42,.045)!important}
+#monthlyFinanceReport>.grid>.card:before{content:"";position:absolute;left:0;top:15px;bottom:15px;width:3px;border-radius:0 4px 4px 0;background:#8ca28c}
+#monthlyFinanceReport>.grid>.card:nth-child(1):before{background:#4c8b60}
+#monthlyFinanceReport>.grid>.card:nth-child(2):before{background:#b86c5e}
+#monthlyFinanceReport>.grid>.card:nth-child(3):before{background:#c39b59}
+#monthlyFinanceReport>.grid>.card:nth-child(4):before{background:#315f42}
+#monthlyFinanceReport>.grid>.card:nth-child(5):before{background:#608b70}
+#monthlyFinanceReport>.grid>.card:nth-child(6):before,#monthlyFinanceReport>.grid>.card:nth-child(7):before,#monthlyFinanceReport>.grid>.card:nth-child(8):before{background:#9a819f}
+#monthlyFinanceReport>.grid>.card:nth-child(9):before{background:#b99a5c}
+#monthlyFinanceReport>.grid>.card .muted{font-size:10px;font-weight:750;letter-spacing:.55px;text-transform:uppercase;line-height:1.5;color:#7b8379}
+#monthlyFinanceReport>.grid>.card .metric{font-size:clamp(20px,2vw,27px);font-weight:800;letter-spacing:-.7px;margin-top:16px;line-height:1.15;font-variant-numeric:tabular-nums}
+#monthlyFinanceReport>.grid>.card:nth-child(1) .metric,#monthlyFinanceReport>.grid>.card:nth-child(5) .metric{color:#34764b}
+#monthlyFinanceReport>.grid>.card:nth-child(2) .metric,#monthlyFinanceReport>.grid>.card:nth-child(3) .metric,#monthlyFinanceReport>.grid>.card:nth-child(6) .metric,#monthlyFinanceReport>.grid>.card:nth-child(8) .metric{color:#a85d50}
+#monthlyFinanceReport>.grid>.card:nth-child(4){background:linear-gradient(135deg,#eff5ec,#e6efe4)!important;border-color:#d6e2d2!important}
+#monthlyFinanceReport>.grid>.card:nth-child(4) .metric{color:#2e6943}
+#monthlyFinanceReport>.grid>.card:nth-child(9){background:linear-gradient(135deg,#f8f3e7,#f0e6d1)!important;border-color:#e4d5b4!important}
+#monthlyFinanceReport>.grid>.card:nth-child(9) .metric{color:#765d2d}
+#dailyYearlyReports{border-radius:18px!important;border:1px solid #e5e2d7!important;box-shadow:0 10px 28px rgba(43,55,43,.055)!important}
+#dailyYearlyReports h3{font:600 19px Georgia,serif!important;color:#294536!important}
+#dailyYearlyReports>.grid:nth-of-type(2),#dailyYearlyReports>.grid:nth-of-type(3){gap:10px}
+#dailyYearlyReports>.grid:nth-of-type(2)>div,#dailyYearlyReports>.grid:nth-of-type(3)>div{background:#f7f8f2;border:1px solid #e8e9df;border-radius:12px;padding:13px;min-width:0}
+#dailyYearlyReports .metric{font-size:clamp(17px,1.7vw,22px);font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#incomeSourceReport{padding:8px 0}
+#bankCashModule>.grid>.card{border-radius:14px!important;border:1px solid #e5e2d7!important;background:linear-gradient(145deg,#fffefa,#f5f6ef)!important;box-shadow:0 8px 22px rgba(43,55,43,.05)!important}
+#bankCashModule>.grid>.card h3{font-size:11px!important;letter-spacing:.6px;text-transform:uppercase;color:#7b8379!important}
+#bankCashModule>.grid>.card h2{font-size:24px;color:#315d42;font-variant-numeric:tabular-nums}
+@media(max-width:700px){#monthlyFinanceReport{padding:14px!important}#monthlyFinanceReport>.grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px}#monthlyFinanceReport>.grid>.card{min-height:105px;padding:13px 10px 12px 13px!important;border-radius:12px!important}#monthlyFinanceReport>.grid>.card .muted{font-size:9px;letter-spacing:.25px}#monthlyFinanceReport>.grid>.card .metric{font-size:clamp(16px,4.5vw,20px);margin-top:12px}#dailyYearlyReports>.grid:nth-of-type(2),#dailyYearlyReports>.grid:nth-of-type(3){grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px}#dailyYearlyReports>.grid:nth-of-type(2)>div,#dailyYearlyReports>.grid:nth-of-type(3)>div{padding:10px;border-radius:10px}#bankCashModule>.grid>.card h2{font-size:19px}}
+@media(max-width:390px){#monthlyFinanceReport>.grid{grid-template-columns:1fr!important}}
+
 </style>
 </head>
 <body>
