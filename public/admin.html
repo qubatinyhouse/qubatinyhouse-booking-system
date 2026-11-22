@@ -771,7 +771,7 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
 <label>Ümumi ödəniləcək məbləğ (AZN)<input id="adminTotalAmount" type="number" min="0.01" step="0.01" placeholder="Qiyməti özünüz daxil edin" oninput="updateAdminManualBalance()" required></label>
 <label>Alınacaq avans (AZN)<input id="adminPaidAmount" type="number" min="0" step="0.01" value="0" oninput="updateAdminManualBalance()" required></label>
 <label>Qalıq məbləğ (AZN)<input id="adminRemainingAmount" type="text" value="0.00 AZN" readonly></label>
-<label>Ödəniş üsulu<select id="adminPaymentMethod"><option value="bank">Bank</option><option value="cash">Nağd</option><option value="card">Kart</option><option value="transfer">Köçürmə</option></select></label>
+<label>Ödəniş üsulu<select id="adminPaymentMethod"><option value="cash">Nağd</option><option value="card">Kart</option></select></label>
 <label>Ödəniş tarixi<input id="adminPaymentDate" type="date"></label>
 <label>Qeyd<input id="adminBookingNote" type="text" maxlength="1500" placeholder="Əlavə qeyd"></label></div>
 <p class="notice">Bu bölmədə qiyməti siz təyin edirsiniz: ümumi məbləği və faktiki aldığınız avansı daxil edin. Qalıq avtomatik hesablanır. Daxil edilən avans ödəniş tarixçəsinə və maliyyə jurnalına yazılır.</p>
@@ -1349,7 +1349,7 @@ async function qthQueueBookingPayment(payment, reservation) {
     p_reservation_id: reservation.id,
     p_amount: Number(payment.amount),
     p_payment_type: payment.payment_type || "other",
-    p_payment_method: payment.payment_method || "bank",
+    p_payment_method: payment.payment_method || "cash",
     p_description: "Rezervasiya ödənişi — " + (reservation.guest_name || "Müştəri") +
       " | " + (reservation.booking_code || reservation.id) + " | " +
       (reservation.unit_id || "") + " | " + (reservation.check_in || "") + " – " + (reservation.check_out || ""),
@@ -1969,8 +1969,7 @@ window.showReservationDetails = function (id) {
       </label>
       <label>Ödəniş üsulu
         <select name="paymentMethod">
-          <option value="bank">Bank</option><option value="cash">Nağd</option>
-          <option value="card">Kart</option><option value="transfer">Köçürmə</option>
+          <option value="cash">Nağd</option><option value="card">Kart</option>
         </select>
       </label>
       <label>Ödəniş tarixi<input name="paymentDate" type="date" value="${today}" required></label>
