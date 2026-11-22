@@ -819,7 +819,7 @@ tbody tr:hover{background:#f8f8f2}
 <div class="card" style="border-left:4px solid #b89557">
 <div class="card-label">QTH Ehtiyat Fondu</div>
 <div class="card-value" id="qthReserveBalance">— AZN</div>
-<div class="card-note"><span id="qthReserveProgress">Hədəf: 16,350.00 AZN</span></div>
+<div class="card-note"><span id="qthReserveProgress">Hədəf: 10,000.00 AZN</span></div>
 <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
 <button type="button" onclick="qthOpenReserveModal('deposit')" style="background:#176b4a;color:#fff;border:0;border-radius:8px;padding:9px 12px;cursor:pointer">＋ Fonda əlavə et</button>
 <button type="button" onclick="qthOpenReserveModal('withdrawal')" style="background:#f4f0e7;color:#624b28;border:1px solid #d9c79f;border-radius:8px;padding:9px 12px;cursor:pointer">− Fondan çıxar</button>
@@ -1717,7 +1717,7 @@ window.addEventListener("message", (event) => {
   if (data.type !== "QTH_FINANCE_SUMMARY") return;
   const fmt = value => Number(value || 0).toLocaleString("az-AZ", {minimumFractionDigits:2,maximumFractionDigits:2}) + " AZN";
   const reserveBalance = Number(data.reserveBalance || 0);
-  const reserveGoal = Number(data.reserveGoal || 16350);
+  const reserveGoal = Number(data.reserveGoal || 10000);
   const reserveNode = document.getElementById("qthReserveBalance");
   if (reserveNode) reserveNode.textContent = fmt(reserveBalance);
   const reserveProgress = document.getElementById("qthReserveProgress");
