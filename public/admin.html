@@ -23,7 +23,7 @@ h1{font-size:25px;margin:0}
 .date{font-size:13px;color:var(--muted)}
 .section{display:none}
 .section.active{display:block}
-.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}
+.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:15px}
 .card{background:white;border:1px solid var(--border);border-radius:13px;padding:20px}
 .card-label{font-size:13px;color:var(--muted)}
 .card-value{font-size:25px;font-weight:750;margin-top:13px}
@@ -606,7 +606,12 @@ tbody tr:hover{background:#f8f8f2}
 <div class="card">
 <div class="card-label">Cari ayın xalis mənfəəti</div>
 <div class="card-value" id="profit">— AZN</div>
-<div class="card-note">Gəlir minus xərc</div>
+<div class="card-note">Gəlir minus biznes xərcləri</div>
+</div>
+<div class="card">
+<div class="card-label">Şəxsi xərclər</div>
+<div class="card-value" id="personalExpense">— AZN</div>
+<div class="card-note" id="personalExpenseNote">Şəxsi xərclər və sahibkarın şəxsi götürməsi</div>
 </div>
 <div class="card">
 <div class="card-label">Ümumi rezervasiyalar</div>
@@ -1379,6 +1384,10 @@ window.addEventListener("message", (event) => {
   document.getElementById("income").textContent = fmt(data.income);
   document.getElementById("expense").textContent = fmt(data.expense);
   document.getElementById("profit").textContent = fmt(Number(data.income || 0) - Number(data.expense || 0));
+  document.getElementById("personalExpense").textContent = fmt(data.personalExpense);
+  const personalBreakdown = data.personalExpenseBreakdown || {};
+  document.getElementById("personalExpenseNote").textContent =
+    "Şəxsi: " + fmt(personalBreakdown.personal) + " · Şəxsi götürmə: " + fmt(personalBreakdown.ownerDraw);
   const note = document.querySelector("#dashboard .notice");
   if (note) note.textContent = "Maliyyə göstəriciləri təsdiqlənmiş maliyyə sessiyasından yeniləndi (" + String(data.month || "") + ").";
   document.querySelectorAll("#dashboard .card-note").forEach((el, i) => {
