@@ -1715,7 +1715,7 @@ document.addEventListener("visibilitychange", () => {
 
 function renderDashboardReservationOverview() {
  const items = Array.isArray(allReservations) ? allReservations : [];
- const phoneKey = r => String(r.phone || "").replace(/\\D/g,"");
+ const phoneKey = r => String(r.phone || "").replace(/\D/g,"");
  const byPhone = new Map();
  items.forEach(r => { const key=phoneKey(r); if(key){const list=byPhone.get(key)||[];list.push(r);byPhone.set(key,list);} });
  const unique=byPhone.size;
