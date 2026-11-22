@@ -1016,7 +1016,7 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
  <div class="panel">
   <div class="customer-toolbar">
    <div><h3>Müştəri bazası</h3><p class="sub">Rezervasiyalardan avtomatik formalaşır. Əlavə anket məlumatları ayrıca saxlanılır.</p></div>
-   <button class="btn" type="button" onclick="openCustomerProfile(null)">＋ Yeni müştəri</button>
+   <button class="btn" type="button" disabled title="Test bazası qoşulana qədər yazma əməliyyatı bağlıdır">＋ Yeni müştəri · test bazası gözlənilir</button>
   </div>
   <div class="customer-search"><input id="customerSearch" type="search" placeholder="Ad, telefon və ya müştəri növü üzrə axtar..." oninput="renderCustomers()"><button class="btn" type="button" onclick="loadCustomers(true)">Yenilə</button></div>
   <p class="notice" id="customerMessage" aria-live="polite">Müştəri məlumatları yüklənir...</p>
@@ -1052,7 +1052,7 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
      <h4>Rezervasiya tarixçəsi</h4>
      <div id="customerHistoryList" class="notice">Tarixçə yüklənir...</div>
     </div>
-    <div class="customer-modal-actions"><button type="button" class="customer-cancel" onclick="closeCustomerProfile()">Ləğv et</button><button type="submit" class="btn" id="customerSaveButton">Anketi yadda saxla</button></div>
+    <div class="customer-modal-actions"><button type="button" class="customer-cancel" onclick="closeCustomerProfile()">Ləğv et</button><button type="submit" class="btn" id="customerSaveButton" disabled>Yadda saxlama test bazası qoşulduqdan sonra aktiv olacaq</button></div>
     <p id="customerFormMessage" class="sub" aria-live="polite"></p>
    </form>
   </div>
@@ -2868,6 +2868,7 @@ if(!qthHousePerformanceTimer){
   const button=$("customerSaveButton"),message=$("customerFormMessage");
   const fullName=$("customerFullName").value.trim(),phone=$("customerPhone").value.trim();
   if(fullName.length<2){message.textContent="Ad və soyadı düzgün daxil edin.";return;}
+  message.textContent="Təhlükəsizlik üçün test versiyasında müştəri məlumatlarının yazılması bağlıdır. Ayrı test bazası qoşulduqdan sonra aktiv ediləcək.";return;
   button.disabled=true;message.textContent="Anket yadda saxlanılır...";
   try{
    const auth=window.qthAdminAuthClient;
