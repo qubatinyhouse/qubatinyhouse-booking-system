@@ -601,10 +601,15 @@ tbody tr:hover{background:#f8f8f2}
 <div class="card">
 <div class="card-label">Cari ayın biznes xərci</div>
 <div class="card-value" id="expense">— AZN</div>
-<div class="card-note">Cari ay üzrə maliyyə göstəricisi</div>
+<div class="card-note">Rezervasiya geri qaytarılmaları ayrıca göstərilir</div>
 </div>
 <div class="card">
-<div class="card-label">Daxilolma − biznes xərci</div>
+<div class="card-label">Rezervasiya geri qaytarılması</div>
+<div class="card-value" id="refunds">— AZN</div>
+<div class="card-note">Müştərilərə qaytarılmış ödənişlər</div>
+</div>
+<div class="card">
+<div class="card-label">Daxilolma − biznes xərci − qaytarılma</div>
 <div class="card-value" id="profit">— AZN</div>
 <div class="card-note">Pul axını göstəricisi; behlər daxilolma tarixində hesablanır</div>
 </div>
@@ -1388,16 +1393,18 @@ window.addEventListener("message", (event) => {
   }
   document.getElementById("income").textContent = fmt(data.income);
   document.getElementById("expense").textContent = fmt(data.expense);
-  document.getElementById("profit").textContent = fmt(Number(data.income || 0) - Number(data.expense || 0));
+  document.getElementById("profit").textContent = fmt(Number(data.income || 0) - Number(data.expense || 0) - Number(data.refunds || 0));
+  const refundsNode = document.getElementById("refunds");
+  if (refundsNode) refundsNode.textContent = fmt(data.refunds || 0);
   document.getElementById("personalExpense").textContent = fmt(data.personalExpense);
   const personalBreakdown = data.personalExpenseBreakdown || {};
   document.getElementById("personalExpenseNote").textContent =
     "Şəxsi: " + fmt(personalBreakdown.personal) + " · Şəxsi götürmə: " + fmt(personalBreakdown.ownerDraw);
-  const remainingAfterExpenses = Number(data.income || 0) - Number(data.expense || 0) - Number(data.personalExpense || 0);
+  const remainingAfterExpenses = Number(data.income || 0) - Number(data.expense || 0) - Number(data.refunds || 0) - Number(data.personalExpense || 0);
   const remainingNode = document.getElementById("remainingAfterExpenses");
   if (remainingNode) remainingNode.textContent = fmt(remainingAfterExpenses);
   const remainingNote = document.getElementById("remainingAfterExpensesNote");
-  if (remainingNote) remainingNote.textContent = "Gəlir " + fmt(data.income) + " − biznes xərci " + fmt(data.expense) + " − şəxsi xərc " + fmt(data.personalExpense);
+  if (remainingNote) remainingNote.textContent = "Daxilolmalar " + fmt(data.income) + " − biznes xərci " + fmt(data.expense) + " − qaytarılma " + fmt(data.refunds || 0) + " − şəxsi çıxış " + fmt(data.personalExpense);
   const note = document.querySelector("#dashboard .notice");
   if (note) note.textContent = "Maliyyə göstəriciləri təsdiqlənmiş maliyyə sessiyasından yeniləndi (" + String(data.month || "") + ").";
   document.querySelectorAll("#dashboard .card-note").forEach((el, i) => {
@@ -2394,8 +2401,8 @@ if(!qthHousePerformanceTimer){
 </body>
 </html>
 <style>
-/* Six KPI cards on desktop; responsive dashboard layout */
-.cards{grid-template-columns:repeat(6,minmax(0,1fr))}
+/* Seven KPI cards on desktop; responsive dashboard layout */
+.cards{grid-template-columns:repeat(7,minmax(0,1fr))}
 @media(max-width:1200px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:620px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 </style>
