@@ -654,6 +654,36 @@ tbody tr:hover{background:#f8f8f2}
   #dashboard>.cards>.card:nth-child(n+5) .card-value{font-size:clamp(17px,4.7vw,22px);margin-top:11px}
 }
 
+/* QTH booking overview chart — display-only; derives counts from already-loaded reservations */
+#dashboard>.qth-booking-chart-panel{
+ margin:20px 0 24px;padding:24px 26px;border:1px solid #e8e6dc;border-radius:19px;
+ background:linear-gradient(145deg,#fffefa 0%,#f5f7f1 100%);
+ box-shadow:0 12px 30px rgba(35,55,40,.055);
+}
+.qth-booking-chart-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px}
+.qth-booking-chart-heading h3{margin:0 0 6px;font-family:Georgia,serif;font-size:19px;color:#263b30}
+.qth-booking-chart-heading .sub{margin:0}
+.qth-booking-chart-period{flex:none;padding:8px 12px;border-radius:999px;background:#e9eee6;color:#45614c;font-size:11px;font-weight:700}
+.qth-booking-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.qth-booking-chart-item{padding:18px 19px;border:1px solid #e9e7de;border-radius:14px;background:#fff}
+.qth-booking-chart-meta{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px;color:#68746b;font-size:12px;font-weight:650}
+.qth-booking-chart-meta strong{font-size:25px;line-height:1;color:#263b30;font-variant-numeric:tabular-nums}
+.qth-booking-chart-track{height:10px;border-radius:20px;background:#edf0e9;overflow:hidden}
+.qth-booking-chart-track span{display:block;width:0;height:100%;border-radius:20px;transition:width .35s ease;background:#b89a5b}
+.qth-booking-chart-item--deposit .qth-booking-chart-track span{background:#477858}
+.qth-booking-chart-item--checkout .qth-booking-chart-track span{background:#829aab}
+.qth-booking-chart-item--checkin .qth-booking-chart-track span{background:#a98cbd}
+.qth-booking-chart-item small{display:block;margin-top:10px;color:#8a9188;font-size:10px;line-height:1.5}
+.qth-booking-chart-note{margin:16px 0 0;color:#838b82;font-size:11px;line-height:1.6}
+@media(max-width:620px){
+ #dashboard>.qth-booking-chart-panel{padding:17px 14px;margin:15px 0 20px}
+ .qth-booking-chart-heading{display:block}
+ .qth-booking-chart-period{display:inline-block;margin-top:10px}
+ .qth-booking-chart-grid{grid-template-columns:1fr;gap:10px}
+ .qth-booking-chart-item{padding:15px}
+ .qth-booking-chart-meta strong{font-size:23px}
+}
+
 </style>
 </head>
 <body>
@@ -773,26 +803,34 @@ tbody tr:hover{background:#f8f8f2}
  <div class="qth-expense-foot" id="qthPayrollNote">Məlumatlar maliyyə və işçi ödəniş qeydlərindən hesablanır.</div>
 </div>
 
-<div class="panel qth-customer-stats-panel">
- <h3>Müştərilərin statistik uçotu</h3>
- <div class="qth-house-performance-stats">
-  <div><small>Unikal müştərilər</small><strong id="qthCustomerUnique">—</strong></div>
-  <div><small>Təkrar gələn müştərilər</small><strong id="qthCustomerRepeat">—</strong></div>
-  <div><small>Aktiv müştərilər</small><strong id="qthCustomerActive">—</strong></div>
-  <div><small>Geri qaytarılmış məbləğ</small><strong id="qthCustomerRefunds">—</strong></div>
+<div class="panel qth-booking-chart-panel" id="qthBookingChartPanel">
+ <div class="qth-booking-chart-heading">
+  <div><h3>Rezervasiya və qonaq statistikası</h3><p class="sub">Bütün tarixlər üzrə təsdiqlənmiş rezervasiyaların ümumi göstəriciləri</p></div>
+  <span class="qth-booking-chart-period">Ümumi statistika</span>
  </div>
- <p class="sub">Müştərilər telefon nömrəsinə görə fərqləndirilir; statistikaya yüklənmiş rezervasiyalar daxildir.</p>
-</div>
-<div class="panel qth-dashboard-reservations">
- <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-  <div><h3>Son rezervasiyalar</h3><p class="sub">Ən son yaradılmış 10 rezervasiya</p></div>
-  <button type="button" onclick="showAllReservations()">Bütün rezervasiyalara keç</button>
+ <div class="qth-booking-chart-grid" id="qthBookingChart" role="group" aria-label="Rezervasiya və qonaq statistikası">
+  <article class="qth-booking-chart-item qth-booking-chart-item--total">
+   <div class="qth-booking-chart-meta"><span>Ümumi rezervasiyalar</span><strong id="qthChartTotal">—</strong></div>
+   <div class="qth-booking-chart-track"><span id="qthChartTotalBar"></span></div>
+   <small>Bazada olan bütün rezervasiyalar</small>
+  </article>
+  <article class="qth-booking-chart-item qth-booking-chart-item--deposit">
+   <div class="qth-booking-chart-meta"><span>Avansla bron edilmiş</span><strong id="qthChartDeposit">—</strong></div>
+   <div class="qth-booking-chart-track"><span id="qthChartDepositBar"></span></div>
+   <small>Avans ödənişi qeydə alınmış təsdiqli bronlar</small>
+  </article>
+  <article class="qth-booking-chart-item qth-booking-chart-item--checkout">
+   <div class="qth-booking-chart-meta"><span>Çıxış edən qonaqlar</span><strong id="qthChartCheckout">—</strong></div>
+   <div class="qth-booking-chart-track"><span id="qthChartCheckoutBar"></span></div>
+   <small>Çıxış tarixi bu gün və ya daha əvvəl olan qonaqlar</small>
+  </article>
+  <article class="qth-booking-chart-item qth-booking-chart-item--checkin">
+   <div class="qth-booking-chart-meta"><span>Qəbul edilmiş qonaqlar</span><strong id="qthChartCheckin">—</strong></div>
+   <div class="qth-booking-chart-track"><span id="qthChartCheckinBar"></span></div>
+   <small>Giriş tarixi bu gün və ya daha əvvəl olan qonaqlar</small>
+  </article>
  </div>
- <div class="table-wrap"><table class="qth-house-performance-table">
-  <thead><tr><th>Müştəri</th><th>Ev</th><th>Giriş – çıxış</th><th>Məbləğ</th><th>Ödənilib</th><th>Geri qaytarılıb</th><th>Status</th><th></th></tr></thead>
-  <tbody id="qthDashboardReservationRows"><tr><td colspan="8">Rezervasiyalar yüklənir...</td></tr></tbody>
- </table></div>
- <p class="notice" id="qthDashboardReservationMessage" aria-live="polite">Rezervasiya məlumatları yüklənir...</p>
+ <p class="qth-booking-chart-note" id="qthBookingChartNote" aria-live="polite">Statistika rezervasiya bazasından yüklənir...</p>
 </div>
 <div class="panel">
 <h3>Sürətli idarəetmə</h3>
@@ -1796,24 +1834,34 @@ document.addEventListener("visibilitychange", () => {
 
 function renderDashboardReservationOverview() {
  const items = Array.isArray(allReservations) ? allReservations : [];
- const phoneKey = r => String(r.phone || "").replace(/\D/g,"");
- const byPhone = new Map();
- items.forEach(r => { const key=phoneKey(r); if(key){const list=byPhone.get(key)||[];list.push(r);byPhone.set(key,list);} });
- const unique=byPhone.size;
- const repeat=[...byPhone.values()].filter(list=>list.length>1).length;
- const active=items.filter(r=>["confirmed","pending_payment","payment_review"].includes(String(r.status||"").toLowerCase())).length;
- const refunds=items.reduce((sum,r)=>sum+Number(r.refunded_amount||0),0);
- const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
- set("qthCustomerUnique",unique.toLocaleString("az-AZ"));
- set("qthCustomerRepeat",repeat.toLocaleString("az-AZ"));
- set("qthCustomerActive",active.toLocaleString("az-AZ"));
- set("qthCustomerRefunds",money(refunds));
- const body=document.getElementById("qthDashboardReservationRows");
- if(!body)return;
- const statusLabels={confirmed:"Təsdiqlənib",pending_payment:"Avans gözlənilir",cancelled:"Ləğv edilib",expired:"Vaxtı bitib",payment_failed:"Ödəniş alınmadı",payment_review:"Yoxlama tələb olunur"};
- const recent=items.slice(0,10);
- body.innerHTML=recent.length?recent.map(r=>'<tr><td>'+escapeReservation(r.guest_name||"-")+'<br><small>'+escapeReservation(r.phone||"")+'</small></td><td>'+escapeReservation(r.unit_name||r.unit_id||"-")+'</td><td>'+escapeReservation(r.check_in||"-")+' – '+escapeReservation(r.check_out||"-")+'</td><td>'+money(r.total_amount)+'</td><td>'+money(r.paid_amount)+'</td><td>'+money(r.refunded_amount||0)+'</td><td>'+escapeReservation(statusLabels[r.status]||r.status||"-")+'</td><td><button type="button" onclick="showReservationDetails(\''+escapeReservation(r.id)+'\')">Ətraflı</button></td></tr>').join(""):'<tr><td colspan="8">Rezervasiya yoxdur.</td></tr>';
- set("qthDashboardReservationMessage",recent.length?recent.length+" son rezervasiya göstərilir.": "Rezervasiya tapılmadı.");
+ const today = qthTodayDate();
+ const confirmed = items.filter(r => String(r.status || "").toLowerCase() === "confirmed");
+ const total = items.length;
+ const depositBookings = confirmed.filter(r => Number(r.paid_amount || 0) > 0).length;
+ const checkedInGuests = confirmed
+   .filter(r => String(r.check_in || "") <= today)
+   .reduce((sum,r) => sum + Math.max(0,Number(r.guest_count || 0)),0);
+ const checkedOutGuests = confirmed
+   .filter(r => String(r.check_out || "") <= today)
+   .reduce((sum,r) => sum + Math.max(0,Number(r.guest_count || 0)),0);
+ const values = [
+   ["Total",total],
+   ["Deposit",depositBookings],
+   ["Checkout",checkedOutGuests],
+   ["Checkin",checkedInGuests]
+ ];
+ const max = Math.max(1,...values.map(([,value])=>value));
+ const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=Number(value).toLocaleString("az-AZ");};
+ set("qthChartTotal",total);
+ set("qthChartDeposit",depositBookings);
+ set("qthChartCheckout",checkedOutGuests);
+ set("qthChartCheckin",checkedInGuests);
+ values.forEach(([key,value])=>{
+   const bar=document.getElementById("qthChart"+key+"Bar");
+   if(bar)bar.style.width=(value===0?0:Math.max(3,(value/max)*100))+"%";
+ });
+ const note=document.getElementById("qthBookingChartNote");
+ if(note) note.textContent = "Yenilənmə: "+today+" · Qonaq sayları təsdiqlənmiş rezervasiyalardakı qonaq sayı cəmi ilə hesablanır. Qəbul edilmiş qonaqlar ümumi giriş sayıdır; çıxış edənlər həmin sayın çıxış tarixi tamamlanmış hissəsidir.";
 }
 
 function renderReservations(items) {
