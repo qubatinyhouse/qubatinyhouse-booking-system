@@ -716,7 +716,7 @@ const dayInput = document.getElementById("reportDay");
 const yearSelect = document.getElementById("reportYear");
 if (dayInput && !dayInput.value) dayInput.value = localDate;
 if (yearSelect && !yearSelect.options.length) {
-  const thisYear = new Date().getFullYear();
+  const thisYear = Number(localDate.slice(0, 4));
   for (let y = thisYear - 4; y <= thisYear + 1; y++) {
     const opt = document.createElement("option"); opt.value = String(y); opt.textContent = String(y);
     if (y === thisYear) opt.selected = true;
@@ -724,7 +724,7 @@ if (yearSelect && !yearSelect.options.length) {
   }
 }
 const selectedDay = dayInput ? dayInput.value : localDate;
-const selectedYear = yearSelect ? yearSelect.value : String(new Date().getFullYear());
+const selectedYear = yearSelect ? yearSelect.value : localDate.slice(0, 4);
 let dailyIncome = 0, dailyExpense = 0, dailyPersonalOutflow = 0, yearlyIncome = 0, yearlyExpense = 0, yearlyPersonalOutflow = 0;
 (transactions || []).forEach(item => {
   const amount = Number(item.amount || 0);
