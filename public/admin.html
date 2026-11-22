@@ -614,6 +614,11 @@ tbody tr:hover{background:#f8f8f2}
 <div class="card-note" id="personalExpenseNote">Şəxsi xərclər və sahibkarın şəxsi götürməsi</div>
 </div>
 <div class="card">
+<div class="card-label">Bütün xərclərdən sonra qalıq</div>
+<div class="card-value" id="remainingAfterExpenses">— AZN</div>
+<div class="card-note" id="remainingAfterExpensesNote">Gəlir − biznes xərcləri − şəxsi xərclər</div>
+</div>
+<div class="card">
 <div class="card-label">Ümumi rezervasiyalar</div>
 <div class="card-value" id="bookingCount">—</div>
 <div class="card-note" id="bookingCountNote">Rezervasiya bazası yoxlanılır...</div>
@@ -1388,6 +1393,11 @@ window.addEventListener("message", (event) => {
   const personalBreakdown = data.personalExpenseBreakdown || {};
   document.getElementById("personalExpenseNote").textContent =
     "Şəxsi: " + fmt(personalBreakdown.personal) + " · Şəxsi götürmə: " + fmt(personalBreakdown.ownerDraw);
+  const remainingAfterExpenses = Number(data.income || 0) - Number(data.expense || 0) - Number(data.personalExpense || 0);
+  const remainingNode = document.getElementById("remainingAfterExpenses");
+  if (remainingNode) remainingNode.textContent = fmt(remainingAfterExpenses);
+  const remainingNote = document.getElementById("remainingAfterExpensesNote");
+  if (remainingNote) remainingNote.textContent = "Gəlir " + fmt(data.income) + " − biznes xərci " + fmt(data.expense) + " − şəxsi xərc " + fmt(data.personalExpense);
   const note = document.querySelector("#dashboard .notice");
   if (note) note.textContent = "Maliyyə göstəriciləri təsdiqlənmiş maliyyə sessiyasından yeniləndi (" + String(data.month || "") + ").";
   document.querySelectorAll("#dashboard .card-note").forEach((el, i) => {
@@ -2383,3 +2393,9 @@ if(!qthHousePerformanceTimer){
 </script>
 </body>
 </html>
+<style>
+/* Six KPI cards on desktop; responsive dashboard layout */
+.cards{grid-template-columns:repeat(6,minmax(0,1fr))}
+@media(max-width:1200px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+</style>
