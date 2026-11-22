@@ -215,20 +215,21 @@ Salam, administrator!
 
   <div class="grid">
     <div class="card">
-      <h3>Nağd kassa</h3>
+      <h3>Nağd xalis hərəkət</h3>
       <h2 id="cashBalance">0.00 AZN</h2>
     </div>
 
     <div class="card">
-      <h3>Bank hesabı</h3>
+      <h3>Bank xalis hərəkət</h3>
       <h2 id="bankBalance">0.00 AZN</h2>
     </div>
 
     <div class="card">
-      <h3>Kart əməliyyatları</h3>
+      <h3>Kart xalis hərəkət</h3>
       <h2 id="cardBalance">0.00 AZN</h2>
     </div>
   </div>
+  <p class="muted">Qeyd: bunlar açılış qalığı daxil edilmədən hesablanan xalis əməliyyat hərəkətləridir; faktiki bank/kassa qalığı deyil.</p>
 <div class="card" id="monthlyFinanceReport">
     <h3>Aylıq maliyyə hesabatı</h3>
 
@@ -238,17 +239,17 @@ Salam, administrator!
     <div class="muted" id="reportPeriodLabel">Seçilmiş ay üzrə nəticələr</div>
     <div class="grid">
         <div class="card">
-            <div class="muted">Aylıq gəlir</div>
+            <div class="muted">Aylıq daxilolmalar</div>
             <div class="metric green" id="monthlyIncome">0 AZN</div>
         </div>
 
         <div class="card">
-            <div class="muted">Aylıq xərc</div>
+            <div class="muted">Biznes xərcləri</div>
             <div class="metric red" id="monthlyExpense">0 AZN</div>
         </div>
 
         <div class="card">
-            <div class="muted">Xalis mənfəət / zərər</div>
+            <div class="muted">Daxilolma − biznes xərci</div>
             <div class="metric" id="monthlyProfit">0 AZN</div>
         </div>
         <div class="card">
@@ -256,14 +257,23 @@ Salam, administrator!
             <div class="metric green" id="monthlyBookingIncome">0 AZN</div>
         </div>
         <div class="card">
-            <div class="muted">Şəxsi xərclər</div>
+            <div class="muted">Şəxsi xərclər (personal)</div>
             <div class="metric red" id="monthlyPersonalExpense">0 AZN</div>
         </div>
         <div class="card">
-            <div class="muted">Sahibkarın şəxsi götürməsi</div>
+            <div class="muted">Sahibkarın götürməsi (owner_draw)</div>
             <div class="metric" id="monthlyOwnerDraw">0 AZN</div>
         </div>
+        <div class="card">
+            <div class="muted">Şəxsi çıxışlar cəmi</div>
+            <div class="metric red" id="monthlyPersonalOutflow">0 AZN</div>
         </div>
+        <div class="card">
+            <div class="muted">Bütün çıxışlardan sonra qalıq</div>
+            <div class="metric" id="monthlyRemaining">0 AZN</div>
+        </div>
+        </div>
+    <p class="muted">Pul axını hesabatıdır: beh və gələcək rezervasiyaların ödənişləri daxil olduğu tarixdə göstərilir; bu göstərici mühasibat üzrə tanınmış gəlirlə eyni olmaya bilər.</p>
   </div>       
   <div class="card" id="dailyYearlyReports">
     <h3>Gündəlik və illik hesabat</h3>
@@ -273,14 +283,16 @@ Salam, administrator!
     </div>
     <div class="grid">
       <div><div class="muted">Günlük gəlir</div><div class="metric green" id="dailyIncome">0 ₼</div></div>
-      <div><div class="muted">Günlük xərc</div><div class="metric red" id="dailyExpense">0 ₼</div></div>
-      <div><div class="muted">Günlük nəticə</div><div class="metric" id="dailyProfit">0 ₼</div></div>
+      <div><div class="muted">Günlük biznes xərci</div><div class="metric red" id="dailyExpense">0 ₼</div></div>
+      <div><div class="muted">Günlük şəxsi çıxış</div><div class="metric red" id="dailyPersonalOutflow">0 ₼</div></div>
+      <div><div class="muted">Bütün çıxışlardan sonra qalıq</div><div class="metric" id="dailyProfit">0 ₼</div></div>
     </div>
     <hr>
     <div class="grid">
       <div><div class="muted">İllik gəlir</div><div class="metric green" id="yearlyIncome">0 ₼</div></div>
-      <div><div class="muted">İllik xərc</div><div class="metric red" id="yearlyExpense">0 ₼</div></div>
-      <div><div class="muted">İllik nəticə</div><div class="metric" id="yearlyProfit">0 ₼</div></div>
+      <div><div class="muted">İllik biznes xərci</div><div class="metric red" id="yearlyExpense">0 ₼</div></div>
+      <div><div class="muted">İllik şəxsi çıxış</div><div class="metric red" id="yearlyPersonalOutflow">0 ₼</div></div>
+      <div><div class="muted">Bütün çıxışlardan sonra qalıq</div><div class="metric" id="yearlyProfit">0 ₼</div></div>
     </div>
   </div>
   <div class="card">
@@ -403,15 +415,18 @@ Salam, administrator!
     <option value="cash">Nağd</option>
     <option value="bank">Bank</option>
     <option value="card">Kart</option>
+    <option value="transfer">Bank köçürməsi</option>
   </select>
 
   <label>Əməliyyat tarixi</label>
   <input id="financeDate" type="date">
 <script>
 const today = new Date();
-const localDate = new Date(
-  today.getTime() - today.getTimezoneOffset() * 60000
-).toISOString().slice(0, 10);
+const bakuDateParts = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Baku", year: "numeric", month: "2-digit", day: "2-digit"
+}).formatToParts(today);
+const bakuPart = type => bakuDateParts.find(part => part.type === type)?.value || "";
+const localDate = bakuPart("year") + "-" + bakuPart("month") + "-" + bakuPart("day");
 
 document.getElementById("financeDate").value = localDate;
 const financeScope = document.getElementById("financeScope");
@@ -620,7 +635,7 @@ let cardBalance = 0;
 
     if (item.payment_method === "cash") {
         cashBalance += amount * sign;
-    } else if (item.payment_method === "bank") {
+    } else if (item.payment_method === "bank" || item.payment_method === "transfer") {
         bankBalance += amount * sign;
     } else if (item.payment_method === "card") {
         cardBalance += amount * sign;
@@ -633,10 +648,7 @@ document.getElementById("cardBalance").textContent = money(cardBalance);
 // AYLIQ GƏLİR VƏ XƏRC HESABLANMASI
 const reportMonth = document.getElementById("reportMonth");
 
-const now = new Date();
-const currentMonth =
-    now.getFullYear() + "-" +
-    String(now.getMonth() + 1).padStart(2, "0");
+const currentMonth = localDate.slice(0, 7);
 
 // Cari ayda hələ əməliyyat yoxdursa, hesabat ilk açılışda
 // son faktiki maliyyə əməliyyatı olan ayı göstərir.
@@ -670,7 +682,7 @@ let monthlyBookingIncome = 0;
     if (item.transaction_type === "income") {
         monthlyIncome += amount;
         // Yalnız faktiki qeydə alınmış rezervasiya ödənişləri sayılır.
-        if (["Ev rezervasiyası", "Rezervasiya behi", "Rezervasiya ödənişi"].includes(item.category)) {
+        if (["Ev rezervasiyası", "Rezervasiya behi", "Rezervasiya ödənişi", "Rezervasiya qalıq ödənişi"].includes(item.category)) {
             monthlyBookingIncome += amount;
         }
     } else if (item.transaction_type === "expense") {
@@ -683,6 +695,9 @@ let monthlyBookingIncome = 0;
 
 document.getElementById("monthlyPersonalExpense").textContent = money(monthlyPersonalExpense);
 document.getElementById("monthlyOwnerDraw").textContent = money(monthlyOwnerDraw);
+const monthlyPersonalOutflow = monthlyPersonalExpense + monthlyOwnerDraw;
+document.getElementById("monthlyPersonalOutflow").textContent = money(monthlyPersonalOutflow);
+document.getElementById("monthlyRemaining").textContent = money(monthlyIncome - monthlyExpense - monthlyPersonalOutflow);
 document.getElementById("monthlyIncome").textContent =
     money(monthlyIncome);
 
@@ -710,24 +725,34 @@ if (yearSelect && !yearSelect.options.length) {
 }
 const selectedDay = dayInput ? dayInput.value : localDate;
 const selectedYear = yearSelect ? yearSelect.value : String(new Date().getFullYear());
-let dailyIncome = 0, dailyExpense = 0, yearlyIncome = 0, yearlyExpense = 0;
+let dailyIncome = 0, dailyExpense = 0, dailyPersonalOutflow = 0, yearlyIncome = 0, yearlyExpense = 0, yearlyPersonalOutflow = 0;
 (transactions || []).forEach(item => {
   const amount = Number(item.amount || 0);
   if (item.transaction_date === selectedDay) {
     if (item.transaction_type === "income") dailyIncome += amount;
-    else if (item.transaction_type === "expense" && (item.expense_scope || "business") === "business") dailyExpense += amount;
+    else if (item.transaction_type === "expense") {
+      const scope = item.expense_scope || "business";
+      if (scope === "business") dailyExpense += amount;
+      else dailyPersonalOutflow += amount;
+    }
   }
   if (String(item.transaction_date || "").slice(0,4) === selectedYear) {
     if (item.transaction_type === "income") yearlyIncome += amount;
-    else if (item.transaction_type === "expense" && (item.expense_scope || "business") === "business") yearlyExpense += amount;
+    else if (item.transaction_type === "expense") {
+      const scope = item.expense_scope || "business";
+      if (scope === "business") yearlyExpense += amount;
+      else yearlyPersonalOutflow += amount;
+    }
   }
 });
 document.getElementById("dailyIncome").textContent = money(dailyIncome);
 document.getElementById("dailyExpense").textContent = money(dailyExpense);
-document.getElementById("dailyProfit").textContent = money(dailyIncome-dailyExpense);
+document.getElementById("dailyPersonalOutflow").textContent = money(dailyPersonalOutflow);
+document.getElementById("dailyProfit").textContent = money(dailyIncome-dailyExpense-dailyPersonalOutflow);
 document.getElementById("yearlyIncome").textContent = money(yearlyIncome);
 document.getElementById("yearlyExpense").textContent = money(yearlyExpense);
-document.getElementById("yearlyProfit").textContent = money(yearlyIncome-yearlyExpense);
+document.getElementById("yearlyPersonalOutflow").textContent = money(yearlyPersonalOutflow);
+document.getElementById("yearlyProfit").textContent = money(yearlyIncome-yearlyExpense-yearlyPersonalOutflow);
 
 
 // Gəlir mənbələri: seçilmiş ayda kateqoriyalar üzrə faktiki daxilolmalar.
