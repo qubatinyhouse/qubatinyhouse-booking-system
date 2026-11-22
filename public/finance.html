@@ -858,18 +858,23 @@ if(payrollResult.error){
   payrollSummary=payrollResult.data?.summary||null;
   payrollEmployees=Array.isArray(payrollResult.data?.employees)?payrollResult.data.employees:[];
 }
-const reserveResult = await client.from("qth_reserve_fund_transactions")
-  .select("id,transaction_type,amount,reason,transaction_date,created_at")
-  .order("transaction_date",{ascending:false}).order("created_at",{ascending:false}).limit(100);
 let reserveBalance = 0;
 let reserveHistory = [];
 let reserveError = null;
-if(reserveResult.error){
-  reserveError = reserveResult.error.message;
+for(let offset=0;;offset+=1000){
+  const reservePage=await client.from("qth_reserve_fund_transactions")
+    .select("id,transaction_type,amount,reason,transaction_date,created_at")
+    .order("transaction_date",{ascending:false}).order("created_at",{ascending:false})
+    .range(offset,offset+999);
+  if(reservePage.error){reserveError=reservePage.error.message;break;}
+  const pageRows=reservePage.data||[];
+  reserveHistory=reserveHistory.concat(pageRows);
+  if(pageRows.length<1000)break;
+}
+if(reserveError){
   console.error("Ehtiyat fondu yüklənmədi:",reserveError);
 }else{
-  reserveHistory = reserveResult.data || [];
-  reserveBalance = reserveHistory.reduce((sum,item)=>sum+(item.transaction_type==="deposit"?1:-1)*Number(item.amount||0),0);
+  reserveBalance=reserveHistory.reduce((sum,item)=>sum+(item.transaction_type==="deposit"?1:-1)*Number(item.amount||0),0);
 }
 if (window.parent !== window) {
   window.parent.postMessage({
