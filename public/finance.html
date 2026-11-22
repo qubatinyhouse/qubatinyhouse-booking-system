@@ -746,12 +746,17 @@ sourceHost.innerHTML = sourceRows.length
   : '<p class="muted">Seçilmiş ay üzrə gəlir qeydə alınmayıb.</p>';
 
 // Dashboard kartları həmişə cari ayı göstərir; tarix seçimi yalnız hesabat bölməsinə təsir edir.
-let currentIncome = 0, currentExpense = 0;
+let currentIncome = 0, currentExpense = 0, currentPersonalExpense = 0, currentOwnerDraw = 0;
 (transactions || []).forEach(item => {
   if (!item.transaction_date || item.transaction_date.slice(0,7) !== currentMonth) return;
   const amount = Number(item.amount || 0);
   if (item.transaction_type === "income") currentIncome += amount;
-  else if (item.transaction_type === "expense" && (item.expense_scope || "business") === "business") currentExpense += amount;
+  else if (item.transaction_type === "expense") {
+    const scope = item.expense_scope || "business";
+    if (scope === "personal") currentPersonalExpense += amount;
+    else if (scope === "owner_draw") currentOwnerDraw += amount;
+    else currentExpense += amount;
+  }
 });
 const expenseGroups = {
   "Instagram reklamları":0,
@@ -794,6 +799,8 @@ if (window.parent !== window) {
     type: "QTH_FINANCE_SUMMARY",
     income: currentIncome,
     expense: currentExpense,
+    personalExpense: currentPersonalExpense + currentOwnerDraw,
+    personalExpenseBreakdown: { personal: currentPersonalExpense, ownerDraw: currentOwnerDraw },
     expenseBreakdown,
     payrollSummary,
     payrollEmployees,
