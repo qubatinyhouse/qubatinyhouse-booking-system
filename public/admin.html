@@ -713,6 +713,7 @@ tbody tr:hover{background:#f8f8f2}
  </table></div>
  <p class="notice" id="qthDashboardReservationMessage" aria-live="polite">Rezervasiya məlumatları yüklənir...</p>
 </div>
+<div class="panel"><h3>Müştəri statistikası</h3><div class="qth-house-performance-stats"><div><small>Unikal müştərilər</small><strong id="qthCustomerUnique">—</strong></div><div><small>Təkrar müştərilər</small><strong id="qthCustomerRepeat">—</strong></div><div><small>Aktiv rezervasiyalar</small><strong id="qthCustomerActive">—</strong></div></div></div><div class="panel"><h3>Son rezervasiyalar</h3><div class="table-wrap"><table class="qth-house-performance-table"><thead><tr><th>Müştəri</th><th>Ev</th><th>Tarixlər</th><th>Məbləğ</th><th>Ödənilib</th><th>Status</th><th></th></tr></thead><tbody id="qthDashboardReservationRows"><tr><td colspan="7">Yüklənir...</td></tr></tbody></table></div><button type="button" onclick="showAllReservations()">Bütün rezervasiyalar</button></div>
 <div class="panel">
 <h3>Sürətli idarəetmə</h3>
 <div class="quick">
@@ -1675,6 +1676,7 @@ window.loadReservations = async function () {
     const result = await adminRequest("GET");
     allReservations = result.reservations || [];
     renderDashboardReservationOverview();
+    renderDashboardReservationOverview();
     if (typeof window.filterReservations === "function") window.filterReservations();
     else renderReservations(allReservations);
     qthInitAdminMonthSelectors();
@@ -1734,6 +1736,8 @@ function renderDashboardReservationOverview() {
  body.innerHTML=recent.length?recent.map(r=>'<tr><td>'+escapeReservation(r.guest_name||"-")+'<br><small>'+escapeReservation(r.phone||"")+'</small></td><td>'+escapeReservation(r.unit_name||r.unit_id||"-")+'</td><td>'+escapeReservation(r.check_in||"-")+' – '+escapeReservation(r.check_out||"-")+'</td><td>'+money(r.total_amount)+'</td><td>'+money(r.paid_amount)+'</td><td>'+money(r.refunded_amount||0)+'</td><td>'+escapeReservation(statusLabels[r.status]||r.status||"-")+'</td><td><button type="button" onclick="showReservationDetails(\''+escapeReservation(r.id)+'\')">Ətraflı</button></td></tr>').join(""):'<tr><td colspan="8">Rezervasiya yoxdur.</td></tr>';
  set("qthDashboardReservationMessage",recent.length?recent.length+" son rezervasiya göstərilir.": "Rezervasiya tapılmadı.");
 }
+
+function renderDashboardReservationOverview(){const items=Array.isArray(allReservations)?allReservations:[];const groups=new Map();items.forEach(r=>{const p=String(r.phone||"").replace(/\D/g,"");if(p)groups.set(p,(groups.get(p)||0)+1);});const el=id=>document.getElementById(id);if(el("qthCustomerUnique"))el("qthCustomerUnique").textContent=groups.size.toLocaleString("az-AZ");if(el("qthCustomerRepeat"))el("qthCustomerRepeat").textContent=[...groups.values()].filter(n=>n>1).length.toLocaleString("az-AZ");if(el("qthCustomerActive"))el("qthCustomerActive").textContent=items.filter(r=>["confirmed","pending_payment","payment_review"].includes(String(r.status||"").toLowerCase())).length.toLocaleString("az-AZ");const body=el("qthDashboardReservationRows");if(!body)return;const labels={confirmed:"Təsdiqlənib",pending_payment:"Avans gözlənilir",cancelled:"Ləğv edilib",expired:"Vaxtı bitib",payment_failed:"Ödəniş alınmadı",payment_review:"Yoxlanılır"};body.innerHTML=items.slice(0,10).map(r=>"<tr><td>"+escapeReservation(r.guest_name||"-")+"</td><td>"+escapeReservation(r.unit_name||r.unit_id||"-")+"</td><td>"+escapeReservation(r.check_in||"-")+" – "+escapeReservation(r.check_out||"-")+"</td><td>"+money(r.total_amount)+"</td><td>"+money(r.paid_amount)+"</td><td>"+escapeReservation(labels[r.status]||r.status||"-")+"</td><td><button type=\"button\" onclick=\"showReservationDetails('"+escapeReservation(r.id)+"')\">Ətraflı</button></td></tr>").join("")||"<tr><td colspan=\"7\">Rezervasiya yoxdur.</td></tr>";}
 
 function renderReservations(items) {
   const table = document.getElementById("reservationTable");
