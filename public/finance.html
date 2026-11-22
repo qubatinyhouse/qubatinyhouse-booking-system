@@ -1298,8 +1298,8 @@ async function connectSharedSession(){
        return;
      }
      try{
-       const result=await client.from("qth_reserve_fund_transactions").insert({
-         transaction_type:transactionType,amount:Math.round(value*100)/100,reason:reason.trim()
+       const result=await client.rpc("qth_record_reserve_fund_transaction",{
+         p_transaction_type:transactionType,p_amount:Math.round(value*100)/100,p_reason:reason.trim()
        });
        if(result.error)throw result.error;
        window.parent.postMessage({type:"QTH_RESERVE_RESULT",transactionType},window.location.origin);
