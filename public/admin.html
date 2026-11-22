@@ -541,6 +541,38 @@ tbody tr:hover{background:#f8f8f2}
  .dashboard-hero.qth-photo-hero{min-height:112px!important;padding:22px 12px!important}
  .dashboard-hero.qth-photo-hero:before{font-size:21px!important;letter-spacing:2.5px!important}
 }
+
+/* QTH PREMIUM FINANCE KPI CARDS — refined visual hierarchy */
+#dashboard>.cards{gap:16px;margin:0 0 22px}
+#dashboard>.cards>.card{min-height:142px;padding:21px 20px 18px 23px;border-radius:18px;position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(145deg,#fffefa 0%,#f7f8f2 100%);border:1px solid #e5e6da;box-shadow:0 10px 28px rgba(35,55,40,.065);transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+#dashboard>.cards>.card:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(35,55,40,.11);border-color:#d8c79f}
+#dashboard>.cards>.card:before{content:"";position:absolute;left:0;top:17px;bottom:17px;width:3px;border-radius:0 4px 4px 0;background:#8aa18a}
+#dashboard>.cards>.card:after{content:"";position:absolute;z-index:-1;width:112px;height:112px;right:-42px;top:-47px;border-radius:50%;border:1px solid #b99a5c26;box-shadow:0 0 0 13px #b99a5c08,0 0 0 27px #b99a5c05}
+#dashboard>.cards>.card:nth-child(1):before{background:#4f8a62}
+#dashboard>.cards>.card:nth-child(2):before{background:#bd765f}
+#dashboard>.cards>.card:nth-child(3):before{background:#c39a55}
+#dashboard>.cards>.card:nth-child(4):before{background:#315d42}
+#dashboard>.cards>.card:nth-child(5):before{background:#8b7b9d}
+#dashboard>.cards>.card:nth-child(6):before{background:#b99a5c}
+#dashboard>.cards>.card:nth-child(7):before{background:#84938a}
+#dashboard>.cards>.card:nth-child(1) .card-value{color:#34764b}
+#dashboard>.cards>.card:nth-child(2) .card-value,#dashboard>.cards>.card:nth-child(3) .card-value,#dashboard>.cards>.card:nth-child(5) .card-value{color:#a85d50}
+#dashboard>.cards>.card:nth-child(4){background:linear-gradient(135deg,#f3f6ef,#e9f0e7);border-color:#d7e2d3}
+#dashboard>.cards>.card:nth-child(4) .card-value{color:#2e6943}
+#dashboard>.cards>.card:nth-child(6){background:linear-gradient(135deg,#f8f3e7,#f1e8d5);border-color:#e5d7b8}
+#dashboard>.cards>.card:nth-child(6) .card-value{color:#765d2d}
+#dashboard>.cards>.card:nth-child(7) .card-value{color:#536d5a}
+#dashboard>.cards>.card .card-label{font-size:11px;font-weight:750;letter-spacing:.75px;text-transform:uppercase;color:#7b8379;line-height:1.45;max-width:90%}
+#dashboard>.cards>.card .card-value{font-size:clamp(22px,2vw,29px);font-weight:800;letter-spacing:-.9px;margin-top:17px;line-height:1.1;font-variant-numeric:tabular-nums}
+#dashboard>.cards>.card .card-note{font-size:10px;line-height:1.5;color:#92988e;margin-top:9px}
+#qthExpensePanel{border:1px solid #e4e2d6!important;border-radius:19px!important;box-shadow:0 12px 30px rgba(43,55,43,.065)!important;background:rgba(255,255,252,.97)!important}
+#qthExpensePanel .qth-expense-head h3{font-family:Georgia,serif;letter-spacing:.1px;color:#294536}
+#qthExpensePanel .qth-expense-month{background:#f4f0e4;border:1px solid #e6dcc4;color:#80683b;border-radius:30px;padding:8px 12px;font-size:10px;letter-spacing:.6px}
+#qthExpensePanel .qth-expense-donut{filter:drop-shadow(0 7px 13px rgba(35,55,40,.09))}
+#qthExpensePanel .qth-expense-legend article,#qthExpensePanel .qth-expense-legend>div{border-radius:11px}
+@media(max-width:950px){#dashboard>.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){#dashboard>.cards{gap:9px;margin-bottom:14px}#dashboard>.cards>.card{min-height:120px;padding:14px 12px 13px 15px;border-radius:14px}#dashboard>.cards>.card .card-label{font-size:9px;letter-spacing:.45px}#dashboard>.cards>.card .card-value{font-size:clamp(17px,5vw,22px);margin-top:12px}#dashboard>.cards>.card .card-note{font-size:9px;margin-top:7px}#dashboard>.cards>.card:after{width:76px;height:76px;right:-31px;top:-33px}}
+
 </style>
 </head>
 <body>
@@ -594,29 +626,34 @@ tbody tr:hover{background:#f8f8f2}
 
 <div class="cards">
 <div class="card">
-<div class="card-label">Cari ayın gəliri</div>
+<div class="card-label">Cari ayın daxilolmaları</div>
 <div class="card-value" id="income">— AZN</div>
-<div class="card-note">Maliyyə modulunda administrator girişi tələb olunur</div>
+<div class="card-note">Rezervasiya behləri daxilolma tarixində sayılır</div>
 </div>
 <div class="card">
-<div class="card-label">Cari ayın xərci</div>
+<div class="card-label">Cari ayın biznes xərci</div>
 <div class="card-value" id="expense">— AZN</div>
-<div class="card-note">Cari ay üzrə maliyyə göstəricisi</div>
+<div class="card-note">Rezervasiya geri qaytarılmaları ayrıca göstərilir</div>
 </div>
 <div class="card">
-<div class="card-label">Cari ayın xalis mənfəəti</div>
+<div class="card-label">Rezervasiya geri qaytarılması</div>
+<div class="card-value" id="refunds">— AZN</div>
+<div class="card-note">Müştərilərə qaytarılmış ödənişlər</div>
+</div>
+<div class="card">
+<div class="card-label">Daxilolma − biznes xərci − qaytarılma</div>
 <div class="card-value" id="profit">— AZN</div>
-<div class="card-note">Gəlir minus biznes xərcləri</div>
+<div class="card-note">Pul axını göstəricisi; behlər daxilolma tarixində hesablanır</div>
 </div>
 <div class="card">
-<div class="card-label">Şəxsi xərclər</div>
+<div class="card-label">Şəxsi çıxışlar</div>
 <div class="card-value" id="personalExpense">— AZN</div>
 <div class="card-note" id="personalExpenseNote">Şəxsi xərclər və sahibkarın şəxsi götürməsi</div>
 </div>
 <div class="card">
-<div class="card-label">Bütün xərclərdən sonra qalıq</div>
+<div class="card-label">Bütün çıxışlardan sonra qalıq</div>
 <div class="card-value" id="remainingAfterExpenses">— AZN</div>
-<div class="card-note" id="remainingAfterExpensesNote">Gəlir − biznes xərcləri − şəxsi xərclər</div>
+<div class="card-note" id="remainingAfterExpensesNote">Daxilolmalar − biznes xərcləri − şəxsi çıxışlar</div>
 </div>
 <div class="card">
 <div class="card-label">Ümumi rezervasiyalar</div>
@@ -1388,16 +1425,18 @@ window.addEventListener("message", (event) => {
   }
   document.getElementById("income").textContent = fmt(data.income);
   document.getElementById("expense").textContent = fmt(data.expense);
-  document.getElementById("profit").textContent = fmt(Number(data.income || 0) - Number(data.expense || 0));
+  document.getElementById("profit").textContent = fmt(Number(data.income || 0) - Number(data.expense || 0) - Number(data.refunds || 0));
+  const refundsNode = document.getElementById("refunds");
+  if (refundsNode) refundsNode.textContent = fmt(data.refunds || 0);
   document.getElementById("personalExpense").textContent = fmt(data.personalExpense);
   const personalBreakdown = data.personalExpenseBreakdown || {};
   document.getElementById("personalExpenseNote").textContent =
     "Şəxsi: " + fmt(personalBreakdown.personal) + " · Şəxsi götürmə: " + fmt(personalBreakdown.ownerDraw);
-  const remainingAfterExpenses = Number(data.income || 0) - Number(data.expense || 0) - Number(data.personalExpense || 0);
+  const remainingAfterExpenses = Number(data.income || 0) - Number(data.expense || 0) - Number(data.refunds || 0) - Number(data.personalExpense || 0);
   const remainingNode = document.getElementById("remainingAfterExpenses");
   if (remainingNode) remainingNode.textContent = fmt(remainingAfterExpenses);
   const remainingNote = document.getElementById("remainingAfterExpensesNote");
-  if (remainingNote) remainingNote.textContent = "Gəlir " + fmt(data.income) + " − biznes xərci " + fmt(data.expense) + " − şəxsi xərc " + fmt(data.personalExpense);
+  if (remainingNote) remainingNote.textContent = "Daxilolmalar " + fmt(data.income) + " − biznes xərci " + fmt(data.expense) + " − qaytarılma " + fmt(data.refunds || 0) + " − şəxsi çıxış " + fmt(data.personalExpense);
   const note = document.querySelector("#dashboard .notice");
   if (note) note.textContent = "Maliyyə göstəriciləri təsdiqlənmiş maliyyə sessiyasından yeniləndi (" + String(data.month || "") + ").";
   document.querySelectorAll("#dashboard .card-note").forEach((el, i) => {
@@ -2394,8 +2433,8 @@ if(!qthHousePerformanceTimer){
 </body>
 </html>
 <style>
-/* Six KPI cards on desktop; responsive dashboard layout */
-.cards{grid-template-columns:repeat(6,minmax(0,1fr))}
+/* Seven KPI cards on desktop; responsive dashboard layout */
+.cards{grid-template-columns:repeat(7,minmax(0,1fr))}
 @media(max-width:1200px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:620px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 </style>

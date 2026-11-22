@@ -154,6 +154,42 @@ body.reports-only,body.cleaning-only,body.settings-only,body.salary-only{backgro
 }
 @media(max-width:390px){main{padding:9px 6px!important}.grid{grid-template-columns:1fr!important}.card{padding:11px!important}}
 
+
+/* QTH PREMIUM FINANCE REPORT CARDS */
+#monthlyFinanceReport{padding:25px!important;border-radius:20px!important;background:linear-gradient(145deg,#fffefa,#f6f7f0)!important;border:1px solid #e4e2d6!important;box-shadow:0 14px 34px rgba(43,55,43,.07)!important}
+#monthlyFinanceReport>h3{font:600 21px Georgia,serif!important;color:#294536!important;margin-bottom:16px!important}
+#monthlyFinanceReport>#reportMonth{max-width:230px;background:#fffefa;border:1px solid #ded8c8;border-radius:11px}
+#monthlyFinanceReport>#reportPeriodLabel{display:inline-block;margin:8px 0 15px;padding:7px 11px;border-radius:20px;background:#f1f2e9;color:#6e7a6d;font-size:11px}
+#monthlyFinanceReport>.grid{gap:13px}
+#monthlyFinanceReport>.grid>.card{position:relative;overflow:hidden;min-height:126px;margin:0!important;padding:19px 17px 16px!important;border-radius:15px!important;background:linear-gradient(145deg,#fff,#f7f8f3)!important;border:1px solid #e6e7dd!important;box-shadow:0 7px 20px rgba(40,55,42,.045)!important}
+#monthlyFinanceReport>.grid>.card:before{content:"";position:absolute;left:0;top:15px;bottom:15px;width:3px;border-radius:0 4px 4px 0;background:#8ca28c}
+#monthlyFinanceReport>.grid>.card:nth-child(1):before{background:#4c8b60}
+#monthlyFinanceReport>.grid>.card:nth-child(2):before{background:#b86c5e}
+#monthlyFinanceReport>.grid>.card:nth-child(3):before{background:#c39b59}
+#monthlyFinanceReport>.grid>.card:nth-child(4):before{background:#315f42}
+#monthlyFinanceReport>.grid>.card:nth-child(5):before{background:#608b70}
+#monthlyFinanceReport>.grid>.card:nth-child(6):before,#monthlyFinanceReport>.grid>.card:nth-child(7):before,#monthlyFinanceReport>.grid>.card:nth-child(8):before{background:#9a819f}
+#monthlyFinanceReport>.grid>.card:nth-child(9):before{background:#b99a5c}
+#monthlyFinanceReport>.grid>.card .muted{font-size:10px;font-weight:750;letter-spacing:.55px;text-transform:uppercase;line-height:1.5;color:#7b8379}
+#monthlyFinanceReport>.grid>.card .metric{font-size:clamp(20px,2vw,27px);font-weight:800;letter-spacing:-.7px;margin-top:16px;line-height:1.15;font-variant-numeric:tabular-nums}
+#monthlyFinanceReport>.grid>.card:nth-child(1) .metric,#monthlyFinanceReport>.grid>.card:nth-child(5) .metric{color:#34764b}
+#monthlyFinanceReport>.grid>.card:nth-child(2) .metric,#monthlyFinanceReport>.grid>.card:nth-child(3) .metric,#monthlyFinanceReport>.grid>.card:nth-child(6) .metric,#monthlyFinanceReport>.grid>.card:nth-child(8) .metric{color:#a85d50}
+#monthlyFinanceReport>.grid>.card:nth-child(4){background:linear-gradient(135deg,#eff5ec,#e6efe4)!important;border-color:#d6e2d2!important}
+#monthlyFinanceReport>.grid>.card:nth-child(4) .metric{color:#2e6943}
+#monthlyFinanceReport>.grid>.card:nth-child(9){background:linear-gradient(135deg,#f8f3e7,#f0e6d1)!important;border-color:#e4d5b4!important}
+#monthlyFinanceReport>.grid>.card:nth-child(9) .metric{color:#765d2d}
+#dailyYearlyReports{border-radius:18px!important;border:1px solid #e5e2d7!important;box-shadow:0 10px 28px rgba(43,55,43,.055)!important}
+#dailyYearlyReports h3{font:600 19px Georgia,serif!important;color:#294536!important}
+#dailyYearlyReports>.grid:nth-of-type(2),#dailyYearlyReports>.grid:nth-of-type(3){gap:10px}
+#dailyYearlyReports>.grid:nth-of-type(2)>div,#dailyYearlyReports>.grid:nth-of-type(3)>div{background:#f7f8f2;border:1px solid #e8e9df;border-radius:12px;padding:13px;min-width:0}
+#dailyYearlyReports .metric{font-size:clamp(17px,1.7vw,22px);font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#incomeSourceReport{padding:8px 0}
+#bankCashModule>.grid>.card{border-radius:14px!important;border:1px solid #e5e2d7!important;background:linear-gradient(145deg,#fffefa,#f5f6ef)!important;box-shadow:0 8px 22px rgba(43,55,43,.05)!important}
+#bankCashModule>.grid>.card h3{font-size:11px!important;letter-spacing:.6px;text-transform:uppercase;color:#7b8379!important}
+#bankCashModule>.grid>.card h2{font-size:24px;color:#315d42;font-variant-numeric:tabular-nums}
+@media(max-width:700px){#monthlyFinanceReport{padding:14px!important}#monthlyFinanceReport>.grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px}#monthlyFinanceReport>.grid>.card{min-height:105px;padding:13px 10px 12px 13px!important;border-radius:12px!important}#monthlyFinanceReport>.grid>.card .muted{font-size:9px;letter-spacing:.25px}#monthlyFinanceReport>.grid>.card .metric{font-size:clamp(16px,4.5vw,20px);margin-top:12px}#dailyYearlyReports>.grid:nth-of-type(2),#dailyYearlyReports>.grid:nth-of-type(3){grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px}#dailyYearlyReports>.grid:nth-of-type(2)>div,#dailyYearlyReports>.grid:nth-of-type(3)>div{padding:10px;border-radius:10px}#bankCashModule>.grid>.card h2{font-size:19px}}
+@media(max-width:390px){#monthlyFinanceReport>.grid{grid-template-columns:1fr!important}}
+
 </style>
 </head>
 <body>
@@ -215,20 +251,21 @@ Salam, administrator!
 
   <div class="grid">
     <div class="card">
-      <h3>Nağd kassa</h3>
+      <h3>Nağd xalis hərəkət</h3>
       <h2 id="cashBalance">0.00 AZN</h2>
     </div>
 
     <div class="card">
-      <h3>Bank hesabı</h3>
+      <h3>Bank xalis hərəkət</h3>
       <h2 id="bankBalance">0.00 AZN</h2>
     </div>
 
     <div class="card">
-      <h3>Kart əməliyyatları</h3>
+      <h3>Kart xalis hərəkət</h3>
       <h2 id="cardBalance">0.00 AZN</h2>
     </div>
   </div>
+  <p class="muted">Qeyd: bunlar açılış qalığı daxil edilmədən hesablanan xalis əməliyyat hərəkətləridir; faktiki bank/kassa qalığı deyil.</p>
 <div class="card" id="monthlyFinanceReport">
     <h3>Aylıq maliyyə hesabatı</h3>
 
@@ -238,17 +275,21 @@ Salam, administrator!
     <div class="muted" id="reportPeriodLabel">Seçilmiş ay üzrə nəticələr</div>
     <div class="grid">
         <div class="card">
-            <div class="muted">Aylıq gəlir</div>
+            <div class="muted">Aylıq daxilolmalar</div>
             <div class="metric green" id="monthlyIncome">0 AZN</div>
         </div>
 
         <div class="card">
-            <div class="muted">Aylıq xərc</div>
+            <div class="muted">Biznes xərcləri</div>
             <div class="metric red" id="monthlyExpense">0 AZN</div>
+        </div>
+        <div class="card">
+            <div class="muted">Rezervasiya geri qaytarılması</div>
+            <div class="metric red" id="monthlyRefunds">0 AZN</div>
         </div>
 
         <div class="card">
-            <div class="muted">Xalis mənfəət / zərər</div>
+            <div class="muted">Daxilolma − biznes xərci − qaytarılma</div>
             <div class="metric" id="monthlyProfit">0 AZN</div>
         </div>
         <div class="card">
@@ -256,14 +297,23 @@ Salam, administrator!
             <div class="metric green" id="monthlyBookingIncome">0 AZN</div>
         </div>
         <div class="card">
-            <div class="muted">Şəxsi xərclər</div>
+            <div class="muted">Şəxsi xərclər (personal)</div>
             <div class="metric red" id="monthlyPersonalExpense">0 AZN</div>
         </div>
         <div class="card">
-            <div class="muted">Sahibkarın şəxsi götürməsi</div>
+            <div class="muted">Sahibkarın götürməsi (owner_draw)</div>
             <div class="metric" id="monthlyOwnerDraw">0 AZN</div>
         </div>
+        <div class="card">
+            <div class="muted">Şəxsi çıxışlar cəmi</div>
+            <div class="metric red" id="monthlyPersonalOutflow">0 AZN</div>
         </div>
+        <div class="card">
+            <div class="muted">Bütün çıxışlardan sonra qalıq</div>
+            <div class="metric" id="monthlyRemaining">0 AZN</div>
+        </div>
+        </div>
+    <p class="muted">Pul axını hesabatıdır: beh və gələcək rezervasiyaların ödənişləri daxil olduğu tarixdə göstərilir; bu göstərici mühasibat üzrə tanınmış gəlirlə eyni olmaya bilər.</p>
   </div>       
   <div class="card" id="dailyYearlyReports">
     <h3>Gündəlik və illik hesabat</h3>
@@ -273,14 +323,18 @@ Salam, administrator!
     </div>
     <div class="grid">
       <div><div class="muted">Günlük gəlir</div><div class="metric green" id="dailyIncome">0 ₼</div></div>
-      <div><div class="muted">Günlük xərc</div><div class="metric red" id="dailyExpense">0 ₼</div></div>
-      <div><div class="muted">Günlük nəticə</div><div class="metric" id="dailyProfit">0 ₼</div></div>
+      <div><div class="muted">Günlük biznes xərci</div><div class="metric red" id="dailyExpense">0 ₼</div></div>
+      <div><div class="muted">Günlük geri qaytarılma</div><div class="metric red" id="dailyRefunds">0 ₼</div></div>
+      <div><div class="muted">Günlük şəxsi çıxış</div><div class="metric red" id="dailyPersonalOutflow">0 ₼</div></div>
+      <div><div class="muted">Bütün çıxışlardan sonra qalıq</div><div class="metric" id="dailyProfit">0 ₼</div></div>
     </div>
     <hr>
     <div class="grid">
       <div><div class="muted">İllik gəlir</div><div class="metric green" id="yearlyIncome">0 ₼</div></div>
-      <div><div class="muted">İllik xərc</div><div class="metric red" id="yearlyExpense">0 ₼</div></div>
-      <div><div class="muted">İllik nəticə</div><div class="metric" id="yearlyProfit">0 ₼</div></div>
+      <div><div class="muted">İllik biznes xərci</div><div class="metric red" id="yearlyExpense">0 ₼</div></div>
+      <div><div class="muted">İllik geri qaytarılma</div><div class="metric red" id="yearlyRefunds">0 ₼</div></div>
+      <div><div class="muted">İllik şəxsi çıxış</div><div class="metric red" id="yearlyPersonalOutflow">0 ₼</div></div>
+      <div><div class="muted">Bütün çıxışlardan sonra qalıq</div><div class="metric" id="yearlyProfit">0 ₼</div></div>
     </div>
   </div>
   <div class="card">
@@ -403,15 +457,18 @@ Salam, administrator!
     <option value="cash">Nağd</option>
     <option value="bank">Bank</option>
     <option value="card">Kart</option>
+    <option value="transfer">Bank köçürməsi</option>
   </select>
 
   <label>Əməliyyat tarixi</label>
   <input id="financeDate" type="date">
 <script>
 const today = new Date();
-const localDate = new Date(
-  today.getTime() - today.getTimezoneOffset() * 60000
-).toISOString().slice(0, 10);
+const bakuDateParts = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Baku", year: "numeric", month: "2-digit", day: "2-digit"
+}).formatToParts(today);
+const bakuPart = type => bakuDateParts.find(part => part.type === type)?.value || "";
+const localDate = bakuPart("year") + "-" + bakuPart("month") + "-" + bakuPart("day");
 
 document.getElementById("financeDate").value = localDate;
 const financeScope = document.getElementById("financeScope");
@@ -620,7 +677,7 @@ let cardBalance = 0;
 
     if (item.payment_method === "cash") {
         cashBalance += amount * sign;
-    } else if (item.payment_method === "bank") {
+    } else if (item.payment_method === "bank" || item.payment_method === "transfer") {
         bankBalance += amount * sign;
     } else if (item.payment_method === "card") {
         cardBalance += amount * sign;
@@ -633,10 +690,7 @@ document.getElementById("cardBalance").textContent = money(cardBalance);
 // AYLIQ GƏLİR VƏ XƏRC HESABLANMASI
 const reportMonth = document.getElementById("reportMonth");
 
-const now = new Date();
-const currentMonth =
-    now.getFullYear() + "-" +
-    String(now.getMonth() + 1).padStart(2, "0");
+const currentMonth = localDate.slice(0, 7);
 
 // Cari ayda hələ əməliyyat yoxdursa, hesabat ilk açılışda
 // son faktiki maliyyə əməliyyatı olan ayı göstərir.
@@ -659,6 +713,7 @@ const selectedMonth = reportMonth.value;
 
 let monthlyIncome = 0;
 let monthlyExpense = 0;
+let monthlyRefunds = 0;
 let monthlyPersonalExpense = 0;
 let monthlyOwnerDraw = 0;
 let monthlyBookingIncome = 0;
@@ -670,19 +725,24 @@ let monthlyBookingIncome = 0;
     if (item.transaction_type === "income") {
         monthlyIncome += amount;
         // Yalnız faktiki qeydə alınmış rezervasiya ödənişləri sayılır.
-        if (["Ev rezervasiyası", "Rezervasiya behi", "Rezervasiya ödənişi"].includes(item.category)) {
+        if (["Ev rezervasiyası", "Rezervasiya behi", "Rezervasiya ödənişi", "Rezervasiya qalıq ödənişi"].includes(item.category)) {
             monthlyBookingIncome += amount;
         }
     } else if (item.transaction_type === "expense") {
         const scope = item.expense_scope || "business";
         if (scope === "personal") monthlyPersonalExpense += amount;
         else if (scope === "owner_draw") monthlyOwnerDraw += amount;
+        else if (item.category === "Rezervasiya üzrə geri qaytarılma") monthlyRefunds += amount;
         else monthlyExpense += amount;
     }
 });
 
 document.getElementById("monthlyPersonalExpense").textContent = money(monthlyPersonalExpense);
 document.getElementById("monthlyOwnerDraw").textContent = money(monthlyOwnerDraw);
+document.getElementById("monthlyRefunds").textContent = money(monthlyRefunds);
+const monthlyPersonalOutflow = monthlyPersonalExpense + monthlyOwnerDraw;
+document.getElementById("monthlyPersonalOutflow").textContent = money(monthlyPersonalOutflow);
+document.getElementById("monthlyRemaining").textContent = money(monthlyIncome - monthlyExpense - monthlyRefunds - monthlyPersonalOutflow);
 document.getElementById("monthlyIncome").textContent =
     money(monthlyIncome);
 
@@ -690,7 +750,7 @@ document.getElementById("monthlyExpense").textContent =
     money(monthlyExpense);
 
 document.getElementById("monthlyProfit").textContent =
-    money(monthlyIncome - monthlyExpense);
+    money(monthlyIncome - monthlyExpense - monthlyRefunds);
 document.getElementById("monthlyBookingIncome").textContent = money(monthlyBookingIncome);
 document.getElementById("reportPeriodLabel").textContent =
     "Hesabat dövrü: " + selectedMonth +
@@ -701,7 +761,7 @@ const dayInput = document.getElementById("reportDay");
 const yearSelect = document.getElementById("reportYear");
 if (dayInput && !dayInput.value) dayInput.value = localDate;
 if (yearSelect && !yearSelect.options.length) {
-  const thisYear = new Date().getFullYear();
+  const thisYear = Number(localDate.slice(0, 4));
   for (let y = thisYear - 4; y <= thisYear + 1; y++) {
     const opt = document.createElement("option"); opt.value = String(y); opt.textContent = String(y);
     if (y === thisYear) opt.selected = true;
@@ -709,25 +769,39 @@ if (yearSelect && !yearSelect.options.length) {
   }
 }
 const selectedDay = dayInput ? dayInput.value : localDate;
-const selectedYear = yearSelect ? yearSelect.value : String(new Date().getFullYear());
-let dailyIncome = 0, dailyExpense = 0, yearlyIncome = 0, yearlyExpense = 0;
+const selectedYear = yearSelect ? yearSelect.value : localDate.slice(0, 4);
+let dailyIncome = 0, dailyExpense = 0, dailyRefunds = 0, dailyPersonalOutflow = 0, yearlyIncome = 0, yearlyExpense = 0, yearlyRefunds = 0, yearlyPersonalOutflow = 0;
 (transactions || []).forEach(item => {
   const amount = Number(item.amount || 0);
   if (item.transaction_date === selectedDay) {
     if (item.transaction_type === "income") dailyIncome += amount;
-    else if (item.transaction_type === "expense" && (item.expense_scope || "business") === "business") dailyExpense += amount;
+    else if (item.transaction_type === "expense") {
+      const scope = item.expense_scope || "business";
+      if (scope === "business" && item.category === "Rezervasiya üzrə geri qaytarılma") dailyRefunds += amount;
+      else if (scope === "business") dailyExpense += amount;
+      else dailyPersonalOutflow += amount;
+    }
   }
   if (String(item.transaction_date || "").slice(0,4) === selectedYear) {
     if (item.transaction_type === "income") yearlyIncome += amount;
-    else if (item.transaction_type === "expense" && (item.expense_scope || "business") === "business") yearlyExpense += amount;
+    else if (item.transaction_type === "expense") {
+      const scope = item.expense_scope || "business";
+      if (scope === "business" && item.category === "Rezervasiya üzrə geri qaytarılma") yearlyRefunds += amount;
+      else if (scope === "business") yearlyExpense += amount;
+      else yearlyPersonalOutflow += amount;
+    }
   }
 });
 document.getElementById("dailyIncome").textContent = money(dailyIncome);
 document.getElementById("dailyExpense").textContent = money(dailyExpense);
-document.getElementById("dailyProfit").textContent = money(dailyIncome-dailyExpense);
+document.getElementById("dailyRefunds").textContent = money(dailyRefunds);
+document.getElementById("dailyPersonalOutflow").textContent = money(dailyPersonalOutflow);
+document.getElementById("dailyProfit").textContent = money(dailyIncome-dailyExpense-dailyRefunds-dailyPersonalOutflow);
 document.getElementById("yearlyIncome").textContent = money(yearlyIncome);
 document.getElementById("yearlyExpense").textContent = money(yearlyExpense);
-document.getElementById("yearlyProfit").textContent = money(yearlyIncome-yearlyExpense);
+document.getElementById("yearlyRefunds").textContent = money(yearlyRefunds);
+document.getElementById("yearlyPersonalOutflow").textContent = money(yearlyPersonalOutflow);
+document.getElementById("yearlyProfit").textContent = money(yearlyIncome-yearlyExpense-yearlyRefunds-yearlyPersonalOutflow);
 
 
 // Gəlir mənbələri: seçilmiş ayda kateqoriyalar üzrə faktiki daxilolmalar.
@@ -746,7 +820,7 @@ sourceHost.innerHTML = sourceRows.length
   : '<p class="muted">Seçilmiş ay üzrə gəlir qeydə alınmayıb.</p>';
 
 // Dashboard kartları həmişə cari ayı göstərir; tarix seçimi yalnız hesabat bölməsinə təsir edir.
-let currentIncome = 0, currentExpense = 0, currentPersonalExpense = 0, currentOwnerDraw = 0;
+let currentIncome = 0, currentExpense = 0, currentRefunds = 0, currentPersonalExpense = 0, currentOwnerDraw = 0;
 (transactions || []).forEach(item => {
   if (!item.transaction_date || item.transaction_date.slice(0,7) !== currentMonth) return;
   const amount = Number(item.amount || 0);
@@ -755,6 +829,7 @@ let currentIncome = 0, currentExpense = 0, currentPersonalExpense = 0, currentOw
     const scope = item.expense_scope || "business";
     if (scope === "personal") currentPersonalExpense += amount;
     else if (scope === "owner_draw") currentOwnerDraw += amount;
+    else if (item.category === "Rezervasiya üzrə geri qaytarılma") currentRefunds += amount;
     else currentExpense += amount;
   }
 });
@@ -766,7 +841,7 @@ const expenseGroups = {
   "Digər xərclər":0
 };
 (transactions || []).forEach(item => {
-  if(item.transaction_type!=="expense" || (item.expense_scope || "business")!=="business" || !item.transaction_date || item.transaction_date.slice(0,7)!==currentMonth) return;
+  if(item.transaction_type!=="expense" || (item.expense_scope || "business")!=="business" || item.category==="Rezervasiya üzrə geri qaytarılma" || !item.transaction_date || item.transaction_date.slice(0,7)!==currentMonth) return;
   const category=String(item.category||"");
   const description=String(item.description||"");
   const text=(category+" "+description).toLocaleLowerCase("az").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[əı]/g,ch=>ch==="ə"?"e":"i");
@@ -799,6 +874,7 @@ if (window.parent !== window) {
     type: "QTH_FINANCE_SUMMARY",
     income: currentIncome,
     expense: currentExpense,
+    refunds: currentRefunds,
     personalExpense: currentPersonalExpense + currentOwnerDraw,
     personalExpenseBreakdown: { personal: currentPersonalExpense, ownerDraw: currentOwnerDraw },
     expenseBreakdown,
