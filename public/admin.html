@@ -3047,4 +3047,24 @@ if(!qthHousePerformanceTimer){
  .sidebar .logo small{margin:2px 0 0;letter-spacing:2px;font-size:8px}
 }
 
+
+/* QTH FOREST SIDEBAR — remove QTH badge and square only */
+.sidebar .logo:before,
+.sidebar .logo:after{display:none!important;content:none!important}
+.sidebar .logo{
+  position:relative!important;isolation:isolate!important;
+  overflow:hidden!important;
+  background:
+    linear-gradient(180deg,rgba(4,35,25,.56),rgba(3,32,23,.82)),
+    url("https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=900&q=80") center 48%/cover no-repeat!important;
+  border:1px solid rgba(222,194,130,.38)!important;
+  border-radius:14px!important;
+  padding:20px 8px 24px!important;
+  margin:0 0 18px!important;
+  box-shadow:inset 0 0 35px rgba(0,0,0,.16),0 8px 20px rgba(0,0,0,.12)!important;
+}
+.sidebar .logo .qth-sidebar-logo,
+.sidebar .logo strong,
+.sidebar .logo small{position:relative!important;z-index:1!important}
+
 </style>
