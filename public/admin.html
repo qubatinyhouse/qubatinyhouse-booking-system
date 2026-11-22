@@ -1052,7 +1052,7 @@ Rezervasiya göstəricisi rezervasiya bazasından yüklənir. Gəlir və xərc y
      <h4>Rezervasiya tarixçəsi</h4>
      <div id="customerHistoryList" class="notice">Tarixçə yüklənir...</div>
     </div>
-    <div class="customer-modal-actions"><button type="button" class="customer-cancel" onclick="closeCustomerProfile()">Ləğv et</button><button type="submit" class="btn" id="customerSaveButton" disabled>Yadda saxlama test bazası qoşulduqdan sonra aktiv olacaq</button></div>
+    <div class="customer-modal-actions"><button type="button" class="customer-cancel" onclick="closeCustomerProfile()">Ləğv et</button><button type="submit" class="btn" id="customerSaveButton">Müştəri məlumatlarını yadda saxla</button></div>
     <p id="customerFormMessage" class="sub" aria-live="polite"></p>
    </form>
   </div>
@@ -2868,7 +2868,6 @@ if(!qthHousePerformanceTimer){
   const button=$("customerSaveButton"),message=$("customerFormMessage");
   const fullName=$("customerFullName").value.trim(),phone=$("customerPhone").value.trim();
   if(fullName.length<2){message.textContent="Ad və soyadı düzgün daxil edin.";return;}
-  message.textContent="Təhlükəsizlik üçün test versiyasında müştəri məlumatlarının yazılması bağlıdır. Ayrı test bazası qoşulduqdan sonra aktiv ediləcək.";return;
   button.disabled=true;message.textContent="Anket yadda saxlanılır...";
   try{
    const auth=window.qthAdminAuthClient;
