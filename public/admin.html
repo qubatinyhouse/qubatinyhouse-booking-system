@@ -718,12 +718,14 @@ tbody tr:hover{background:#f8f8f2}
   box-shadow:0 8px 22px rgba(4,36,24,.10)!important;
 }
 .header h1#pageTitle{
-  display:block!important;font:700 24px/1.3 Arial,Helvetica,sans-serif!important;
+  display:block!important;font:700 21px/1.35 Arial,Helvetica,sans-serif!important;
   letter-spacing:.1px;color:#fff8e8!important;margin:0!important;
+  text-transform:none!important;
 }
 .header h1#pageTitle::after{content:none!important;display:none!important}
 .header .sub{display:none!important}
 .header .date{display:none!important}
+@media(max-width:620px){.header h1#pageTitle{font-size:17px!important}}
 #qthAdminLogout{
   color:#fff8e8!important;background:rgba(255,255,255,.10)!important;
   border:1px solid rgba(232,211,164,.45)!important;
@@ -1411,17 +1413,23 @@ document.getElementById("mobileQuickCreate")?.addEventListener("click",()=>{
 document.addEventListener("keydown",event=>{if(event.key==="Escape")toggleMobileMore(false);});
 
 function qthBakuDateLabel(){
- return new Intl.DateTimeFormat("az-AZ",{weekday:"long",day:"2-digit",month:"long",year:"numeric",timeZone:"Asia/Baku"}).format(new Date());
+ const parts=new Intl.DateTimeFormat("en-GB",{
+  timeZone:"Asia/Baku",year:"numeric",month:"2-digit",day:"2-digit",
+  hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"
+ }).formatToParts(new Date());
+ const p={};parts.forEach(x=>{if(x.type!=="literal")p[x.type]=x.value;});
+ const months=["yanvar","fevral","mart","aprel","may","iyun","iyul","avqust","sentyabr","oktyabr","noyabr","dekabr"];
+ const weekdays=["bazar","bazar ertəsi","çərşənbə axşamı","çərşənbə","cümə axşamı","cümə","şənbə"];
+ const weekday=new Date(Date.UTC(Number(p.year),Number(p.month)-1,Number(p.day))).getUTCDay();
+ return Number(p.day)+" "+months[Number(p.month)-1]+" "+p.year+", "+weekdays[weekday]+" · saat "+p.hour+":"+p.minute+":"+p.second;
 }
 function qthRefreshHeaderDate(){
  const label=qthBakuDateLabel();
  const title=document.getElementById("pageTitle");
- const today=document.getElementById("today");
  if(title)title.textContent=label;
- if(today)today.textContent=label;
 }
 qthRefreshHeaderDate();
-window.setInterval(qthRefreshHeaderDate,60000);
+window.setInterval(qthRefreshHeaderDate,1000);
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
